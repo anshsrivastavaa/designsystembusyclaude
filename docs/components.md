@@ -123,3 +123,75 @@ system is that there is one of each thing.
 
 **How to request a change.** Say what you were trying to build, what got in the way, and what
 you did instead. That is enough. The change gets made here and everyone gets it.
+
+---
+
+## The variant plan, 24-08 — what is left to build, and what it is built from
+
+Aj's rule, in his words: *"no components hardcoded, we need to reuse as many as possible"* — meant
+the way a Figma library is meant. A small set of components, each carrying variants, composed
+everywhere. Never a new one-off per use.
+
+An inventory on 24-08 counted twenty-five components and read the variant definition of each. **Two
+things came out of it.** The library is further ahead than the product: three components and five
+variants exist with **zero call sites**, built for jobs that are still being hand-written beside
+them. And everything still owed on Create Invoice is served by what exists plus eight variants —
+**at most two genuinely new components, and one of those is conditional on a decision Aj has not
+made yet.**
+
+### Built, and used by nothing
+
+Each of these was written for a job that is today hand-rolled somewhere in the product. Adopting
+them is the whole of the "stop hardcoding" work; there is nothing to design.
+
+| Exists | Call sites | Written for |
+|---|---|---|
+| `Disclosure` | **0** | Four hand-written collapsibles: `Breakdown.tsx:58`, `TaxSummary.tsx:65`, `Narration.tsx:26`, `DrawerField.tsx:93`. Its own header says so |
+| `TableHeading` `as="div"` | **0** | The item grid's column heading, drawn inline at `ItemGrid.tsx:154-176` and again at `SundryGrid.tsx:21-34` |
+| `Tabs look="bare"` | **0** | The narration's Printed/Internal, hand-rolled at `Narration.tsx:54-71` with no arrow keys |
+| `TextField locked` | 0 | The sunken read-only cell `ItemRow.tsx:9` names as a row state |
+| `Field message` / `reservesMessage` | 0 | The reserved message line that stops a form jumping when an error appears |
+| `Label htmlFor` | 0 | Tying a label to its control, which is why no invoice field has one |
+
+### The eight variants
+
+Each names the hand-rolled thing it replaces. None is a new component.
+
+| Variant | Replaces |
+|---|---|
+| `Disclosure chevron="lead" \| "trail"` | Breakdown's chevron sits after the figure, not before the word |
+| `Tabs look="chips"` | The zone chips hand-written at `Settings.tsx:149-168` |
+| `Toggle look="boxed"` | The bordered span written twice around the two switches, `ActionBar.tsx:87` and `:92` |
+| `Chip shape="pill"` | The "Partly paid · balance X" pill hand-drawn at `ActionBar.tsx:82-84` |
+| `Button variant="on-dark"` | The whole local `DarkButton` component at `BulkBar.tsx:61-79` |
+| `Button size="xs"` | The strip's menu trigger, one authored step below body, `TopMenu.tsx:54-64` |
+| `TableRowActions as="td" \| "div"` | Row insert, copy and move on the item grid, which is divs — the same polymorphism `TableHeading` already takes |
+| `SearchBox collapsible={false}` | The icon-plus-field row rebuilt at `Settings.tsx:136-144` |
+
+### The two components that genuinely do not exist
+
+- **`MenuRow`.** There are **four** implementations of one idea — `listing/MenuItem.tsx`,
+  `app/MenuLine.tsx`, `FieldSettings.tsx:72-105`, and `VoucherSwitch.tsx:92-103` where a `Button` is
+  overridden into a menu row. They have already drifted: `MenuItem` marks the chosen row with a
+  rotated chevron, `FieldSettings` marks it with a tick. One component with `kind`, `mark`, `chosen`,
+  `detail`, `disabled` + `reason` and `notBuilt`. `MenuItem` already carries six of the seven props,
+  so this is mostly a move.
+- **`Select`.** Four hand-styled native selects with four different class runs — `Pager.tsx:32`,
+  `Settings.tsx:89`, `DrawerField.tsx:71`, `PartyDrawer.tsx:156`. Nothing in the library covers it.
+
+Conditional, and **not** to be built before Aj rules: a centred **`Dialog`**, needed only if the
+"reason before cancel or delete" is not a `Drawer` — `Drawer` already owns the scrim, Escape, focus
+return and a `footer` slot, and this file already rules that a Popover needing a sticky footer has
+become a Drawer.
+
+### The gate does not cover this, and that is why it kept happening
+
+`scripts/check-shape.mjs` enforces "a generic component is never dropped straight onto a screen"
+for **one component out of twenty-five** — `ComboBox` — by a regex that does not even match
+`ComboBoxList`. `Popover` is dropped straight onto fourteen screens, and **eight of them declare
+their own `role="menu"` container**, which is how four menu rows got built with every gate green.
+`check-drift.mjs` is the partial net and it only sees byte-identical class runs, so two files
+expressing the same idea in different words pass it.
+
+**So the rule as written is enforced for one case and documented as general.** Widening the check
+is what stops this recurring; until it is widened, this section is the list.
