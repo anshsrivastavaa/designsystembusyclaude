@@ -187,3 +187,54 @@
 @utility motion-drop {
   animation: motion-drop var(--motion-glide) var(--ease-settle) both;
 }
+
+/* THE FOCUS RING, AS ONE UTILITY, BECAUSE THERE WERE FOUR OF IT.
+ *
+ * Three classes were being typed out by hand at thirty-five places in twenty-five files, and
+ * they had already drifted into four different rings: two pixels outside on the listing's
+ * buttons, flush against the edge on the invoice's, and inside on a grid cell. Nobody chose
+ * that. It is what happens when the way a thing looks lives in a copied line rather than in a
+ * name — the first copy is right, and the fifth is whatever was on the clipboard.
+ *
+ * A ring is also the one piece of styling that must not vary: it is how somebody navigating by
+ * keyboard knows where they are, and a ring that changes shape between two buttons on the same
+ * screen reads as the focus having moved somewhere else. Nielsen Norman's consistency heuristic
+ * is the general form of it; WCAG's focus-visible requirement is the floor.
+ *
+ * THE OFFSET IS THE ONLY THING THAT VARIES, and it varies for one reason: a control with room
+ * around it wears the ring outside, where it is clearest, and a control flush against its
+ * neighbours — a grid cell, a field inside a bordered box — wears it inside, or the ring is
+ * clipped by whatever sits next to it and reads as a broken rectangle.
+ *
+ * The two pixels are written here rather than as a token because one place uses them. A token
+ * exists when a value has to agree across files; this value now lives in exactly one file. */
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--color-stroke-focus);
+    outline-offset: 2px;
+  }
+}
+
+@utility focus-ring-inset {
+  &:focus-visible {
+    outline: 2px solid var(--color-stroke-focus);
+    outline-offset: -2px;
+  }
+}
+
+/* The same two, for a control whose real focus lands on a child — a text field inside its
+   bordered box, a cell wrapping an input. The box shows the ring; the input inside it never
+   draws its own, or there are two rings for one focus. */
+@utility focus-ring-within {
+  &:focus-within {
+    outline: 2px solid var(--color-stroke-focus);
+    outline-offset: 2px;
+  }
+}
+
+@utility focus-ring-within-inset {
+  &:focus-within {
+    outline: 2px solid var(--color-stroke-focus);
+    outline-offset: -2px;
+  }
+}

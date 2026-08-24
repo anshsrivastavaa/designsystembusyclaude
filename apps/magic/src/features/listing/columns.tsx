@@ -41,12 +41,15 @@ export const GROUP_OF: Record<string, ColumnGroup> = {
 
 const readable = (day: string) => day.split('-').reverse().join('-')
 
-/** What the rows come to before tax, and the tax on them. Computed rather than stored: the
- * listing is handed whole invoices, and a second copy of a total is a second thing that can
- * disagree with the first. */
-const taxablePaise = (invoice: Invoice) => invoice.rows.reduce((sum, row) => sum + row.amountPaise, 0)
-const taxPaise = (invoice: Invoice) =>
-  invoice.rows.reduce((sum, row) => sum + Math.round((row.amountPaise * row.taxPercent) / 100), 0)
+// WHAT THE ROWS COME TO BEFORE TAX, AND THE TAX ON THEM, ARE READ OFF THE HEADER. This file
+// used to add them up here, over invoice.rows, with the reasoning that a stored total is a
+// second thing that can disagree with the first. The reasoning was right and pointed the wrong
+// way: adding them up here IS the second copy, and it is the one that has to be kept in step by
+// hand. They are worked out once where an invoice is built, and a listing reads fields.
+//
+// It is also not this build's job. The front end shows figures; a rounding rule per row is an
+// accounting decision, and when the real backend arrives its answer and ours would differ in
+// the last paise on some invoice nobody would think to look at.
 
 const E_INVOICE: Record<string, string> = {
   notRequired: 'Not required', pending: 'Pending', generated: 'Generated', cancelled: 'Cancelled',
@@ -80,7 +83,7 @@ function numberCell(row: Invoice, onOpen?: (id: string) => void) {
       // alongside it passed with the guard removed, which is how it was caught: a check that
       // cannot fail proves nothing, and neither does the code it was defending.
       onClick={() => onOpen(row.id)}
-      className="rounded-control text-ink-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus"
+      className="rounded-control text-ink-accent hover:underline focus-ring"
     >
       {row.number}
     </button>
@@ -122,8 +125,8 @@ export function listingColumns(today: string, onOpen?: (id: string) => void): Ta
       id: 'received', header: 'Received', width: 'w-40', align: 'end', sortable: true,
       cell: (row) => (row.paidPaise === 0 ? '—' : formatPaise(row.paidPaise)),
     },
-    { id: 'taxable', header: 'Taxable Amt', width: 'w-40', align: 'end', cell: (row) => formatPaise(taxablePaise(row)) },
-    { id: 'tax', header: 'Total Tax', width: 'w-36', align: 'end', cell: (row) => formatPaise(taxPaise(row)) },
+    { id: 'taxable', header: 'Taxable Amt', width: 'w-40', align: 'end', cell: (row) => formatPaise(row.taxablePaise) },
+    { id: 'tax', header: 'Total Tax', width: 'w-36', align: 'end', cell: (row) => formatPaise(row.taxPaise) },
     { id: 'eInvoice', header: 'E-Invoice', width: 'w-36', cell: (row) => E_INVOICE[row.eInvoiceStatus] ?? '—' },
     { id: 'eWayBill', header: 'E-Way Bill', width: 'w-36', cell: (row) => E_WAY_BILL[row.eWayBillStatus] ?? '—' },
   ]

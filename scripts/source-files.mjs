@@ -6,9 +6,9 @@ import { readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 // Reference material is not source. It is read, never built, and it arrives named however the
-// build it came from named it — PRD/, Listing/, a v2 export. Naming each one as it appears is
-// a race this loses: the filename rule has already blocked a push over a file nobody here
-// wrote, and a raw-colour rule has already failed over a reference HTML page.
+// build it came from named it — a specification, an export from an older prototype. Naming each
+// one as it appears is a race this loses: the filename rule has already blocked a push over a
+// file nobody here wrote, and a raw-colour rule has already failed over a reference HTML page.
 //
 // So the checks look only where we BUILD, and everything else is reference by default. A new
 // folder of somebody's screenshots cannot break a gate, and a new folder of ours cannot slip

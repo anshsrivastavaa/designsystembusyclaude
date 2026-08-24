@@ -40,6 +40,14 @@ const twMerge = extendTailwindMerge({
       // component may carry both `motion-rise` and `duration-swift` without either winning.
       duration: ['duration-swift', 'duration-glide', 'duration-enter', 'duration-leave'],
       animate: ['motion-rise', 'motion-drop'],
+      // The four rings go in tailwind-merge's outline-offset group, which is the property that
+      // actually differs between them, so a component that inherits one and sets another gets
+      // the one it set rather than two rings fighting. A brand-new group id would have been the
+      // tidier name and the library's types do not allow one without a cast, which would be a
+      // cast written to make a name look nicer.
+      'outline-offset': [
+        'focus-ring', 'focus-ring-inset', 'focus-ring-within', 'focus-ring-within-inset',
+      ],
     },
   },
 })

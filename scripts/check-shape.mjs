@@ -11,7 +11,32 @@ import { testRules } from './shape-tests.mjs'
 import { sourceFiles } from './source-files.mjs'
 
 let failed = false
-console.log('shape: 10 checks')
+
+// THE COUNT IS DERIVED, NOT TYPED. It said `shape: 10 checks` as a string literal at the top and
+// again at the bottom, so the number was right only for as long as somebody remembered to change
+// both — and a group whose count is a guess cannot honestly claim that a group running zero
+// fails. Every result line goes through `result()`, the count is how many of those there were,
+// and the lines are held until the end only so the header can print the real number first.
+const OUT = []
+const RESULTS = []
+const result = (text) => {
+  RESULTS.push(text)
+  OUT.push(text)
+}
+const detail = (text) => OUT.push(text)
+
+// EVERY EXIT GOES THROUGH HERE, for the same reason the count is derived: buffering lines so
+// the header can carry a true number means a bare process.exit() prints nothing at all, and a
+// red run that says nothing is worse than no run.
+const flush = () => {
+  console.log(`shape: ${RESULTS.length} checks`)
+  for (const text of OUT) (text.startsWith('  ok') ? console.log : console.error)(text)
+}
+const stop = () => {
+  flush()
+  console.error('shape: FAILED')
+  process.exit(1)
+}
 
 let cruise = { summary: { totalCruised: 0, error: 0, violations: [] } }
 try {
@@ -25,24 +50,24 @@ try {
   const output = String(error.stdout ?? '')
   if (output.trim().startsWith('{')) cruise = JSON.parse(output)
   else {
-    console.error(`  RAN NOTHING  dependency rules could not run — ${String(error.stderr ?? error)}`)
-    process.exit(1)
+    result(`  RAN NOTHING  dependency rules could not run — ${String(error.stderr ?? error)}`)
+    stop()
   }
 }
 
 const { totalCruised = 0, violations = [] } = cruise.summary
 
 if (totalCruised === 0) {
-  console.error('  RAN NOTHING  dependency rules cruised no module')
+  result('  RAN NOTHING  dependency rules cruised no module')
   failed = true
 } else if (violations.length > 0) {
-  console.error(`  FAIL  dependencies point one way: no feature into a feature, no library into the app, nothing impure into lib, no cycles  (${totalCruised} modules)`)
+  result(`  FAIL  dependencies point one way: no feature into a feature, no library into the app, nothing impure into lib, no cycles  (${totalCruised} modules)`)
   for (const violation of violations) {
-    console.error(`        ${violation.from} → ${violation.to} — ${violation.rule.name}`)
+    detail(`        ${violation.from} → ${violation.to} — ${violation.rule.name}`)
   }
   failed = true
 } else {
-  console.log(`  ok    dependencies point one way: no feature into a feature, no library into the app, nothing impure into lib, no cycles  (${totalCruised} modules)`)
+  result(`  ok    dependencies point one way: no feature into a feature, no library into the app, nothing impure into lib, no cycles  (${totalCruised} modules)`)
 }
 
 // The plain ComboBox may never be dropped straight onto a screen. Only a named picker may
@@ -61,16 +86,16 @@ const screens = sourceFiles(['.tsx'], { without: PICKERS })
 const direct = screens.filter((path) => /from\s+['"][^'"]*ComboBox['"]/.test(readFileSync(path, 'utf8')))
 
 if (screens.length === 0) {
-  console.error('  RAN NOTHING  the ComboBox rule looked at no file')
+  result('  RAN NOTHING  the ComboBox rule looked at no file')
   failed = true
 } else if (direct.length > 0) {
-  console.error(`  FAIL  only a named picker may instance the plain ComboBox  (${screens.length} files)`)
+  result(`  FAIL  only a named picker may instance the plain ComboBox  (${screens.length} files)`)
   for (const path of direct) {
-    console.error(`        ${path} — wrap it in a named picker, or add that picker to the list in this check`)
+    detail(`        ${path} — wrap it in a named picker, or add that picker to the list in this check`)
   }
   failed = true
 } else {
-  console.log(`  ok    only a named picker may instance the plain ComboBox  (${screens.length} files)`)
+  result(`  ok    only a named picker may instance the plain ComboBox  (${screens.length} files)`)
 }
 
 // Everything pretend about today's data lives in one folder, and exactly one file outside it
@@ -83,14 +108,14 @@ const outside = sourceFiles(['.ts', '.tsx'], { without: [MOCK, SEAM] })
 const reachIn = outside.filter((path) => /from\s+['"][^'"]*data\/mock\//.test(readFileSync(path, 'utf8')))
 
 if (outside.length === 0) {
-  console.error('  RAN NOTHING  the mock rule looked at no file')
+  result('  RAN NOTHING  the mock rule looked at no file')
   failed = true
 } else if (reachIn.length > 0) {
-  console.error(`  FAIL  only ${SEAM} may import from ${MOCK}  (${outside.length} files)`)
-  for (const path of reachIn) console.error(`        ${path} — ask the adapter for it instead`)
+  result(`  FAIL  only ${SEAM} may import from ${MOCK}  (${outside.length} files)`)
+  for (const path of reachIn) detail(`        ${path} — ask the adapter for it instead`)
   failed = true
 } else {
-  console.log(`  ok    only ${SEAM} may import from ${MOCK}  (${outside.length} files)`)
+  result(`  ok    only ${SEAM} may import from ${MOCK}  (${outside.length} files)`)
 }
 
 // Every shortcut is decided in one table. A set bound where each key happens to be used
@@ -102,14 +127,14 @@ const application = sourceFiles(['.ts', '.tsx'], { without: [SHORTCUTS] })
 const bindsKeys = application.filter((path) => /\bevent\.key\b|\bkey === ['"]/.test(readFileSync(path, 'utf8')))
 
 if (application.length === 0) {
-  console.error('  RAN NOTHING  the shortcut rule looked at no file')
+  result('  RAN NOTHING  the shortcut rule looked at no file')
   failed = true
 } else if (bindsKeys.length > 0) {
-  console.error(`  FAIL  every shortcut is decided in ${SHORTCUTS}  (${application.length} files)`)
-  for (const path of bindsKeys) console.error(`        ${path} — add a line to the table and ask it what the key means`)
+  result(`  FAIL  every shortcut is decided in ${SHORTCUTS}  (${application.length} files)`)
+  for (const path of bindsKeys) detail(`        ${path} — add a line to the table and ask it what the key means`)
   failed = true
 } else {
-  console.log(`  ok    every shortcut is decided in ${SHORTCUTS}  (${application.length} files)`)
+  result(`  ok    every shortcut is decided in ${SHORTCUTS}  (${application.length} files)`)
 }
 
 // Every icon comes from the one table in packages/ui/Icon.tsx. An SVG pasted into a screen is
@@ -121,14 +146,14 @@ const drawers = sourceFiles(['.tsx'], { without: [ICON_FILE] })
 const drawnByHand = drawers.filter((path) => /<svg[\s>]/.test(readFileSync(path, 'utf8')))
 
 if (drawers.length === 0) {
-  console.error('  RAN NOTHING  the icon rule looked at no file')
+  result('  RAN NOTHING  the icon rule looked at no file')
   failed = true
 } else if (drawnByHand.length > 0) {
-  console.error(`  FAIL  every icon comes from ${ICON_FILE}  (${drawers.length} files)`)
-  for (const path of drawnByHand) console.error(`        ${path} — add a name to the icon table and use <Icon name="…" />`)
+  result(`  FAIL  every icon comes from ${ICON_FILE}  (${drawers.length} files)`)
+  for (const path of drawnByHand) detail(`        ${path} — add a name to the icon table and use <Icon name="…" />`)
   failed = true
 } else {
-  console.log(`  ok    every icon comes from ${ICON_FILE}  (${drawers.length} files)`)
+  result(`  ok    every icon comes from ${ICON_FILE}  (${drawers.length} files)`)
 }
 
 // THE STORY RULE MOVED OUT OF THIS GROUP, to scripts/check-stories.mjs. It asked whether
@@ -183,27 +208,34 @@ for (const path of everySource.filter((each) => featureOf(each) !== null && !ENT
 }
 
 if (everySource.length === 0) {
-  console.error('  RAN NOTHING  the shared-component rule looked at no file')
+  result('  RAN NOTHING  the shared-component rule looked at no file')
   failed = true
 } else if (shared.length > 0) {
-  console.error(`  FAIL  a component more than one feature uses lives in packages/ui  (${everySource.length} files)`)
-  for (const { path, users } of shared) console.error(`        ${path} — also used by ${users}`)
+  result(`  FAIL  a component more than one feature uses lives in packages/ui  (${everySource.length} files)`)
+  for (const { path, users } of shared) detail(`        ${path} — also used by ${users}`)
   failed = true
 } else {
-  console.log(`  ok    a component more than one feature uses lives in packages/ui  (${everySource.length} files)`)
+  result(`  ok    a component more than one feature uses lives in packages/ui  (${everySource.length} files)`)
 }
 
-for (const result of [...paymentRules(), ...testRules(), ...nameRules()]) {
-  if (result.ok) console.log(result.line)
+// The rules that live in their own files hand back a line each, and they count exactly like the
+// ones written above. They used to print straight to the screen — which is why they appeared
+// ABOVE the header naming how many checks there were, and why that header said six.
+for (const rule of [...paymentRules(), ...testRules(), ...nameRules()]) {
+  if (rule.ok) result(rule.line)
   else {
-    for (const line of result.lines) console.error(line)
+    const [first, ...rest] = rule.lines
+    result(first ?? '  FAIL  a rule failed without saying which')
+    for (const text of rest) detail(text)
     failed = true
   }
 }
 
 
-if (failed) {
-  console.error('shape: FAILED')
-  process.exit(1)
+if (RESULTS.length === 0) {
+  result('  RAN NOTHING  this group reported no result at all')
+  stop()
 }
-console.log('shape: 10 checks passed')
+if (failed) stop()
+flush()
+console.log(`shape: ${RESULTS.length} checks passed`)

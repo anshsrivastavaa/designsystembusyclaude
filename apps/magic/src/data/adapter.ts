@@ -69,6 +69,14 @@ export interface DataAdapter {
    * Chosen, not ruled (21-08): the screen has to show a number, and inventing one here would
    * be a front end making a claim about the books. */
   nextInvoiceNumber(series: string): Promise<Answer<string>>
+  /** The date on the last invoice raised, or null in a book with none yet.
+   *
+   * ASKED FOR RATHER THAN WORKED OUT. The date field offers it as a quick pick for a day of
+   * back-dated entry, and the front end could only answer it by fetching invoices and sorting
+   * them — which is a listing's worth of work to read one field, and a second place the answer
+   * is decided. Null is a real answer: the first invoice in a fresh book has no last date, and
+   * the pick is not offered rather than landing on today and claiming to be something else. */
+  lastInvoiceDate(): Promise<Answer<string | null>>
   /** The header of every invoice that matches. A listing never opens the rows. */
   listInvoices(query: InvoiceQuery): Promise<Answer<Invoice[]>>
   getInvoice(id: string): Promise<Answer<Invoice>>

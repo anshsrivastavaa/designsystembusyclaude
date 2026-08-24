@@ -48,13 +48,22 @@ What each group is protecting, so that none of them looks like an arbitrary obst
 | **tests** | Two tiers: pure logic in Node, components in a real browser. The browser tier exists because the failure this build is named after was seven fields that were never hidden while every test asked whether the hiding *class* was present. |
 | **stories** | Every component in `packages/ui` has a story Storybook can actually show. The catalogue is a deliverable, not a workbench. |
 | **flow** | Whole journeys through a real production build. The full run is always written to `reports/flow-run.log`, so a red run can be read even if the summary was piped away. |
+| **deps** | Every package a workspace imports is declared in that workspace's own `package.json`. npm hoists a workspace tree into one `node_modules` at the top, so an undeclared import resolves perfectly on your machine and fails the moment anything installs or builds one workspace on its own — which is what a deploy does, and what your first three commands do. Twelve deploys failed on this before the check existed. |
+| **groups** | The command is the list. This runs last, checks that every group named in the chain points at a file that is really there, and prints any group the chain left out along with the command to run it — so a check that is not part of the run is never a check that is quietly missing. |
 | **visual** | Screenshot comparison. Switched off until baselines are taken on CI — it says so, and says how to turn it on, because a check that is off for a good reason quietly becomes a check that is off. |
 
 ## How this repository is kept up to date, and when that stops
 
 **This is a mirror of the design team's build, and it updates itself.** Every time their checks
 pass, a new commit lands on `main` here carrying the current front end. It is appended, never
-force-pushed, so anything you commit stays and updates merge normally.
+force-pushed.
+
+**Your commits are safe, and here is the mechanism rather than the promise.** Each sync writes
+`.mirror-files`, a list of every path it wrote. The next sync starts from *your* `main`, changes
+only the paths on that list, and removes only paths that were on the previous list and are no
+longer carried. A file you add is not on the list, so nothing touches it — including a file you
+add inside a folder the sync otherwise owns, such as `apps/`. Where you edit a file that IS on
+the list, the sync overwrites it, because that file is still theirs until you take ownership.
 
 **It stops when you take ownership.** The point where that happens is visible in the code: the
 moment you replace `apps/magic/src/data/source.ts` with a real backend and delete
@@ -71,6 +80,27 @@ implement one interface, point that single line at it, delete the mock folder.
 `docs/backend-assumptions.md` is written for you. It says what the front end assumes about
 shapes, money, dates and failure. Money is integer paise everywhere — never a float, never a
 string — and dates are ISO. Anything the front end refuses to decide on its own is named there.
+
+## Deploying it
+
+The deployment settings are in `vercel.json` at the root rather than in a dashboard, so they
+travel with the code and you can see what they are:
+
+```
+install   npm ci
+build     npm run build -w @busy/magic
+output    apps/magic/dist
+```
+
+**Install at the repository root, not inside `apps/magic`.** This is an npm workspace: the app
+reaches `packages/ui` through an alias to the source folder, and that folder's own imports —
+React among them — resolve from the tree the root install builds. Installing inside `apps/magic`
+alone gets as far as the build and then cannot resolve `react/jsx-runtime` from a library file.
+The **deps** check above keeps every workspace honest about what it declares; the root install is
+what puts those declarations somewhere the bundler can reach them.
+
+`npm run build` at the root builds every workspace AND Storybook, which is right for a full
+check and is not what a deploy of the app wants. Hence the narrower command above.
 
 ## Where things are
 

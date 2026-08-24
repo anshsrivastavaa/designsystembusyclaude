@@ -1,2 +1,15 @@
 npm run check
-node scripts/check-session.mjs
+
+# The session group runs here and does not travel, so this asks whether it is present rather
+# than assuming it. THIS HOOK IS COPIED INTO THE HANDOFF REPOSITORY, where the file is
+# deliberately absent — unguarded, it would fail every push they ever make on a file they were
+# never given, and their CI runs the check command rather than this hook, so nothing would have
+# said so until somebody hit it.
+#
+# The usual objection to a conditional — that the rule quietly stops running the day the file
+# goes — does not hold here, because two louder things cover exactly that case: the check
+# command's closing line names this group only while its file is there, and CI runs it by path
+# and goes red saying the module is missing.
+if [ -f scripts/check-session.mjs ]; then
+  npm run check:session
+fi

@@ -45,7 +45,29 @@ for (const directory of directories) {
   })
 }
 
-console.log(`types: ${projects.length + 1} checks`)
+// THE COUNT IS DERIVED. It read `projects.length + 1`, where the 1 was the coverage check —
+// a magic number that would have been wrong the moment a second check was added beside it, and
+// wrong quietly, because nothing compares the number to what actually ran.
+const OUT = []
+const RESULTS = []
+const result = (text) => {
+  RESULTS.push(text)
+  OUT.push(text)
+}
+const detail = (text) => OUT.push(text)
+
+// EVERY EXIT GOES THROUGH HERE. Buffering the lines so the header can carry a true count means
+// a bare process.exit() prints nothing at all — which is how a red run would have become a
+// silent one. Caught by reading the failure path rather than by running it.
+const flush = () => {
+  console.log(`types: ${RESULTS.length} checks`)
+  for (const text of OUT) (text.startsWith('  ok') ? console.log : console.error)(text)
+}
+const stop = () => {
+  flush()
+  console.error('types: FAILED')
+  process.exit(1)
+}
 
 if (projects.length === 0) {
   console.error('types: RAN NOTHING — no project was type-checked')
@@ -57,10 +79,10 @@ for (const project of projects) {
   try {
     const files = project.run()
     for (const file of files) covered.add(file)
-    console.log(`  ok    ${project.name} type-checks  (${files.length} files)`)
+    result(`  ok    ${project.name} type-checks  (${files.length} files)`)
   } catch {
-    console.error(`  FAIL  ${project.name} type-checks`)
-    process.exit(1)
+    result(`  FAIL  ${project.name} type-checks`)
+    stop()
   }
 }
 
@@ -68,16 +90,20 @@ const everyFile = sourceFiles(['.ts', '.tsx'])
 const uncovered = everyFile.filter((file) => !covered.has(file))
 
 if (everyFile.length === 0) {
-  console.error('  RAN NOTHING  no TypeScript file was found to check coverage against')
-  process.exit(1)
+  result('  RAN NOTHING  no TypeScript file was found to check coverage against')
+  stop()
 }
 
 if (uncovered.length > 0) {
-  console.error(`  FAIL  every TypeScript file is covered by a project  (${everyFile.length} files)`)
-  for (const file of uncovered) console.error(`        ${file} — no tsconfig includes it, so nothing type-checks it`)
-  console.error('types: FAILED')
-  process.exit(1)
+  result(`  FAIL  every TypeScript file is covered by a project  (${everyFile.length} files)`)
+  for (const file of uncovered) detail(`        ${file} — no tsconfig includes it, so nothing type-checks it`)
+  stop()
 }
 
-console.log(`  ok    every TypeScript file is covered by a project  (${everyFile.length} files)`)
-console.log(`types: ${projects.length + 1} checks passed`)
+result(`  ok    every TypeScript file is covered by a project  (${everyFile.length} files)`)
+if (RESULTS.length === 0) {
+  result('  RAN NOTHING  this group reported no result at all')
+  stop()
+}
+flush()
+console.log(`types: ${RESULTS.length} checks passed`)

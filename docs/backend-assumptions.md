@@ -48,9 +48,12 @@ to find and delete.
   someone is typing. The backend is authoritative on save.** What the screen shows during
   entry is a courtesy to the person typing; what comes back from `saveInvoice` is what is
   true. If the two disagree, the backend wins and the screen has to say so.
-- Tax is currently added per line. **Provisional** — there are two tax modes and per-line is
-  right in one of them. The real specification arrives with region two and nothing further is
-  built on it meanwhile.
+- **There are three tax modes, not two**, and the arithmetic for all three is in
+  `lib/totals.ts`: `itemExclusive` adds tax per line, `itemInclusive` treats the line amount as
+  already containing it and works backwards, and `billWise` generates tax rows per band at the
+  foot of the bill. **Provisional** — the real specification arrives with region two, and this
+  document said "two modes, per-line is right in one of them" while the code had shipped all
+  three.
 
 ### Refusals
 
@@ -131,8 +134,12 @@ to find and delete.
 
 - `lastUsedSundries(partyId)` returns the sundries this party had last time. It exists on the
   interface because the picker that needs it will need it **from the backend, not from a
-  guess** — users add the same sundries for the same party repeatedly. Bill sundry itself is
-  not built, and the mock returns nothing.
+  guess** — users add the same sundries for the same party repeatedly.
+- **Bill sundry is built.** This document said it was not, and that the mock returned nothing;
+  the mock returns eleven sundries, a picker creates new ones, and a whole journey walks the
+  grid with the keyboard. `listSundries(search)`, `createSundry(draft)` and
+  `lastUsedSundries(partyId)` are all called by the running screen, so all three need real
+  implementations rather than the one this document implied could wait.
 
 ### Timing
 

@@ -56,7 +56,7 @@ test('a whole invoice can be entered from the keyboard alone', async ({ page }) 
 })
 
 test('the arrow keys reach the columns the typing walk skips', async ({ page }) => {
-  await page.goto('/?rows=10')
+  await openInvoice(page, '/?rows=10', 10)
   await enterTheGrid(page)
 
   // As far right as the grid goes. Counted from the headings rather than written as a number:

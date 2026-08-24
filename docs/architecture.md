@@ -22,14 +22,14 @@ adapter**, not a second repo. Dev swaps one file.
 | Framework | React 19 | Agreed with dev |
 | Language | TypeScript, strict mode | The computer catches mistakes before a person does |
 | Styling | Tailwind v4 | Its theme system is built on CSS variables, so our tokens stay the single source |
-| Components | shadcn/ui on Radix, plus cmdk | Copied into our repo as source we own and edit, not a dependency we wrap |
-| Item grid | hand-written | **TanStack Table is not installed.** It was named here for weeks with zero imports anywhere. The grid's keyboard rules are bespoke — Enter walks Item, Qty, Price, then the next row — and column freezing is a sticky-position offset rather than the bookkeeping a table library exists to do. See the note below for the day that stops being true |
+| Components | shadcn/ui on Radix | Copied into our repo as source we own and edit, not a dependency we wrap. **cmdk (not installed)** was named here for weeks. `ComboBox` is hand-written because that library owns the highlight, and this build needs a pinned lead row the keyboard walks past — see the comment at the top of `packages/ui/ComboBox.tsx` |
+| Item grid | hand-written | **TanStack Table (not installed).** It was named here for weeks with zero imports anywhere. The grid's keyboard rules are bespoke — Enter walks Item, Qty, Price, then the next row — and column freezing is a sticky-position offset rather than the bookkeeping a table library exists to do. See the note below for the day that stops being true |
 | Client state | Zustand | One small store per feature. No ceremony, readable by a stranger |
-| Server state | none — `data/source.ts` and `useEffect` | **Not TanStack Query, which is not installed.** Every screen calls the adapter in an effect and holds the answer in local state. That is honest for a mock with seven calls and it is what the dev team will find; it is named as a gap below rather than as a decision |
-| Forms | zod schemas, hand-written fields | **Not react-hook-form, which is not installed.** Fields hold their own draft state; see `EditableCell` for why a numeric field must |
-| Tests | Vitest, three tiers | See `gates.md` |
+| Server state | none — `data/source.ts` and `useEffect` | **TanStack Query (not installed).** Not used. Every screen calls the adapter in an effect and holds the answer in local state. That is honest for a mock with seven calls and it is what the dev team will find; it is named as a gap below rather than as a decision |
+| Forms | zod schemas, hand-written fields | **react-hook-form (not installed).** Not used. Fields hold their own draft state; see `EditableCell` for why a numeric field must |
+| Tests | Vitest in Node and in a real browser, Playwright for whole journeys | `npm run check` is the list — every group prints how many things it ran and fails if it ran none |
 | Component catalogue | Storybook | Doubles as the handover document |
-| Desktop | not started | **Tauri is not installed and there is no `src-tauri`.** The intention below stands; nothing is wired |
+| Desktop | not started | **Tauri (not installed)**, and there is no `src-tauri`. The intention below stands; nothing is wired |
 
 ## What we deliberately did not choose
 
@@ -57,8 +57,9 @@ Recorded so nobody re-argues it without new information.
   column engine turns out to be bookkeeping after all** — if resize, pin and reorder start
   needing a model that has to stay consistent with itself, that is exactly what the library is
   for, and this paragraph is the permission to reach for it.
-- **Porting the v2 test suite.** Its checks are tied to HTML that no longer exists, and it
-  went green through two bugs that killed the page. See `gates.md`.
+- **Porting the v2 test suite.** Its checks are tied to HTML that no longer exists, and it went
+  green through two bugs that killed the page — which is why every check in this build asserts
+  computed style or behaviour and never a class name.
 
 ## Folder layout
 
@@ -71,13 +72,13 @@ apps/
     src/
       lib/         money, gst, dates, keyboard - pure functions, held by a check
       data/
-        schema/    zod schemas: invoice, party, item, settlement
+        schema/    zod schemas: invoice, party, item, sundry, settings, insights, refusal
         adapter.ts the one interface between the app and its data
         mock/      the mock world
       features/
         invoice/
         listing/
-      app/         routes, providers, theme
+      app/         the shell: rail, top bar, menus, settings, theme. No router — see below
 docs/
 ```
 
@@ -89,21 +90,30 @@ docs/
 Every screen asks the adapter for data. It never calls an API and never reaches into the
 mock world directly.
 
+**The interface is `apps/magic/src/data/adapter.ts`. Read it there, not here.** This document
+used to print a copy of it, and the copy said five methods returning the plain thing. The real
+one has fourteen, and **every single one returns `Answer<T>`** — either the value or a `Refusal`
+saying why not. Anyone who implemented what the copy showed would have written the wrong
+interface and found out at compile time, having built it.
+
+That is why there is no code in this section any more. A printed copy of a live file is a second
+version of it that nothing keeps in step, and this one drifted by ten methods and the entire
+error model before anybody noticed.
+
+`Answer<T>` is the piece that matters most and is easiest to skip:
+
 ```
-export interface DataAdapter {
-  listInvoices(query: InvoiceQuery): Promise<Invoice[]>
-  getInvoice(id: string): Promise<Invoice>
-  saveInvoice(draft: InvoiceDraft): Promise<Invoice>
-  listParties(search: string): Promise<Party[]>
-  listItems(search: string): Promise<Item[]>
-}
+export type Answer<Value> = Value | Refusal
 ```
 
-Today one file implements it against mock data. Later a second file implements it against
-the real backend. Nothing else in the application changes.
+A screen cannot use the value without first handling the refusal, because it will not compile
+otherwise. That is deliberate: a backend that can say no is the normal case — a party that no
+longer exists, a number series that has run out, a save that lost a race — and a front end that
+assumes yes is a front end that shows a blank screen when it happens.
 
-This is the whole handover story, and it is worth saying plainly to the dev team: they
-implement one interface and the front end works.
+Today one file implements the interface against mock data. Later a second file implements it
+against the real backend. Nothing else in the application changes: **implement one interface,
+point `data/source.ts` at it, delete `data/mock/`.**
 
 ## The schemas are the API contract
 

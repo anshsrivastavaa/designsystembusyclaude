@@ -57,6 +57,9 @@ const answers: DataAdapter = {
       outstandingPaise: 0,
       trustGrade: null,
       creditLimitPaise: 0,
+      // A party created at the counter has agreed no terms yet, which is not the same as being
+      // due immediately. Whoever opens the master sets them.
+      creditDays: 0,
       overduePaise: 0,
       gstinStatus: 'unchecked',
     }
@@ -140,6 +143,13 @@ const answers: DataAdapter = {
     const requested = Number.parseInt(id.replace(/\D/g, ''), 10)
     const size = Number.isFinite(requested) ? requested : 10
     return { ...invoices[1]!, id: `invoice-of-${size}`, ...invoiceOf(size) }
+  },
+
+  async lastInvoiceDate() {
+    // The newest date across the book. The real backend answers this from an index rather than
+    // by reading every invoice, which is the whole reason it is asked rather than worked out.
+    const dates = invoices.map((invoice) => invoice.date).sort()
+    return dates[dates.length - 1] ?? null
   },
 
   async saveInvoice(draft) {

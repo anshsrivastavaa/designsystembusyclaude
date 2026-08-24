@@ -76,21 +76,31 @@ export function generateTaxRows(taxBands: readonly Band[], place: PlaceOfSupply)
 
   return taxBands
     .filter((band) => band.percent > 0)
-    .flatMap((band) =>
-      components.map((component) => {
-        // Inside the state the rate splits in half between the two components; across a
-        // border IGST carries the whole of it.
-        const percent = place === 'intra' ? band.percent / 2 : band.percent
-        return {
-          id: `tax-${component}-${band.percent}`,
-          sundryId: `sundry-${component}`,
-          name: `${component.toUpperCase()} ${percent}%`,
-          kind: 'percent' as const,
-          value: percent,
-          amountPaise: Math.round((band.taxablePaise * percent) / 100),
-          taxable: false,
-          taxComponent: component,
-        }
-      }),
-    )
+    .flatMap((band) => {
+      // HALVE THE TAX, NEVER THE RATE — the same rule `lib/tax.ts` follows, and for the same
+      // reason its comment gives: two halves of a RATE are rounded twice and need not add up to
+      // the band's tax. This file halved the rate and the Tax Summary halved the tax, so the
+      // Breakdown and the Summary disagreed ON THE SAME SCREEN — an 18% band on 1005 paise came
+      // to 90 + 90 = 180 here against 91 + 90 = 181 there.
+      //
+      // The FIRST component is rounded and the second takes what is left, so the pair always add
+      // to exactly the band's tax whatever the rounding did.
+      const whole = Math.round((band.taxablePaise * band.percent) / 100)
+      const half = Math.round(whole / 2)
+
+      // The rate is still halved for the NAME, because CGST 9% is what a return calls it. It is
+      // no longer what the money is worked out from.
+      const percent = place === 'intra' ? band.percent / 2 : band.percent
+
+      return components.map((component, at) => ({
+        id: `tax-${component}-${band.percent}`,
+        sundryId: `sundry-${component}`,
+        name: `${component.toUpperCase()} ${percent}%`,
+        kind: 'percent' as const,
+        value: percent,
+        amountPaise: place === 'inter' ? whole : at === 0 ? half : whole - half,
+        taxable: false,
+        taxComponent: component,
+      }))
+    })
 }

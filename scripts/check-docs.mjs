@@ -13,17 +13,24 @@
 
 import { readFileSync } from 'node:fs'
 
-import { NAMED, installedPackages } from './stack-names.mjs'
+import { installedPackages, namesIn } from './stack-names.mjs'
 
 const ARCHITECTURE = 'docs/architecture.md'
 
 const have = installedPackages()
 const table = readFileSync(ARCHITECTURE, 'utf8').split('\n').filter((line) => line.startsWith('|'))
 
+// THE EXEMPTION IS PER NAME, NOT PER ROW. It used to ask whether the row contained the words
+// "not installed" anywhere — so one disclaimer about one package excused every package named
+// beside it, and a row reading "shadcn/ui on Radix, plus cmdk … cmdk is not installed" would
+// have excused Radix and shadcn/ui as well. That is the same loose window the session group had
+// already been tightened against, arrived at independently in a second file. One test now, in
+// stack-names.mjs, used by both.
 const promised = []
-for (const [named, packageName] of Object.entries(NAMED)) {
-  const claimed = table.some((row) => row.includes(named) && !row.toLowerCase().includes('not installed'))
-  if (claimed && !have.has(packageName)) promised.push(`${named} — the table names it, ${packageName} is not installed`)
+for (const { named, packageName, excused } of namesIn(table.join('\n'))) {
+  if (excused || have.has(packageName)) continue
+  if (promised.some((line) => line.startsWith(`${named} —`))) continue
+  promised.push(`${named} — the table names it, ${packageName} is not installed`)
 }
 
 const RULE = `every package the ${ARCHITECTURE} stack table names is installed`

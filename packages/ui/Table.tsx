@@ -147,7 +147,7 @@ export function Table<Row>({
               className={cn(
                 'group h-row',
                 chosen ? 'bg-surface-selected' : 'bg-surface hover:bg-surface-hover',
-                'focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-stroke-focus',
+                'focus-ring-within-inset',
               )}
             >
               {selection ? (
@@ -227,7 +227,7 @@ export function Table<Row>({
           // column widths are measured by id rather than by walking the header row.
           'absolute top-1 right-1 z-40 grid size-control-sm place-items-center rounded-control',
           'text-ink-muted hover:bg-surface-hover hover:text-ink',
-          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus',
+          'focus-ring',
         )}
       >
         <Icon name="rows" className="size-icon-sm" />

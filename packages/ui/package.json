@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "//": "Every component is its own entry point. There is no index that re-exports the set, because a barrel file makes `import { Button } from '@busy/ui'` pull the whole library into a bundle that wanted one button — and because it becomes a second list of what exists, alongside the folder, that somebody has to remember to update. `@busy/ui/Button` is the file, and the file is the truth.",
+  "//": "Every component is its own entry point. There is no index that re-exports the set, because a barrel file makes `import { Button } from '@busy/ui'` pull the whole library into a bundle that wanted one button \u2014 and because it becomes a second list of what exists, alongside the folder, that somebody has to remember to update. `@busy/ui/Button` is the file, and the file is the truth.",
   "exports": {
     "./*": "./*.tsx",
     "./styles.css": "./styles.css",
@@ -12,6 +12,13 @@
     "./TableColumn": "./TableColumn.ts",
     "./useStuck": "./useStuck.ts",
     "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
+    "@radix-ui/react-slot": "^1.3.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.6.0"
   },
   "peerDependencies": {
     "react": "^19.2.0",

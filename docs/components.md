@@ -92,10 +92,6 @@ only place they should.
 - **No toasts for validation.** An error appears beside the field it belongs to. On an item
   row, the offending cell is marked and the reason is written on the strip above the table.
 - **A list never moves the selection somewhere the user cannot see it.**
-- **Money shorthand, in money fields only.** `k` is a thousand, `l` is a lakh, `cr` is a crore,
-  case does not matter. It converts when the user leaves the field, and the field then holds
-  the real number. Any other trailing letter is refused outright rather than guessed at. Never
-  in quantity fields, where `l` would collide with litres.
 
 ## Rules that belong to one component
 

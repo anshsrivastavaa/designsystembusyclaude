@@ -37,7 +37,7 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
         type="button"
         onClick={onRemove}
         aria-label={`Remove ${label}`}
-        className="grid size-control-sm place-items-center rounded-control text-ink-muted hover:bg-surface-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus"
+        className="grid size-control-sm place-items-center rounded-control text-ink-muted hover:bg-surface-hover hover:text-ink focus-ring"
       >
         <Icon name="close" className="size-icon-sm" />
       </button>

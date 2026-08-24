@@ -13,7 +13,7 @@
     "tokens:write": "node scripts/token-dtcg.mjs --write",
     "mutate": "stryker run",
     "prepare": "husky || echo \"husky is not installed, so git hooks are not set up. Install dev dependencies and run npm run prepare to get them.\"",
-    "check": "npm run check:types && npm run check:lint && npm run check:shape && npm run check:tokens && npm run check:docs && npm run check:dead && npm run check:tests && npm run check:stories && npm run check:flow && npm run check:visual",
+    "check": "npm run check:types && npm run check:lint && npm run check:shape && npm run check:tokens && npm run check:docs && npm run check:dead && npm run check:deps && npm run check:tests && npm run check:stories && npm run check:flow && npm run check:visual && npm run check:groups",
     "check:types": "node scripts/check-types.mjs",
     "check:lint": "node scripts/check-lint.mjs",
     "check:shape": "node scripts/check-shape.mjs",
@@ -24,7 +24,10 @@
     "check:flow": "node scripts/check-flow.mjs",
     "check:visual": "node scripts/check-visual.mjs",
     "visual:accept": "playwright test --config playwright.visual.config.ts --update-snapshots",
-    "check:dead": "node scripts/check-dead.mjs"
+    "check:dead": "node scripts/check-dead.mjs",
+    "check:deps": "node scripts/check-deps.mjs",
+    "check:groups": "node scripts/check-groups.mjs",
+    "check:session": "node scripts/check-session.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
@@ -34,6 +37,7 @@
     "@stryker-mutator/vitest-runner": "^10.0.0",
     "@tailwindcss/cli": "^4.3.3",
     "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^5.1.0",
     "@vitest/browser": "^4.1.11",
     "@vitest/browser-playwright": "^4.1.11",
     "dependency-cruiser": "^18.2.0",
@@ -55,14 +59,5 @@
     "*.css": [
       "node scripts/check-tokens.mjs"
     ]
-  },
-  "dependencies": {
-    "@phosphor-icons/react": "^2.1.10",
-    "@radix-ui/react-slot": "^1.3.3",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^3.6.0",
-    "zod": "^4.4.3",
-    "zustand": "^5.0.15"
   }
 }

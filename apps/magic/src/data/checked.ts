@@ -56,6 +56,10 @@ export function checked(adapter: DataAdapter): DataAdapter {
     createSundry: (draft) => adapter.createSundry(draft).then(sundry),
     lastUsedSundries: (partyId) => adapter.lastUsedSundries(partyId).then(sundries),
     nextInvoiceNumber: (series) => adapter.nextInvoiceNumber(series).then(against(z.string().min(1), 'invoice number')),
+    lastInvoiceDate: () =>
+      // Null is a real answer here, not a missing one — a fresh book has no last invoice — so
+      // the shape it is checked against has to allow it or the check refuses the truth.
+      adapter.lastInvoiceDate().then(against(z.string().min(1).nullable(), 'last invoice date')),
     listInvoices: (query) => adapter.listInvoices(query).then(invoices),
     getInvoice: (id) => adapter.getInvoice(id).then(invoice),
     saveInvoice: (draft) => adapter.saveInvoice(draft).then(invoice),

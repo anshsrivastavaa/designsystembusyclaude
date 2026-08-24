@@ -29,7 +29,11 @@ const buttonVariants = cva(
   [
     'inline-flex shrink-0 items-center justify-center gap-2 rounded-control font-label whitespace-nowrap',
     'text-body transition-colors outline-none',
-    'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    // The same ring every other control in the build wears. shadcn shipped this as a box-shadow
+    // ring with an offset painted in the page colour, which is a different shape from the
+    // outline everything else draws — and on a Button sitting on a sunken surface the offset
+    // painted the wrong colour behind it. One ring, one utility.
+    'focus-ring',
     'disabled:pointer-events-none disabled:opacity-50',
     '[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-icon-md',
   ].join(' '),

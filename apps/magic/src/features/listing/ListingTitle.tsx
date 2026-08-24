@@ -39,7 +39,7 @@ export function ListingTitle({ onCreate }: { onCreate?: () => void }) {
         aria-expanded={switching}
         aria-haspopup="dialog"
         onClick={() => setSwitching((was) => !was)}
-        className="flex items-center gap-1 rounded-control px-1 py-1 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus"
+        className="flex items-center gap-1 rounded-control px-1 py-1 hover:bg-surface-hover focus-ring"
       >
         <h1 className="text-heading font-strong tracking-tight text-ink">Invoices</h1>
         <Icon name="chevronDown" className="text-ink-muted" />

@@ -53,7 +53,7 @@ export function MagicButton({ narrowed }: { narrowed: Invoice[] }) {
           'flex h-control items-center gap-2 rounded-full border border-accent px-4',
           'bg-surface text-body font-label text-ink-accent shadow-raised transition-colors',
           'hover:bg-accent hover:text-on-accent',
-          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus',
+          'focus-ring',
         )}
       >
         <Icon name="sparkle" className="animate-pulse" />

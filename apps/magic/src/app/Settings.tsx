@@ -90,7 +90,7 @@ function Row({ setting }: { setting: Setting }) {
         value={String(values[setting.id] ?? '')}
         disabled={setting.parked !== undefined}
         onChange={(event) => set(setting.id, event.target.value)}
-        className="h-control rounded-control border border-stroke bg-surface px-2 text-body text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus"
+        className="h-control rounded-control border border-stroke bg-surface px-2 text-body text-ink focus-ring"
       >
         {setting.options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -125,7 +125,7 @@ export function Settings({ open, onClose }: { open: boolean; onClose: () => void
           <button
             type="button"
             onClick={onClose}
-            className="h-control rounded-control bg-accent px-4 text-body font-label text-on-accent hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus"
+            className="h-control rounded-control bg-accent px-4 text-body font-label text-on-accent hover:bg-accent-hover focus-ring"
           >
             Done
           </button>
@@ -133,7 +133,7 @@ export function Settings({ open, onClose }: { open: boolean; onClose: () => void
       }
     >
       <div className="flex flex-col gap-3">
-        <div className="flex h-control items-center gap-1 rounded-control border border-stroke bg-surface px-2 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-stroke-focus">
+        <div className="flex h-control items-center gap-1 rounded-control border border-stroke bg-surface px-2 focus-ring-within">
           <Icon name="search" className="text-ink-muted" />
           <TextField
             value={query}

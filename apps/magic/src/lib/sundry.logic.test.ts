@@ -117,3 +117,42 @@ describe('the rows bill-wise mode makes for itself', () => {
     expect(generateTaxRows([{ percent: 0, taxablePaise: 50000, taxPaise: 0 }], 'intra')).toEqual([])
   })
 })
+
+// THE BREAKDOWN AND THE TAX SUMMARY ARE ON THE SAME SCREEN AND MUST AGREE.
+//
+// They did not. `tax.ts` halves the TAX and lets the second component take the remainder, so its
+// two halves always re-add to the band's tax. This file halved the RATE and rounded each half
+// independently, which loses a paisa whenever the tax is odd. Found by the independent audit on
+// 24-08, measured on an 18% band of 1005 paise: 90 + 90 here against 91 + 90 there.
+//
+// This is the test that only fails when the fault comes back, so it asks the question the two
+// files actually answer rather than checking one of them against a number typed by hand.
+describe('the tax rows and the tax summary agree', () => {
+  const bands = [
+    // Odd tax: 18% of 1005 is 180.9, which rounds to 181 and cannot be halved evenly.
+    { percent: 18, taxablePaise: 1005, taxPaise: Math.round((1005 * 18) / 100) },
+    { percent: 5, taxablePaise: 333, taxPaise: Math.round((333 * 5) / 100) },
+    { percent: 12, taxablePaise: 8_745, taxPaise: Math.round((8745 * 12) / 100) },
+  ]
+
+  it('splits a band into two components that add back to exactly its tax', () => {
+    for (const band of bands) {
+      const rows = generateTaxRows([band], 'intra')
+      const summed = rows.reduce((total, made) => total + made.amountPaise, 0)
+      expect(summed).toBe(band.taxPaise)
+    }
+  })
+
+  it('gives the whole band to IGST across a border', () => {
+    for (const band of bands) {
+      const rows = generateTaxRows([band], 'inter')
+      expect(rows).toHaveLength(1)
+      expect(rows[0]!.amountPaise).toBe(band.taxPaise)
+    }
+  })
+
+  it('still names the components at half the rate, because that is what a return calls them', () => {
+    const rows = generateTaxRows([bands[0]!], 'intra')
+    expect(rows.map((made) => made.name)).toEqual(['CGST 9%', 'SGST 9%'])
+  })
+})

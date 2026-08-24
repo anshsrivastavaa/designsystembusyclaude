@@ -103,7 +103,7 @@ export function AppShell({ children, onOpenSales }: AppShellProps) {
               disabled={area.built !== true}
               className={cn(
                 'relative flex h-10 items-center gap-3 rounded-control px-3 text-body',
-                'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus',
+                'focus-ring',
                 'disabled:cursor-not-allowed disabled:opacity-50',
                 area.built === true
                   ? 'bg-surface-selected font-label text-ink-accent'

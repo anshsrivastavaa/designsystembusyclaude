@@ -106,7 +106,7 @@ test('typing is asking, so the first match is highlighted and Enter takes it', a
 })
 
 test('the item cell does not open its list on arrival, because the walk passes through it', async ({ page }) => {
-  await page.goto('/?rows=10')
+  await openInvoice(page, '/?rows=10', 10)
   await enterTheGrid(page)
 
   await expect(page.getByRole('listbox', { name: 'Item' })).toBeHidden()

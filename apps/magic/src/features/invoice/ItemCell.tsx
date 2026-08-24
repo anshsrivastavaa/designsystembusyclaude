@@ -26,7 +26,14 @@ export function ItemCell({
 }) {
   const [search, setSearch] = useState(row.itemName)
   const shownRow = useRef(row.id)
-  const selectOnNextPaint = useRef(false)
+  // ARMED ON ARRIVAL, NOT ONLY ON LATE ARRIVAL. This cell only mounts when the cursor reaches it,
+  // so mounting over a row that already has a name IS the cursor landing on a filled cell — and
+  // that is the ordinary case on a loaded invoice. It used to start `false` and be armed only by
+  // the effect below, which fires when the name arrives AFTER the cell, so the selection happened
+  // on a slow invoice and never on a loaded one. The journey that covers this passed for months
+  // because it was walking an invoice whose rows had not turned up yet: typing appended, the
+  // search matched nothing, and the list silently never opened.
+  const selectOnNextPaint = useRef(row.itemName !== '')
 
   // The invoice arrives after this cell has mounted, so the name has to be picked up when it
   // does — otherwise row one shows an empty item cell over a row that has one. And the value
@@ -46,9 +53,24 @@ export function ItemCell({
   // value drops the caret at the end.
   useEffect(() => {
     if (!selectOnNextPaint.current) return
-    selectOnNextPaint.current = false
     const input = inputRef.current
-    if (input && document.activeElement === input) input.select()
+    if (!input) return
+
+    // IT WAITS FOR THE KEYBOARD RATHER THAN HOPING TO CATCH IT. The cell mounts a beat before the
+    // grid gives it focus, and this effect's dependencies do not include focus — so the old code
+    // ran once, found the field not focused, threw the flag away and never asked again. That is
+    // why the selection only ever happened on an invoice whose rows arrived LATE: the name
+    // changing re-ran the effect at a moment when focus was already here.
+    const take = () => {
+      selectOnNextPaint.current = false
+      input.select()
+    }
+    if (document.activeElement === input) {
+      take()
+      return undefined
+    }
+    input.addEventListener('focus', take, { once: true })
+    return () => input.removeEventListener('focus', take)
   }, [search, inputRef])
   const [options, setOptions] = useState<readonly Item[]>([])
   const applyItem = useInvoice((state) => state.applyItem)

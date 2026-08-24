@@ -34,7 +34,7 @@ export function Toggle({ checked, onCheckedChange, children, className, disabled
       onClick={() => onCheckedChange(!checked)}
       className={cn(
         'group flex items-center gap-3 rounded-control text-left text-body text-ink',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus',
+        'focus-ring',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}

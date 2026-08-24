@@ -3,6 +3,7 @@ import { expect, type Page, test } from '@playwright/test'
 import { cellUnder } from './cells'
 
 import { enterTheGrid } from './enterTheGrid'
+import { openInvoice } from './invoice'
 
 // Being in the accessibility tree is not the same as being on the screen. The item list was
 // present, correct and completely invisible for a day: it lived inside a cell 33 pixels tall
@@ -25,7 +26,7 @@ async function reallyOnScreen(page: Page, selector: string) {
 }
 
 test('typing into a row that already holds an item shows the list on the screen', async ({ page }) => {
-  await page.goto('/?rows=10')
+  await openInvoice(page, '/?rows=10', 10)
 
   // The case Aj hit twice, and the case no journey walked: a loaded invoice, a row that
   // already has an item, one keypress.
@@ -66,7 +67,7 @@ test('the list on an empty invoice is on the screen too', async ({ page }) => {
 })
 
 test('down moves to the next row from the item cell instead of dead-ending', async ({ page }) => {
-  await page.goto('/?rows=10')
+  await openInvoice(page, '/?rows=10', 10)
   await enterTheGrid(page)
   await expect(page.getByRole('row').nth(2)).toBeVisible()
 
@@ -78,7 +79,7 @@ test('down moves to the next row from the item cell instead of dead-ending', asy
 })
 
 test('no item cell opens its list on arrival, empty or not', async ({ page }) => {
-  await page.goto('/?rows=10')
+  await openInvoice(page, '/?rows=10', 10)
   await enterTheGrid(page)
 
   // Reverses an earlier ruling, deliberately. An auto-opening list has to capture Down to be
@@ -96,7 +97,7 @@ test('no item cell opens its list on arrival, empty or not', async ({ page }) =>
 })
 
 test('down moves down the grid from an item cell, and only the open list takes it', async ({ page }) => {
-  await page.goto('/?rows=10')
+  await openInvoice(page, '/?rows=10', 10)
   await enterTheGrid(page)
 
   const secondRow = await cellUnder(page, 2, 'Item Name')

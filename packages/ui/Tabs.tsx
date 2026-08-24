@@ -93,7 +93,7 @@ export function Tabs<Value extends string>({ options, value, onChange, label }: 
               'flex h-control-sm items-center gap-2 rounded-control',
               option.icon === undefined ? 'px-3' : 'px-2',
               'text-body font-label whitespace-nowrap transition-colors',
-              'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus',
+              'focus-ring',
               chosen ? 'bg-surface text-ink shadow-raised' : 'text-ink-secondary hover:bg-surface-hover hover:text-ink',
             )}
           >

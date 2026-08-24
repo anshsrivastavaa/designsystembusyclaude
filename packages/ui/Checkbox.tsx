@@ -56,7 +56,7 @@ export function Checkbox({ className, checked = false, mixed = false, ref, ...pr
         // 48px row reads as a button by mistake. The touch target is the whole cell, which
         // the listing gives it, not the box.
         'size-4 shrink-0 cursor-pointer accent-accent',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus',
+        'focus-ring',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}

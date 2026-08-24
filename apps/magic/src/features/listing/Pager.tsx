@@ -33,7 +33,7 @@ export function Pager({ rows }: { rows: number }) {
         value={pageSize}
         onChange={(event) => setPageSize(Number(event.target.value))}
         aria-label="Rows per page"
-        className="h-control-sm rounded-control border border-stroke bg-surface px-1 text-body text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus"
+        className="h-control-sm rounded-control border border-stroke bg-surface px-1 text-body text-ink focus-ring"
       >
         {SIZES.map((size) => (
           <option key={size} value={size}>

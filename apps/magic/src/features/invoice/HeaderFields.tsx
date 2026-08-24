@@ -10,13 +10,14 @@
 // line appears under the field only when something other than the usual is in effect. That is
 // what keeps four fields to four fields instead of four fields and nine controls.
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 import { Icon } from '@busy/ui/Icon'
 import { TextField } from '@busy/ui/TextField'
 import { data } from '../../data/source'
 import { isRefusal } from '../../data/schema/refusal'
-import { dayFromText, dayText, today } from '../../lib/day'
+import { dayText, daysAfter, monthStart, today } from '../../lib/day'
+import { DateField } from './DateField'
 import { FieldSettings } from './FieldSettings'
 import { InEffect } from './InEffect'
 import { useInvoice } from './store'
@@ -63,6 +64,22 @@ export function HeaderFields({ onOpenTransport, onOpenSettings }: { onOpenTransp
   const setNumber = useInvoice((state) => state.setNumber)
   const setDate = useInvoice((state) => state.setDate)
   const setDueDate = useInvoice((state) => state.setDueDate)
+  const party = useInvoice((state) => state.party)
+
+  // READ, NEVER WORKED OUT. Credit days are a term agreed with the customer and they live on the
+  // party master; with nobody picked yet there are no terms to offer, which is not the same as
+  // terms of zero.
+  const creditDays = party?.creditDays ?? 0
+
+  // THE LAST INVOICE'S DATE IS THE BACKEND'S ANSWER TOO. It is offered only when there is one:
+  // the first invoice in a fresh book has no last date, and a chip that lands on today while
+  // claiming to be the last invoice date would be a control saying something untrue.
+  const [lastInvoiceDate, setLastInvoiceDate] = useState<string | null>(null)
+  useEffect(() => {
+    void data.lastInvoiceDate().then((answer) => {
+      if (!isRefusal(answer)) setLastInvoiceDate(answer)
+    })
+  }, [])
 
   // THE NUMBER COMES FROM THE SERIES, and asking again is what changing the series MEANS. It
   // never lands on a number somebody has typed — the slice guards that, not this.
@@ -74,7 +91,35 @@ export function HeaderFields({ onOpenTransport, onOpenSettings }: { onOpenTransp
 
   // The date field holds text while it is being typed and only becomes a date when it is a
   // date. Writing every keystroke back would turn "2" into the year 2 on the way to 21-08.
-  const typing = useRef<string | null>(null)
+
+  // THE PICKS ARE MADE HERE, because they are made of facts the panel has no business knowing.
+  //
+  // "Last Invoice Date" is offered ONLY when there is one — the document asks for it to carry
+  // the date itself rather than sit as a bare label, so a person can see what they are choosing
+  // before they choose it.
+  const datePicks = [
+    { label: 'Today', day: today() },
+    { label: 'Yesterday', day: daysAfter(today(), -1) },
+    // Backdating to the 1st is a common bookkeeping habit, which is why v2 offers it.
+    { label: 'Month start', day: monthStart(today()) },
+    ...(lastInvoiceDate === null
+      ? []
+      : [{ label: `Last Invoice Date: ${dayText(lastInvoiceDate)}`, day: lastInvoiceDate }]),
+  ]
+
+  // THE DOCUMENT'S SEVEN TERMS, so the picker and the Default Due Date setting behind the label
+  // offer the same words. Every one of them counts from the INVOICE date, never from today: a
+  // back-dated invoice with Net 30 is due thirty days after it was raised.
+  //
+  // Party credit days is READ, never worked out. It is a term agreed with the customer and it
+  // lives on the party master; a front end that guessed a house default would be inventing one.
+  const duePicks = [
+    ...(creditDays === 0
+      ? []
+      : [{ label: `Party credit days (${creditDays})`, day: daysAfter(date, creditDays) }]),
+    { label: 'Invoice date', day: date },
+    ...[15, 30, 60, 90].map((days) => ({ label: `Net ${days}`, day: daysAfter(date, days) })),
+  ]
 
   return (
     <div className="flex items-end gap-3">
@@ -111,25 +156,16 @@ export function HeaderFields({ onOpenTransport, onOpenSettings }: { onOpenTransp
         >
           Date
         </FieldSettings>
-        <div className={BOX}>
-          <TextField
-            aria-label="Invoice date"
-            defaultValue={dayText(date)}
-            key={date}
-            onChange={(event) => {
-              typing.current = event.target.value
-            }}
-            // ON LEAVING, NOT ON EVERY KEY. A half-typed date is not a date, and writing one
-            // back put the invoice in the year 2 on the way to 2026.
-            onBlur={(event) => {
-              const read = dayFromText(typing.current ?? event.target.value)
-              if (read !== null) setDate(read)
-              typing.current = null
-            }}
-          />
-          <Icon name="calendar" className="mr-2 size-icon-sm shrink-0 text-ink-muted" />
-        </div>
-        <InEffect>{date === today() ? null : 'Not today'}</InEffect>
+        <DateField
+          label="Invoice date"
+          value={date}
+          opensOn={today()}
+          onPick={setDate}
+          picks={datePicks}
+        />
+        {/* NO LINE UNDER THIS FIELD. "Not today" used to sit here and it is in no document and
+            not in v2 — a date that is not today is not a problem, and announcing it is the
+            subtext this screen does not have anywhere. The date itself says what the date is. */}
       </MetaField>
 
       <MetaField width="w-36">
@@ -150,15 +186,18 @@ export function HeaderFields({ onOpenTransport, onOpenSettings }: { onOpenTransp
         >
           Due
         </FieldSettings>
-        <div className={BOX}>
-          <TextField
-            aria-label="Due date"
-            // A dash, not today's date. An invoice with no term is not due today.
-            placeholder="—"
-            value={dueDate === '' ? '' : dayText(dueDate)}
-            readOnly
-          />
-        </div>
+        <DateField
+          label="Due date"
+          value={dueDate}
+          // An empty due date opens on the INVOICE's month, which is where the terms start from.
+          opensOn={date}
+          onPick={setDueDate}
+          picks={duePicks}
+          earliest={date}
+          earliestMessage={`A due date cannot be before the invoice date, ${dayText(date)}.`}
+          // A dash, not today's date. An invoice with no term is not due today.
+          placeholder="—"
+        />
       </MetaField>
 
       {/* THE LORRY IS THE ONE TRANSPORT CONTROL. v2 retired the labelled button for it, and

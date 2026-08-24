@@ -73,7 +73,7 @@ function DarkButton({ children, onClick, reason, buttonRef, expanded }: {
       disabled={reason !== undefined}
       title={reason}
       {...(expanded === undefined ? {} : { 'aria-expanded': expanded, 'aria-haspopup': 'dialog' as const })}
-      className="flex h-control-sm items-center gap-2 rounded-control px-3 text-body whitespace-nowrap text-surface hover:bg-ink-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus disabled:cursor-not-allowed disabled:opacity-40"
+      className="flex h-control-sm items-center gap-2 rounded-control px-3 text-body whitespace-nowrap text-surface hover:bg-ink-secondary focus-ring disabled:cursor-not-allowed disabled:opacity-40"
     >
       {children}
     </button>

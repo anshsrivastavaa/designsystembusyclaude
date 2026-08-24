@@ -41,7 +41,7 @@ export function TopMenu({ label, children, align = 'start' }: TopMenuProps) {
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={() => setOpen((was) => !was)}
-        className="flex items-center rounded-control px-2 py-1 text-sm text-ink-secondary hover:bg-surface-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus"
+        className="flex items-center rounded-control px-2 py-1 text-sm text-ink-secondary hover:bg-surface-hover hover:text-ink focus-ring"
       >
         {label}
       </button>

@@ -31,7 +31,7 @@ export function YearMenu() {
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={() => setOpen((was) => !was)}
-        className="flex h-control-sm shrink-0 items-center gap-1 rounded-control bg-surface-sunken px-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus"
+        className="flex h-control-sm shrink-0 items-center gap-1 rounded-control bg-surface-sunken px-2 hover:bg-surface-hover focus-ring"
       >
         <span className="text-sm text-ink-secondary">{OPEN}</span>
         <Icon name="chevronDown" className="size-icon-sm text-ink-muted" />

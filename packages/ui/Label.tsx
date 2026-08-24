@@ -48,7 +48,7 @@ export function Label({ children, onOpenSettings, settingsName, className, htmlF
         // the header into a page of links; nothing here is a link, and the ones that open
         // something are found by trying, which is what a label that reacts is for.
         'rounded-control text-left hover:underline focus-visible:underline',
-        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-focus',
+        'focus-ring',
         className,
       )}
     >

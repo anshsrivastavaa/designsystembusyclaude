@@ -2,14 +2,16 @@ import { expect, test } from '@playwright/test'
 
 import { cellUnder } from './cells'
 
-import { enterTheGrid } from './enterTheGrid'
+import { dismissThePartyList, enterTheGrid } from './enterTheGrid'
+import { openInvoice } from './invoice'
 
 // A mixed-input journey. Every other journey here starts with focus already in the grid and
 // never touches the mouse, which proves a keyboard-only product — and this is not one. Real
 // people click into a cell and then carry on typing, and that path was never walked.
 
 test('clicking into a cell and then carrying on by keyboard', async ({ page }) => {
-  await page.goto('/?rows=10')
+  await openInvoice(page, '/?rows=10', 10)
+  await dismissThePartyList(page)
 
   // Click into the Qty cell of the third row, the way somebody exploring the screen would.
   await (await cellUnder(page, 3, 'Qty')).click()
@@ -26,7 +28,7 @@ test('clicking into a cell and then carrying on by keyboard', async ({ page }) =
 })
 
 test('the arrow keys carry the cursor onto the columns that are never typed into', async ({ page }) => {
-  await page.goto('/?rows=10')
+  await openInvoice(page, '/?rows=10', 10)
   await enterTheGrid(page)
 
   // Unit and Amount are reachable cells even when they are not typed into, so the cursor has
@@ -43,7 +45,7 @@ test('the arrow keys carry the cursor onto the columns that are never typed into
 })
 
 test('the keyboard still works after the cursor has stood on a column nobody types into', async ({ page }) => {
-  await page.goto('/?rows=10')
+  await openInvoice(page, '/?rows=10', 10)
   await enterTheGrid(page)
 
   // Onto the last column and back one. The column to its left is Tax Amt in this mode, which
@@ -58,7 +60,7 @@ test('the keyboard still works after the cursor has stood on a column nobody typ
 })
 
 test('typing over a cell that already holds a value replaces it and finds the list', async ({ page }) => {
-  await page.goto('/?rows=10')
+  await openInvoice(page, '/?rows=10', 10)
 
   // Row one already holds an item. This is the path a person takes when they change their
   // mind about a line, and it is the one that was silently doing nothing.

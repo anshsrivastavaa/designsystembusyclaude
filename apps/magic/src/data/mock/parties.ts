@@ -66,6 +66,10 @@ export const parties: Party[] = NAMES.map(([name, city], index) => ({
   // explain it without recomputing anything.
   trustGrade: name === 'Cash' ? null : gradeWithCap(index),
   creditLimitPaise: name === 'Cash' || index % 6 === 4 ? 0 : (index + 1) * 500000,
+  // Cash pays now, so it has no terms at all. The rest carry the terms a wholesale ledger
+  // actually has — a fortnight, a month, two months — rather than one number everywhere, because
+  // the due-date picker has to show that they differ party to party.
+  creditDays: name === 'Cash' ? 0 : [0, 30, 15, 45, 30, 60, 30, 15, 30, 45, 30, 60][index]!,
   overduePaise: index % 4 === 2 ? index * 120000 + 30000 : 0,
   gstinStatus: gstinFor(name, index),
 }))

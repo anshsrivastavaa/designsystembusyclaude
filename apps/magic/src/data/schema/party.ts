@@ -36,6 +36,14 @@ export const partySchema = z.object({
   /** What they are allowed to owe, in paise. Zero means no limit has been set, which is not
    * the same as a limit of nothing. */
   creditLimitPaise: z.number().int(),
+  /** How many days this party is given to pay, from the invoice date. Zero means no terms have
+   * been agreed, which is not the same as due immediately.
+   *
+   * IT LIVES ON THE PARTY MASTER AND THE BACKEND SUPPLIES IT. The due-date picker offers "Party
+   * credit days" as its first pick, and a front end that worked that number out — or guessed a
+   * house default — would be inventing a term of trade nobody agreed. It is a fact about the
+   * customer, so it is read, never derived. */
+  creditDays: z.number().int(),
   /** Of the outstanding, how much is past its due date. */
   overduePaise: z.number().int(),
   /** The GST registration's standing. `none` is an unregistered buyer — ordinary, not a

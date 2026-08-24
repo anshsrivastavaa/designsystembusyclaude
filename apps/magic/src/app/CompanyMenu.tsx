@@ -30,7 +30,7 @@ export function CompanyMenu() {
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={() => setOpen((was) => !was)}
-        className="flex h-control-sm min-w-0 items-center gap-2 rounded-control px-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus"
+        className="flex h-control-sm min-w-0 items-center gap-2 rounded-control px-2 hover:bg-surface-hover focus-ring"
       >
         <span className="truncate text-body font-label text-ink">{COMPANY}</span>
         <Icon name="chevronDown" className="size-icon-sm shrink-0 text-ink-muted" />

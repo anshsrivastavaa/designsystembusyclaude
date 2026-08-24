@@ -70,7 +70,7 @@ export function SearchBox({
   }
 
   return (
-    <div className="flex h-control w-72 items-center gap-1 rounded-control border border-stroke bg-surface px-2 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-stroke-focus">
+    <div className="flex h-control w-72 items-center gap-1 rounded-control border border-stroke bg-surface px-2 focus-ring-within">
       <Icon name="search" className="text-ink-muted" />
       <TextField
         ref={field}
