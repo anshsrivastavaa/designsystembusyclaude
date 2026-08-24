@@ -15,7 +15,7 @@ import { Icon } from '@busy/ui/Icon'
 import { Popover } from '@busy/ui/Popover'
 import { DateMenu } from './DateMenu'
 import { FilterMenu } from './FilterMenu'
-import { MenuItem } from './MenuItem'
+import { MenuRow } from '@busy/ui/MenuRow'
 import { InvoiceSearch } from './InvoiceSearch'
 import { TableViewMenu } from './TableViewMenu'
 
@@ -48,7 +48,7 @@ export function ListingTitle({ onCreate }: { onCreate?: () => void }) {
       <Popover open={switching} onClose={() => setSwitching(false)} anchorRef={switcher} label="Switch listing">
         <div role="menu" aria-label="Switch listing" className="min-h-0 overflow-auto py-1">
           {LISTINGS.map((listing) => (
-            <MenuItem
+            <MenuRow
               key={listing}
               chosen={listing === 'Invoices'}
               disabled={listing !== 'Invoices'}
@@ -57,7 +57,7 @@ export function ListingTitle({ onCreate }: { onCreate?: () => void }) {
               onClick={() => setSwitching(false)}
             >
               {listing}
-            </MenuItem>
+            </MenuRow>
           ))}
         </div>
       </Popover>

@@ -27,7 +27,7 @@ import { TextField } from '@busy/ui/TextField'
 import { toPaise } from '../../lib/money'
 import { AdvancedFilters } from './AdvancedFilters'
 import type { AmountTest } from './filtering'
-import { MenuFooterAction, MenuHeading } from './MenuItem'
+import { MenuFooterAction, MenuHeading } from '@busy/ui/MenuRow'
 import { useListing } from './store'
 
 /** A money range. Two of these are the whole of the quick amount filtering, and they are one

@@ -171,7 +171,6 @@ apps/magic/src/features/listing/ListingEmpty.tsx
 apps/magic/src/features/listing/ListingTitle.tsx
 apps/magic/src/features/listing/ListingToolbar.tsx
 apps/magic/src/features/listing/MagicButton.tsx
-apps/magic/src/features/listing/MenuItem.tsx
 apps/magic/src/features/listing/Pager.tsx
 apps/magic/src/features/listing/README.md
 apps/magic/src/features/listing/RowMenu.tsx
@@ -264,6 +263,8 @@ packages/ui/Icon.stories.tsx
 packages/ui/Icon.tsx
 packages/ui/Label.stories.tsx
 packages/ui/Label.tsx
+packages/ui/MenuRow.stories.tsx
+packages/ui/MenuRow.tsx
 packages/ui/NotBuilt.stories.tsx
 packages/ui/NotBuilt.tsx
 packages/ui/Popover.component.test.tsx
@@ -272,6 +273,8 @@ packages/ui/Popover.tsx
 packages/ui/README.md
 packages/ui/SearchBox.stories.tsx
 packages/ui/SearchBox.tsx
+packages/ui/Select.stories.tsx
+packages/ui/Select.tsx
 packages/ui/Shortcut.stories.tsx
 packages/ui/Shortcut.tsx
 packages/ui/Table.component.test.tsx
@@ -318,6 +321,8 @@ packages/ui/settled.ts
 packages/ui/shadcn-bridge.css
 packages/ui/styles.css
 packages/ui/useStuck.ts
+packages/ui/variants.component.test.tsx
+packages/ui/variants.ts
 playwright.config.ts
 playwright.visual.config.ts
 scripts/check-dead.mjs

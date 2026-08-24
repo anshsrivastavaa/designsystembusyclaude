@@ -152,16 +152,15 @@ export const SETTINGS: Setting[] = [
   },
 
   // ---- Totals & saving ----
-  {
-    kind: 'choice', id: 'saveDefault', zone: 'totals', label: 'What Save does',
-    options: [
-      { value: 'plain', label: 'Save' },
-      { value: 'print', label: 'Save & Print' },
-      { value: 'new', label: 'Save & New' },
-      { value: 'share', label: 'Save & Share' },
-    ],
-    parked: 'Save does one thing today; the menu behind it arrives with the footer'
-  },
+  // WHAT SAVE DOES IS NOT A SETTING ANY MORE. This offered four answers — Save, Save & Print,
+  // Save & New, Save & Share — and was overturned on 25-08: Save has two tiers, "Save and new"
+  // and "Save and go to the listing", with icon switches for WhatsApp, Print and Email that run
+  // after the save if they are left on. That is a control on the screen, not a preference behind
+  // one, and a person changes it per invoice rather than once.
+  //
+  // The row came out in the same change as the tail going in, deliberately. A setting that
+  // answers a question the action bar also answers is the product carrying two answers on two
+  // live screens, and whichever one somebody learns, the other is a lie.
   {
     kind: 'choice', id: 'roundOff', zone: 'totals', label: 'Round off',
     options: [

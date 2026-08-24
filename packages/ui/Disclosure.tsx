@@ -38,6 +38,10 @@ export type DisclosureProps = {
   /** Passing this makes it controlled. */
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  /** Which side of the summary the chevron sits on. It leads in three of the four sections that
+   *  wanted this; the invoice breakdown puts it AFTER the figure, because there the row reads as
+   *  a total first and a way in second. */
+  chevron?: 'lead' | 'trail'
   /** Ink for the header. `accent` is the drawer's "more fields" link, which reads as a way in
    *  rather than as a heading; `heading` is the other three. */
   tone?: 'heading' | 'accent'
@@ -53,6 +57,7 @@ export function Disclosure({
   open: given,
   onOpenChange,
   tone = 'heading',
+  chevron = 'lead',
   children,
   className,
 }: DisclosureProps) {
@@ -63,6 +68,17 @@ export function Disclosure({
     if (given === undefined) setOwn(!open)
     onOpenChange?.(!open)
   }
+
+  /* THE CHEVRON TURNS, IT IS NOT SWAPPED FOR A SECOND ICON. One glyph rotating says the same
+     thing is still there and has changed state; two glyphs say two different things. It also
+     animates, which the four hand-written copies did not — a mark that jumps through 180 degrees
+     reads as a redraw rather than as the thing you just did. */
+  const mark = (
+    <Icon
+      name="chevronDown"
+      className={cn('transition-transform duration-swift ease-settle', open ? 'rotate-180' : '')}
+    />
+  )
 
   return (
     <div className={className}>
@@ -77,18 +93,12 @@ export function Disclosure({
           tone === 'accent' ? 'text-ink-accent' : 'text-ink-secondary hover:text-ink',
         )}
       >
-        {/* THE CHEVRON TURNS, IT IS NOT SWAPPED FOR A SECOND ICON. One glyph rotating says the
-            same thing is still there and has changed state; two glyphs say two different things.
-            It also animates, which the four hand-written copies did not — a mark that jumps
-            through 180 degrees reads as a redraw rather than as the thing you just did. */}
-        <Icon
-          name="chevronDown"
-          className={cn('transition-transform duration-swift ease-settle', open ? 'rotate-180' : '')}
-        />
+        {chevron === 'trail' ? null : mark}
         <span className="min-w-0 flex-1 truncate">{summary}</span>
         {open || closedAside === undefined ? null : (
           <span className="min-w-0 truncate text-sm font-body text-ink-muted">{closedAside}</span>
         )}
+        {chevron === 'trail' ? mark : null}
       </button>
 
       {/* NOT RENDERED WHILE CLOSED, rather than rendered and hidden. The build this one is named

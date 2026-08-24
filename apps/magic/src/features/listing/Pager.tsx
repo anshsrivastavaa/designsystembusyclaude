@@ -9,6 +9,7 @@
 // under the columns that have nothing to total. The figures sit under theirs. One bar.
 
 import { Button } from '@busy/ui/Button'
+import { Select } from '@busy/ui/Select'
 import { Icon } from '@busy/ui/Icon'
 import { pageCount } from './filtering'
 import { useListing } from './store'
@@ -29,18 +30,13 @@ export function Pager({ rows }: { rows: number }) {
         {rows} {rows === 1 ? 'invoice' : 'invoices'}
       </span>
 
-      <select
-        value={pageSize}
-        onChange={(event) => setPageSize(Number(event.target.value))}
-        aria-label="Rows per page"
-        className="h-control-sm rounded-control border border-stroke bg-surface px-1 text-body text-ink focus-ring"
-      >
-        {SIZES.map((size) => (
-          <option key={size} value={size}>
-            {size}
-          </option>
-        ))}
-      </select>
+      <Select
+        size="sm"
+        label="Rows per page"
+        value={String(pageSize)}
+        onChange={(next) => setPageSize(Number(next))}
+        options={SIZES.map((size) => ({ value: String(size), label: String(size) }))}
+      />
 
       <Button variant="ghost" size="icon-sm" aria-label="Previous page" disabled={pageNumber <= 1} onClick={() => setPage(pageNumber - 1)}>
         <Icon name="chevronLeft" />

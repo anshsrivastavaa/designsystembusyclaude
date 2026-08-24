@@ -17,7 +17,7 @@ import { Icon } from '@busy/ui/Icon'
 import { Popover } from '@busy/ui/Popover'
 import { Toggle } from '@busy/ui/Toggle'
 import { ColumnSetup } from './ColumnSetup'
-import { MenuFooterAction, MenuHeading, MenuItem } from './MenuItem'
+import { MenuFooterAction, MenuHeading, MenuRow } from '@busy/ui/MenuRow'
 import { GROUP_LABEL, useListing, type GroupBy } from './store'
 
 const GROUPS: GroupBy[] = ['none', 'date', 'party', 'partyGroup', 'salesman']
@@ -54,7 +54,7 @@ export function TableViewMenu() {
           <MenuHeading>Group by</MenuHeading>
           <div role="menu" aria-label="Group by">
             {GROUPS.map((group) => (
-              <MenuItem
+              <MenuRow
                 key={group}
                 chosen={group === groupBy}
                 disabled={NEEDS[group] !== undefined}
@@ -66,7 +66,7 @@ export function TableViewMenu() {
                 }}
               >
                 {GROUP_LABEL[group]}
-              </MenuItem>
+              </MenuRow>
             ))}
           </div>
 

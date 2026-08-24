@@ -31,9 +31,25 @@ const eslint = new ESLint()
 
 // ESLint throws rather than returning an empty list when its own configuration excludes
 // everything, and a raw stack trace is not a report. Both roads end at the same sentence.
+//
+// IT LINTS WHAT THIS REPOSITORY CALLS SOURCE, RATHER THAN EVERYTHING ON THE DISK. `lintFiles(['.'])`
+// walks the whole tree, and ESLint's flat config does not read `.gitignore` — so an untracked,
+// ignored folder is still linted. A self-hosted runner was unpacked into the checkout on 25-08 to
+// get around Actions refusing to start jobs, and GitHub's own runner source arrived as 56 errors
+// that blocked a push. Adding it to the ignore list would have been the third list of what to skip
+// and the start of a race `source-files.mjs` already says it loses: "naming each one as it appears
+// is a race this loses."
+//
+// So there is one answer to what source is and this asks it, which is the whole reason that file
+// exists. A folder of somebody's tooling cannot break a gate; a new folder of OURS still cannot
+// slip past one, because ours go in the build roots.
 let results = []
 try {
-  results = await eslint.lintFiles(['.'])
+  // EVERY EXTENSION ESLINT WAS ALREADY READING, and the list was checked against the old scope
+  // rather than guessed: narrowing it to .ts/.tsx/.mjs silently dropped `.dependency-cruiser.cjs`
+  // and `scripts/ports.d.mts`, which is the coverage loss this repository has been bitten by three
+  // times. The two scopes were compared file by file and differ now only by the runner.
+  results = await eslint.lintFiles(sourceFiles(['.ts', '.tsx', '.mjs', '.cjs', '.mts', '.cts']))
 } catch (error) {
   console.error('lint: RAN NOTHING — ESLint matched no file at all')
   console.error(`      ${error instanceof Error ? error.message : String(error)}`)

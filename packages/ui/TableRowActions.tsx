@@ -11,10 +11,17 @@ import { cn } from './cn'
 
 /** The buttons for one row. The cell is narrow and holds them right; they overflow leftwards
  * over the last column, on their own background so the figures underneath do not show
- * through. Sticky, so they stay at the visible right edge however far the table is scrolled. */
-export function TableRowActions({ children }: { children: React.ReactNode }) {
+ * through. Sticky, so they stay at the visible right edge however far the table is scrolled.
+ *
+ * `as` EXISTS BECAUSE THE ITEM GRID IS NOT A <table>. The listing draws real table markup and
+ * this has to be a `<td>` or the row is invalid; the invoice's item grid is built out of divs,
+ * where a `<td>` is equally invalid and the browser reparents it out of the row entirely. Same
+ * behaviour, same sticky edge, two containers — which is a variant, not a second component. */
+export function TableRowActions({ as = 'td', children }: { as?: 'td' | 'div'; children: React.ReactNode }) {
+  const Container = as
+
   return (
-    <td className="sticky right-0 border-b border-stroke bg-inherit">
+    <Container className="sticky right-0 border-b border-stroke bg-inherit">
       <div
         className={cn(
           'absolute inset-y-0 right-0 flex items-center gap-1 rounded-control bg-inherit pr-2 pl-3',
@@ -27,6 +34,6 @@ export function TableRowActions({ children }: { children: React.ReactNode }) {
       >
         {children}
       </div>
-    </td>
+    </Container>
   )
 }

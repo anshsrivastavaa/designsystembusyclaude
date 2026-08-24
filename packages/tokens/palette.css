@@ -21,21 +21,21 @@
 :root {
   /* Surfaces — six roles, no ranking between them. */
 
-  --neutral-1: #e6e9ec; /* page — the window everything sits on */
+  --neutral-1: #e2e8f0; /* page — the window everything sits on */
   --neutral-2: #ffffff; /* surface — cards, the table body, the main plane */
-  --neutral-3: #eef0f2; /* sunken — wells cut into a surface: inputs, table headings */
+  --neutral-3: #ecf0f6; /* sunken — wells cut into a surface: inputs, table headings */
   --neutral-4: #e4e7ea; /* surface pressed — the plane while it is being pressed */
-  --neutral-5: #f2f4f6; /* surface hovered — the plane under the pointer */
+  --neutral-5: #eff3f9; /* surface hovered — the plane under the pointer */
   --neutral-6: #ffffff; /* raised — lifted off the page: popovers, menus, dialogs */
 
   /* Lines — getting stronger. */
 
-  --neutral-7: #dfe2e6; /* stroke — the line that divides most things */
+  --neutral-7: #d8dfe8; /* stroke — the line that divides most things */
   --neutral-8: #c9cdd3; /* stroke strong — a line that has to be seen */
 
   /* Ink — getting darker, in order. */
 
-  --neutral-9: #666c76;  /* ink muted — placeholders, empty states */
+  --neutral-9: #5f6470;  /* ink muted — placeholders, empty states */
   --neutral-10: #4f545c; /* ink secondary — labels, calculated values */
   --neutral-11: #1a1c20; /* ink — what you read */
   --neutral-12: #0f0f11; /* ink strongest — the end of the ink band */
@@ -53,7 +53,7 @@
    * arrives with the name that needs it, never in anticipation — the previous build
    * carried 235 tokens and 8 of them were used nowhere at all. */
 
-  --brand-soft: #e9f2ff;   /* selected rows, and the tint behind a notice */
+  --brand-soft: #dce9fb;   /* selected rows, and the tint behind a notice */
   --brand-ring: #007aff;   /* the Busy blue from the logo — the focus ring */
   --brand: #0063d6;        /* fills and links; white on it measures 5.59:1 */
   --brand-strong: #0050b3; /* the same fill with a pointer on it — a step, never a fade */

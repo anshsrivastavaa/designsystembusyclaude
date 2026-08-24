@@ -115,7 +115,8 @@ function ComboBox<Option>({
     // whatever is around the field. Escape hands them back, Alt+Down opens deliberately. The
     // state of the list may never change what a key MEANS — the user cannot see that state
     // before they press it, and three rounds of arrow-key confusion came from trying.
-    if (event.key === 'ArrowDown' && event.altKey && !visible) {
+    // NO `!visible` GUARD: that is the rule above being kept. DECISIONS, 25-08.
+    if (event.key === 'ArrowDown' && event.altKey) {
       event.preventDefault()
       event.stopPropagation()
       // Alt+Down is the user ASKING for the list, so the first stop is highlighted and one

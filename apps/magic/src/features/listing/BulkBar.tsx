@@ -28,7 +28,7 @@ import { Popover } from '@busy/ui/Popover'
 import type { Invoice } from '../../data/schema/invoice'
 import { cannotGenerate, type ComplianceId } from './filtering'
 import { NotBuiltMark, NotBuiltNote } from '@busy/ui/NotBuilt'
-import { MenuItem } from './MenuItem'
+import { MenuRow } from '@busy/ui/MenuRow'
 import { useListing } from './store'
 
 /** Everything here needs something this front end does not have. Said once. */
@@ -175,9 +175,9 @@ export function BulkBar({ atFoot = false }: { atFoot?: boolean }) {
           <NotBuiltNote />
           <div className="border-t border-stroke pt-1">
             {UPDATES.map((entry) => (
-              <MenuItem key={entry.label} kind="command" disabled reason={entry.reason}>
+              <MenuRow key={entry.label} kind="command" disabled reason={entry.reason}>
                 {entry.label}
-              </MenuItem>
+              </MenuRow>
             ))}
           </div>
         </div>
@@ -186,9 +186,9 @@ export function BulkBar({ atFoot = false }: { atFoot?: boolean }) {
       <Popover open={overflowing} onClose={() => setOverflowing(false)} anchorRef={more} label="More actions">
         <div role="menu" aria-label="More actions" className="w-72 py-1">
           {GENERATE.map((entry) => (
-            <MenuItem key={entry.label} kind="command" disabled reason={generateReason(picked, entry.which)}>
+            <MenuRow key={entry.label} kind="command" disabled reason={generateReason(picked, entry.which)}>
               {entry.label}
-            </MenuItem>
+            </MenuRow>
           ))}
         </div>
       </Popover>

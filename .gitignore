@@ -26,3 +26,9 @@ playwright-report/
 .claude/settings.local.json
 packages/tokens/source/fonts/
 PRD/
+
+# THE SELF-HOSTED RUNNER, WHICH IS A TOOL AND NOT SOURCE. It is being installed here to get
+# around Actions refusing to start jobs on a billing limit. Untracked was not enough: the lint
+# group reads every file git does not ignore, so GitHub's own runner source turned up as 56
+# errors and blocked a push — and it grows as the install proceeds, so the count kept changing.
+actions-runner/

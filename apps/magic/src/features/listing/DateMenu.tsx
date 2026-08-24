@@ -14,7 +14,7 @@ import { Icon } from '@busy/ui/Icon'
 import { Popover } from '@busy/ui/Popover'
 import { TextField } from '@busy/ui/TextField'
 import { RANGE_IDS, RANGE_LABEL, rangeDates } from './dateRanges'
-import { MenuItem } from './MenuItem'
+import { MenuRow } from '@busy/ui/MenuRow'
 import { useListing } from './store'
 
 export function DateMenu() {
@@ -45,7 +45,7 @@ export function DateMenu() {
       <Popover open={open} onClose={() => setOpen(false)} anchorRef={button} label="Period">
         <div role="menu" aria-label="Period" className="w-72 py-1">
           {RANGE_IDS.map((id) => (
-            <MenuItem
+            <MenuRow
               key={id}
               chosen={id === rangeId}
               detail={rangeDates(id, today)}
@@ -55,7 +55,7 @@ export function DateMenu() {
               }}
             >
               {RANGE_LABEL[id]}
-            </MenuItem>
+            </MenuRow>
           ))}
         </div>
 

@@ -3,7 +3,7 @@
   "palette": {
     "neutral-1": {
       "$type": "color",
-      "$value": "#e6e9ec"
+      "$value": "#e2e8f0"
     },
     "neutral-2": {
       "$type": "color",
@@ -11,7 +11,7 @@
     },
     "neutral-3": {
       "$type": "color",
-      "$value": "#eef0f2"
+      "$value": "#ecf0f6"
     },
     "neutral-4": {
       "$type": "color",
@@ -19,7 +19,7 @@
     },
     "neutral-5": {
       "$type": "color",
-      "$value": "#f2f4f6"
+      "$value": "#eff3f9"
     },
     "neutral-6": {
       "$type": "color",
@@ -27,7 +27,7 @@
     },
     "neutral-7": {
       "$type": "color",
-      "$value": "#dfe2e6"
+      "$value": "#d8dfe8"
     },
     "neutral-8": {
       "$type": "color",
@@ -35,7 +35,7 @@
     },
     "neutral-9": {
       "$type": "color",
-      "$value": "#666c76"
+      "$value": "#5f6470"
     },
     "neutral-10": {
       "$type": "color",
@@ -51,7 +51,7 @@
     },
     "brand-soft": {
       "$type": "color",
-      "$value": "#e9f2ff"
+      "$value": "#dce9fb"
     },
     "brand-ring": {
       "$type": "color",

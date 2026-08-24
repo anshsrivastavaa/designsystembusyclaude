@@ -1,6 +1,14 @@
-// One row inside one of the listing's popovers. Every menu on this screen uses it, so a menu
-// row is the same height, the same padding and the same tick everywhere — the previous build
-// grew four menu styles because each menu drew its own rows.
+// One row inside a menu. Every menu uses it, so a menu row is the same height, the same padding
+// and the same mark everywhere — the previous build grew four menu styles because each menu drew
+// its own rows.
+//
+// IT MOVED HERE FROM features/listing ON 25-08, and the move is the point rather than the tidying.
+// It sat inside one feature while a second feature needed exactly it and could not import across
+// the boundary, so that feature wrote its own — and the two had already drifted: this one marks
+// the chosen row with a rotated chevron, the other with a tick. The drift gate saw nothing,
+// because it catches byte-identical class runs and these two say the same thing in different
+// words. That is the previous build's 158 duplicate definitions arriving by a route no gate
+// watched. The dependency rule was pointing at where this file belonged the whole time.
 //
 // THE TICK IS ALWAYS RESERVED, chosen or not. Without that the labels shift sideways as the
 // chosen row changes, and a list that moves under the pointer is a list you mis-click.
@@ -12,11 +20,11 @@
 
 import type * as React from 'react'
 
-import { Icon } from '@busy/ui/Icon'
-import { NotBuiltMark } from '@busy/ui/NotBuilt'
-import { cn } from '@busy/ui/cn'
+import { Icon } from './Icon'
+import { NotBuiltMark } from './NotBuilt'
+import { cn } from './cn'
 
-export type MenuItemProps = {
+export type MenuRowProps = {
   /** `choice` is one of a set and reports whether it is the chosen one. `command` does
    * something when pressed and has no state at all. */
   kind?: 'choice' | 'command'
@@ -34,7 +42,7 @@ export type MenuItemProps = {
   children: React.ReactNode
 }
 
-export function MenuItem({ kind = 'choice', chosen = false, detail, onClick, disabled = false, notBuilt = false, reason, children }: MenuItemProps) {
+export function MenuRow({ kind = 'choice', chosen = false, detail, onClick, disabled = false, notBuilt = false, reason, children }: MenuRowProps) {
   return (
     <button
       type="button"

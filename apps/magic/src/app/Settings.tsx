@@ -36,6 +36,7 @@ import * as React from 'react'
 
 import { Drawer } from '@busy/ui/Drawer'
 import { Icon } from '@busy/ui/Icon'
+import { Select } from '@busy/ui/Select'
 import { TextField } from '@busy/ui/TextField'
 import { Toggle } from '@busy/ui/Toggle'
 import { ZONES, type Setting, type Zone } from './settingsCatalogue'
@@ -86,18 +87,18 @@ function Row({ setting }: { setting: Setting }) {
       {setting.parked === undefined ? null : (
         <span className="text-sm text-ink-muted">Parked — {setting.parked}</span>
       )}
-      <select
+      <Select
+        label={setting.label}
         value={String(values[setting.id] ?? '')}
         disabled={setting.parked !== undefined}
-        onChange={(event) => set(setting.id, event.target.value)}
-        className="h-control rounded-control border border-stroke bg-surface px-2 text-body text-ink focus-ring"
-      >
-        {setting.options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.note === undefined ? option.label : `${option.label} — ${option.note}`}
-          </option>
-        ))}
-      </select>
+        {...(setting.parked === undefined ? {} : { reason: setting.parked })}
+        onChange={(next) => set(setting.id, next)}
+        options={setting.options.map((option) => ({
+          value: option.value,
+          label: option.label,
+          ...(option.note === undefined ? {} : { note: option.note }),
+        }))}
+      />
     </label>
   )
 }

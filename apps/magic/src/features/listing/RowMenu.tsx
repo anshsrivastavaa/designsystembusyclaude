@@ -25,7 +25,7 @@ import { Popover } from '@busy/ui/Popover'
 import type { Invoice } from '../../data/schema/invoice'
 import { cannotGenerate } from './filtering'
 import { NotBuiltNote } from '@busy/ui/NotBuilt'
-import { MenuItem } from './MenuItem'
+import { MenuRow } from '@busy/ui/MenuRow'
 import { balanceOf, isCancelled } from '../../lib/payment'
 
 /** Null means it can be done on this invoice. A string is why it cannot. */
@@ -95,7 +95,7 @@ export function RowMenu({ invoice }: { invoice: Invoice }) {
                 {allUnbuilt ? <NotBuiltNote /> : null}
                 <div className={allUnbuilt ? 'border-t border-stroke pt-1' : undefined}>
                   {reasons.map(({ entry, reason }) => (
-                    <MenuItem
+                    <MenuRow
                       key={entry.label}
                       kind="command"
                       disabled={reason !== null}
@@ -103,7 +103,7 @@ export function RowMenu({ invoice }: { invoice: Invoice }) {
                       reason={reason ?? ''}
                     >
                       {entry.label}
-                    </MenuItem>
+                    </MenuRow>
                   ))}
                 </div>
               </>
