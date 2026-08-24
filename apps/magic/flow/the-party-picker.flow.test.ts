@@ -225,25 +225,3 @@ test('the grid fills its height with empty rows and still counts only filled lin
   // And none of them is a line yet. A count of rows would say eleven over an empty invoice.
   await expect(page.getByRole('grid', { name: 'Invoice items' }).getByText('No lines yet')).toBeVisible()
 })
-
-test('the keyboard reaches what is known about the party, without a mouse', async ({ page }) => {
-  await openInvoice(page, '/?screen=create&rows=3', 3)
-  await page.getByRole('combobox', { name: 'Party' }).click()
-  await page.getByRole('option').filter({ hasText: 'Sharma Traders' }).first().click()
-  await page.getByRole('combobox', { name: 'Party' }).focus()
-
-  // EVERYTHING KNOWN ABOUT A PARTY WAS REACHABLE BY MOUSE ONLY, which broke the product's own
-  // argument: an invoice this build says can be entered without touching the mouse had one
-  // panel you could only open by pointing at it. The order is the order of the row — the grade
-  // badge sits at the end of the field, the details control under it.
-  await page.keyboard.press('Tab')
-  await expect(page.getByRole('button', { name: /Trust grade/ })).toBeFocused()
-
-  await page.keyboard.press('Enter')
-  await expect(page.getByRole('dialog')).toBeVisible()
-  await expect(page.getByRole('dialog')).toContainText('Sharma Traders')
-
-  // And it hands the keyboard back to what opened it.
-  await page.keyboard.press('Escape')
-  await expect(page.getByRole('button', { name: /Trust grade/ })).toBeFocused()
-})

@@ -1,15 +1,22 @@
 npm run check
 
-# The session group runs here and does not travel, so this asks whether it is present rather
-# than assuming it. THIS HOOK IS COPIED INTO THE HANDOFF REPOSITORY, where the file is
-# deliberately absent — unguarded, it would fail every push they ever make on a file they were
-# never given, and their CI runs the check command rather than this hook, so nothing would have
-# said so until somebody hit it.
+# TWO GROUPS THAT DO NOT TRAVEL, AND ONE OF THEM IS WHY THE HANDOFF WENT QUIET.
+#
+# `session` is the rules about how this team works. `mirror` asks the handoff repository how far
+# behind it is — the question CI cannot answer, because the case that matters is CI not running.
+#
+# THIS HOOK IS COPIED INTO THE HANDOFF REPOSITORY, where both files are deliberately absent, so
+# each line asks whether its file is there. Unguarded, it would fail every push the dev team ever
+# makes on a file they were never given, and their CI runs the check command rather than this
+# hook, so nothing would have said so until somebody hit it.
 #
 # The usual objection to a conditional — that the rule quietly stops running the day the file
-# goes — does not hold here, because two louder things cover exactly that case: the check
-# command's closing line names this group only while its file is there, and CI runs it by path
-# and goes red saying the module is missing.
+# goes — does not hold: the check command's closing lines name both groups by name, and say where
+# each one runs.
 if [ -f scripts/check-session.mjs ]; then
   npm run check:session
+fi
+
+if [ -f scripts/check-mirror.mjs ]; then
+  npm run check:mirror
 fi

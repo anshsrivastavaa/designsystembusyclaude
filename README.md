@@ -32,25 +32,29 @@ npm run check
 ```
 
 Every group reports how many things it ran and **fails if it ran nothing**, because a group
-that runs nothing and reports green is the failure this suite exists to prevent. CI runs the
-same one command on every push, and a pre-push hook runs it before you can push.
+that runs nothing and reports green is the failure this suite exists to prevent.
+
+**A pre-push hook runs this whole command before anything leaves your machine. CI runs it again
+on a clean box, minus the journeys**, which take about eighty per cent of the wall clock for a
+second opinion on work the hook has already checked. The command prints what it left out and
+where that runs instead, every time — there is no arrangement in which a group is dropped
+without the run saying so.
 
 What each group is protecting, so that none of them looks like an arbitrary obstacle:
 
-| Group | What it protects |
-|---|---|
-| **types** | Every TypeScript file is covered by a project. A file no `tsconfig` includes is a file nothing type-checks, which is worse than one with errors — it looks fine. |
-| **lint** | No file over 250 lines, and no raw Tailwind arbitrary value. Over the cap means a file is two things; an arbitrary value puts a size or a colour back into a component through a door the token scanner cannot see. |
-| **shape** | Which way dependencies point. A feature may not import another feature; the library may not import the app; `lib/` stays pure, which is what mutation testing is scoped on. Also: one icon table, one shortcut table, one `ComboBox` behind named wrappers. |
-| **tokens** | Every colour, size, weight, line height, duration and curve comes from `packages/tokens`. A raw value in a component is a decision nobody recorded, and it is invisible to every other check. |
-| **docs** | Every package `docs/architecture.md`'s stack table names is actually installed. That document is your brief, so a promise in it has to be true. |
-| **dead** | Nothing is exported that nothing imports. Dead code still gets read by whoever is working out how something behaves. |
-| **tests** | Two tiers: pure logic in Node, components in a real browser. The browser tier exists because the failure this build is named after was seven fields that were never hidden while every test asked whether the hiding *class* was present. |
-| **stories** | Every component in `packages/ui` has a story Storybook can actually show. The catalogue is a deliverable, not a workbench. |
-| **flow** | Whole journeys through a real production build. The full run is always written to `reports/flow-run.log`, so a red run can be read even if the summary was piped away. |
-| **deps** | Every package a workspace imports is declared in that workspace's own `package.json`. npm hoists a workspace tree into one `node_modules` at the top, so an undeclared import resolves perfectly on your machine and fails the moment anything installs or builds one workspace on its own — which is what a deploy does, and what your first three commands do. Twelve deploys failed on this before the check existed. |
-| **groups** | The command is the list. This runs last, checks that every group named in the chain points at a file that is really there, and prints any group the chain left out along with the command to run it — so a check that is not part of the run is never a check that is quietly missing. |
-| **visual** | Screenshot comparison. Switched off until baselines are taken on CI — it says so, and says how to turn it on, because a check that is off for a good reason quietly becomes a check that is off. |
+| Group | Where it runs | What it protects |
+|---|---|---|
+| **types** | hook and CI | Every TypeScript file is covered by a project. A file no `tsconfig` includes is a file nothing type-checks, which is worse than one with errors — it looks fine. |
+| **lint** | hook and CI | No file over 250 lines, and no raw Tailwind arbitrary value. Over the cap means a file is two things; an arbitrary value puts a size or a colour back into a component through a door the token scanner cannot see. |
+| **shape** | hook and CI | Which way dependencies point. A feature may not import another feature; the library may not import the app; `lib/` stays pure, which is what mutation testing is scoped on. Also: one icon table, one shortcut table, one `ComboBox` behind named wrappers. |
+| **tokens** | hook and CI | Every colour, size, weight, line height, duration and curve comes from `packages/tokens`. A raw value in a component is a decision nobody recorded, and it is invisible to every other check. |
+| **docs** | hook and CI | Every package `docs/architecture.md`'s stack table names is actually installed. That document is your brief, so a promise in it has to be true. |
+| **dead** | hook and CI | Nothing is exported that nothing imports. Dead code still gets read by whoever is working out how something behaves. |
+| **tests** | hook and CI | Two tiers: pure logic in Node, components in a real browser. The browser tier exists because the failure this build is named after was seven fields that were never hidden while every test asked whether the hiding *class* was present. |
+| **stories** | hook and CI | Every component in `packages/ui` has a story Storybook can actually show. The catalogue is a deliverable, not a workbench. |
+| **flow** | **hook only** | Whole journeys through a real production build. It is the expensive one — measured on 24-08, 70 seconds of a 91-second run — so CI leaves it to the hook, which runs it on every push before the code exists anywhere else. The full run is always written to `reports/flow-run.log`, so a red run can be read even if the summary was piped away. |
+| **deps** | hook and CI | Every package a workspace imports is declared in that workspace's own `package.json`. npm hoists a workspace tree into one `node_modules` at the top, so an undeclared import resolves perfectly on your machine and fails the moment anything installs or builds one workspace on its own — which is what a deploy does, and what your first three commands do. Twelve deploys failed on this before the check existed. |
+| **visual** | hook and CI | Screenshot comparison. Switched off until baselines are taken on CI — it says so, and says how to turn it on, because a check that is off for a good reason quietly becomes a check that is off. |
 
 ## How this repository is kept up to date, and when that stops
 

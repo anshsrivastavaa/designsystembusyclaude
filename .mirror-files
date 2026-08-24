@@ -37,6 +37,7 @@ apps/magic/flow/the-f-key-walk.flow.test.ts
 apps/magic/flow/the-keyboard-is-never-lost.flow.test.ts
 apps/magic/flow/the-party-picker.flow.test.ts
 apps/magic/flow/the-screen-holds-together.flow.test.ts
+apps/magic/flow/what-is-known-about-a-party.flow.test.ts
 apps/magic/index.html
 apps/magic/package.json
 apps/magic/public/busy-logo-dark.avif
@@ -305,8 +306,8 @@ scripts/check-deps.mjs
 scripts/check-docs.mjs
 scripts/check-drift.mjs
 scripts/check-flow.mjs
-scripts/check-groups.mjs
 scripts/check-lint.mjs
+scripts/check-run.mjs
 scripts/check-shape.mjs
 scripts/check-stories.mjs
 scripts/check-tests.mjs
