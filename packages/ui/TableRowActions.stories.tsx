@@ -1,6 +1,7 @@
 // The controls that appear on the row under the pointer.
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { DemoTable } from '../../.storybook/demo'
 
 import { Button } from './Button'
 import { Icon } from './Icon'
@@ -23,7 +24,7 @@ export const RowActions: Story = {
         </p>
       </div>
 
-      <table className="w-full rounded-card border border-stroke bg-surface text-body">
+      <DemoTable>
         <tbody>
           {['INV/2026/0067', 'INV/2026/0066', 'INV/2026/0065'].map((number) => (
             <tr key={number} className="group border-b border-stroke last:border-b-0">
@@ -42,7 +43,7 @@ export const RowActions: Story = {
             </tr>
           ))}
         </tbody>
-      </table>
+      </DemoTable>
     </div>
   ),
 }

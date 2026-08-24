@@ -3,6 +3,8 @@
 
 import { useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import * as React from 'react'
+import { DemoRow } from '../../.storybook/demo'
 
 import { Tabs, type TabOption } from './Tabs'
 
@@ -22,17 +24,6 @@ const EMPTIED: TabOption<Status>[] = STATUSES.map((option) =>
 
 const UNCOUNTED: TabOption<Status>[] = STATUSES.map(({ value, label }) => ({ value, label }))
 
-function Row({ label, note, children }: { label: string; note?: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-start gap-4 border-b border-stroke py-4 last:border-b-0">
-      <span className="w-40 shrink-0 text-sm text-ink-secondary">{label}</span>
-      <div>
-        {children}
-        {note ? <p className="mt-2 text-sm text-ink-muted">{note}</p> : null}
-      </div>
-    </div>
-  )
-}
 
 function Strip({ options }: { options: TabOption<Status>[] }) {
   const [status, setStatus] = useState<Status>('all')
@@ -44,15 +35,23 @@ function Density({ density, label }: { density: string; label: string }) {
     <section data-density={density} className="mt-8">
       <h2 className="text-lg font-strong text-ink">{label}</h2>
       <div className="mt-2 rounded-card border border-stroke bg-surface px-5">
-        <Row label="The status strip" note="Tab once to reach it, then the arrow keys move the choice.">
+        <DemoRow align="top" label="The status strip" note="Tab once to reach it, then the arrow keys move the choice.">
           <Strip options={STATUSES} />
-        </Row>
-        <Row label="An empty option" note="Nothing is overdue. The option stays, showing zero — hiding it would make the strip change shape as the data does.">
+        </DemoRow>
+        <DemoRow align="top" label="An empty option" note="Nothing is overdue. The option stays, showing zero — hiding it would make the strip change shape as the data does.">
           <Strip options={EMPTIED} />
-        </Row>
-        <Row label="Counts not known yet" note="No count is drawn at all. A count of zero and a count nobody has worked out are different things.">
+        </DemoRow>
+        <DemoRow align="top" label="Counts not known yet" note="No count is drawn at all. A count of zero and a count nobody has worked out are different things.">
           <Strip options={UNCOUNTED} />
-        </Row>
+        </DemoRow>
+
+        <DemoRow
+          align="top"
+          label="Bare, with no tray"
+          note="The same behaviour and the same arrow keys, for a choice not worth a control that announces itself. Two words under the narration: whether the customer sees the note."
+        >
+          <BareExample />
+        </DemoRow>
       </div>
     </section>
   )
@@ -79,5 +78,21 @@ function TabsPage() {
 const meta = { title: 'Tabs', render: () => <TabsPage /> } satisfies Meta
 
 export default meta
+
+function BareExample() {
+  const [which, setWhich] = React.useState<'printed' | 'internal'>('printed')
+  return (
+    <Tabs
+      look="bare"
+      label="Who sees this note"
+      value={which}
+      onChange={setWhich}
+      options={[
+        { value: 'printed' as const, label: 'Printed' },
+        { value: 'internal' as const, label: 'Internal' },
+      ]}
+    />
+  )
+}
 
 export const Tabs_: StoryObj<typeof meta> = { name: 'Tabs' }

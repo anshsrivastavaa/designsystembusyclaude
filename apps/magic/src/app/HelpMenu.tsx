@@ -12,8 +12,8 @@
 
 import * as React from 'react'
 
-import { Popover } from '@busy/ui/Popover'
 import { actionFor, boundKeys, type Action, type Where } from '../lib/shortcuts'
+import { TopMenu } from './TopMenu'
 import { isTyping } from '../lib/typing'
 
 /** What each action is, in the words somebody would use for it. Here rather than in the table
@@ -63,7 +63,6 @@ function Keys({ bound }: { bound: (typeof boundKeys)[number] }) {
 }
 
 export function HelpMenu() {
-  const button = React.useRef<HTMLButtonElement>(null)
   const [open, setOpen] = React.useState(false)
 
   // "?" from anywhere, as long as nothing is being typed into — which the shortcut table
@@ -87,20 +86,13 @@ export function HelpMenu() {
           holding the real thing. Two controls answering to the same name is the duplicate
           definition problem arriving as user interface — whichever one somebody learns, the
           other is a dead end. So v2's empty one is folded into this, and this takes v2's
-          position and v2's word. The shortcut is still `?`, which the title says. */}
-      <button
-        ref={button}
-        type="button"
-        title="Help and keyboard shortcuts  ( ? )"
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        onClick={() => setOpen((was) => !was)}
-        className="flex items-center rounded-control px-2 py-1 text-sm text-ink-secondary hover:bg-surface-hover hover:text-ink focus-ring"
-      >
-        Help
-      </button>
+          position and v2's word. The shortcut is still `?`, which the title says.
 
-      <Popover open={open} onClose={() => setOpen(false)} anchorRef={button} label="Help and keyboard shortcuts" align="start">
+          IT IS TopMenu, NOT A SECOND ONE. This file used to carry its own trigger and its own
+          Popover, and the className was byte-identical to TopMenu's — which is how the drift
+          gate found it. The only thing it needed that TopMenu lacked was to be opened from
+          outside, by the `?` key, so TopMenu takes an optional `open` and this passes it. */}
+      <TopMenu label="Help" title="Help and keyboard shortcuts  ( ? )" open={open} onOpenChange={setOpen}>
         <div className="min-h-0 overflow-auto p-3">
           {GROUPS.map((group) => {
             const rows = boundKeys.filter((bound) => bound.where === group.where)
@@ -123,7 +115,7 @@ export function HelpMenu() {
             why its button is switched off rather than doing nothing.
           </p>
         </div>
-      </Popover>
+      </TopMenu>
     </>
   )
 }

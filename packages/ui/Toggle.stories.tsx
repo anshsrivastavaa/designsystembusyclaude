@@ -3,20 +3,10 @@
 
 import { useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { DemoRow } from '../../.storybook/demo'
 
 import { Toggle } from './Toggle'
 
-function Row({ label, note, children }: { label: string; note?: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-start gap-4 border-b border-stroke py-4 last:border-b-0">
-      <span className="w-40 shrink-0 text-sm text-ink-secondary">{label}</span>
-      <div>
-        {children}
-        {note ? <p className="mt-2 text-sm text-ink-muted">{note}</p> : null}
-      </div>
-    </div>
-  )
-}
 
 /** The switch doing its real job: what it names changes as it moves, with nothing to confirm. */
 function LineItems() {
@@ -54,29 +44,29 @@ function Density({ density, label }: { density: string; label: string }) {
     <section data-density={density} className="mt-8">
       <h2 className="text-lg font-strong text-ink">{label}</h2>
       <div className="mt-2 rounded-card border border-stroke bg-surface px-5">
-        <Row label="Off">
+        <DemoRow align="top" label="Off">
           <Toggle checked={false} onCheckedChange={() => {}}>
             Show line items
           </Toggle>
-        </Row>
-        <Row label="On">
+        </DemoRow>
+        <DemoRow align="top" label="On">
           <Toggle checked onCheckedChange={() => {}}>
             Show line items
           </Toggle>
-        </Row>
-        <Row label="Disabled, off" note="Nothing is disabled without saying why. That line IS the control's reason, not a caption about the story.">
+        </DemoRow>
+        <DemoRow align="top" label="Disabled, off" note="Nothing is disabled without saying why. That line IS the control's reason, not a caption about the story.">
           <Toggle checked={false} disabled onCheckedChange={() => {}}>
             Show line items — grouping is on, turn grouping off to see them
           </Toggle>
-        </Row>
-        <Row label="Disabled, on">
+        </DemoRow>
+        <DemoRow align="top" label="Disabled, on">
           <Toggle checked disabled onCheckedChange={() => {}}>
             Show line items
           </Toggle>
-        </Row>
-        <Row label="Doing its real job" note="It takes effect as it moves. If it needed an OK button after it, it was a checkbox.">
+        </DemoRow>
+        <DemoRow align="top" label="Doing its real job" note="It takes effect as it moves. If it needed an OK button after it, it was a checkbox.">
           <LineItems />
-        </Row>
+        </DemoRow>
       </div>
     </section>
   )

@@ -3,6 +3,7 @@
 // state nobody has looked at.
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { DemoRow } from '../../.storybook/demo'
 
 import { Icon } from './Icon'
 import { Button } from './Button'
@@ -16,14 +17,6 @@ function Trash() {
 const SIZES = ['sm', 'default', 'lg'] as const
 const ICON_SIZES = ['icon-sm', 'icon', 'icon-lg'] as const
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-4 border-b border-stroke py-4 last:border-b-0">
-      <span className="w-40 shrink-0 text-sm text-ink-secondary">{label}</span>
-      <div className="flex flex-wrap items-center gap-3">{children}</div>
-    </div>
-  )
-}
 
 function Density({ density, label }: { density: string; label: string }) {
   return (
@@ -31,23 +24,23 @@ function Density({ density, label }: { density: string; label: string }) {
       <h2 className="text-lg font-strong text-ink">{label}</h2>
 
       <div className="mt-2 rounded-card border border-stroke bg-surface px-5">
-        <Row label="Primary">
+        <DemoRow label="Primary">
           {SIZES.map((size) => (
             <Button key={size} size={size}>
               Save invoice
             </Button>
           ))}
-        </Row>
+        </DemoRow>
 
-        <Row label="Quiet">
+        <DemoRow label="Quiet">
           {SIZES.map((size) => (
             <Button key={size} variant="ghost" size={size}>
               Add row
             </Button>
           ))}
-        </Row>
+        </DemoRow>
 
-        <Row label="With an icon">
+        <DemoRow label="With an icon">
           <Button>
             <Trash />
             Delete
@@ -56,26 +49,26 @@ function Density({ density, label }: { density: string; label: string }) {
             <Trash />
             Delete
           </Button>
-        </Row>
+        </DemoRow>
 
-        <Row label="Icon only">
+        <DemoRow label="Icon only">
           {ICON_SIZES.map((size) => (
             <Button key={size} size={size} variant="ghost" aria-label="Delete row">
               <Trash />
             </Button>
           ))}
-        </Row>
+        </DemoRow>
 
-        <Row label="Disabled">
+        <DemoRow label="Disabled">
           <Button disabled>Save invoice</Button>
           <Button variant="ghost" disabled>
             Add row
           </Button>
-        </Row>
+        </DemoRow>
 
-        <Row label="Too much text">
+        <DemoRow label="Too much text">
           <Button>Save this invoice and start another one straight away</Button>
-        </Row>
+        </DemoRow>
       </div>
     </section>
   )

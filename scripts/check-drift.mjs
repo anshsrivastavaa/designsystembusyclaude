@@ -46,6 +46,11 @@ const ALLOWED = [
     until: 'A owns features/invoice until Create Invoice is finished, and is taking this into one cell component',
   },
   {
+    run: 'flex h-control items-center rounded-control border border-stroke bg-surface focus-within:outline focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-stroke-focus',
+    why: "the invoice header's field box, in DateField.tsx and HeaderFields.tsx",
+    until: 'A adopts focus-ring-within-inset, which is already authored in packages/tokens and is what the rest of the build now wears — this run is four of the five focus rings that utility replaced',
+  },
+  {
     run: 'rounded-control border border-stroke bg-surface-raised shadow-popover',
     why: 'ComboBoxList paints its own panel instead of sitting in a Popover',
     until: 'ComboBoxList moves onto Popover — the last item on the drift list, deliberately, because it is the one with behaviour in it',

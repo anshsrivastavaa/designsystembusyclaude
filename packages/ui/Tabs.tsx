@@ -33,6 +33,10 @@ export type TabOption<Value extends string> = {
 }
 
 export type TabsProps<Value extends string> = {
+  /** `tray` is the segmented control: a sunken well with the chosen option lifted out of it.
+   *  `bare` is the same behaviour with no well — two words in muted ink, for a choice that is
+   *  worth being able to make and is not worth a control that announces itself. */
+  look?: 'tray' | 'bare'
   options: TabOption<Value>[]
   value: Value
   onChange: (value: Value) => void
@@ -40,7 +44,7 @@ export type TabsProps<Value extends string> = {
   label: string
 }
 
-export function Tabs<Value extends string>({ options, value, onChange, label }: TabsProps<Value>) {
+export function Tabs<Value extends string>({ options, value, onChange, label, look = 'tray' }: TabsProps<Value>) {
   const strip = React.useRef<HTMLDivElement>(null)
 
   // Arrow keys move the choice, which for a radio group also moves the keyboard with it —
@@ -72,7 +76,15 @@ export function Tabs<Value extends string>({ options, value, onChange, label }: 
       // inline-flex, so the strip is as wide as its options. As a block-level flex it
       // stretched to whatever contained it, and the tray ran on past Hold to the edge of
       // the toolbar — which reads as an empty sixth option.
-      className="inline-flex items-center gap-1 rounded-control bg-surface-sunken p-1"
+      className={cn(
+        'inline-flex items-center gap-1',
+        // THE TRAY IS WHAT MAKES IT A SEGMENTED CONTROL, and one place wants the behaviour
+        // without it: two words under the narration, in the smallest size and muted ink, where
+        // "whether the customer sees this note is worth being able to say and is not worth a
+        // heading". Written by hand there, it lost the arrow keys — which is the whole reason
+        // this component exists. A look, not a second component.
+        look === 'tray' ? 'rounded-control bg-surface-sunken p-1' : 'gap-3',
+      )}
     >
       {options.map((option) => {
         const chosen = option.value === value
@@ -91,6 +103,7 @@ export function Tabs<Value extends string>({ options, value, onChange, label }: 
             {...(option.icon === undefined ? {} : { 'aria-label': option.label, title: option.label })}
             className={cn(
               'flex items-center gap-2 rounded-control',
+              look === 'bare' && 'text-sm text-ink-muted',
               // AN ICON-ONLY OPTION IS SIZED LIKE AN ICON BUTTON, because that is what it looks
               // like sitting in the chrome next to one. With words it stays the shorter control:
               // a row of text tabs at the full height is a toolbar, not a segmented control.
@@ -99,7 +112,13 @@ export function Tabs<Value extends string>({ options, value, onChange, label }: 
                 : 'h-control px-2 [&_svg]:size-icon-lg',
               'text-body font-label whitespace-nowrap transition-colors',
               'focus-ring',
-              chosen ? 'bg-surface text-ink shadow-raised' : 'text-ink-secondary hover:bg-surface-hover hover:text-ink',
+              look === 'tray'
+                ? chosen
+                  ? 'bg-surface text-ink shadow-raised'
+                  : 'text-ink-secondary hover:bg-surface-hover hover:text-ink'
+                : chosen
+                  ? 'font-label text-ink'
+                  : 'hover:text-ink',
             )}
           >
             {option.icon ?? option.label}

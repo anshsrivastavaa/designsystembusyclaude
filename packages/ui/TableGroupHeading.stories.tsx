@@ -1,6 +1,7 @@
 // The band on its own, between two runs of rows, which is the only place it means anything.
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { DemoTable } from '../../.storybook/demo'
 
 import { TableGroupHeading } from './TableGroupHeading'
 
@@ -17,7 +18,7 @@ const ROWS = [
 
 export const BetweenTwoParties: Story = {
   render: () => (
-    <table className="w-full rounded-card border border-stroke bg-surface text-body">
+    <DemoTable>
       <tbody>
         {ROWS.map((row, index) => (
           <>
@@ -31,6 +32,6 @@ export const BetweenTwoParties: Story = {
           </>
         ))}
       </tbody>
-    </table>
+    </DemoTable>
   ),
 }

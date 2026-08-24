@@ -21,11 +21,27 @@ export type TopMenuProps = {
   /** Where the surface lines up under the word. The menus on the right of the strip hang from
    * their right edge, or they run off the window. */
   align?: 'start' | 'end'
+  /** A longer name in the tooltip, where the word alone does not say what the menu holds.
+   * "Help" is the word; "Help and keyboard shortcuts ( ? )" is what it opens. */
+  title?: string
+  /** Controlled, for the one menu something outside it can open — Help answers to `?` from
+   * anywhere on the page. Left out, the menu keeps its own state, which is every other case. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function TopMenu({ label, children, align = 'start' }: TopMenuProps) {
+export function TopMenu({ label, children, align = 'start', title, open: given, onOpenChange }: TopMenuProps) {
   const button = React.useRef<HTMLButtonElement>(null)
-  const [open, setOpen] = React.useState(false)
+  const [own, setOwn] = React.useState(false)
+
+  // Controlled when a caller passes `open`, its own otherwise. HelpMenu had to copy this whole
+  // component to get the first behaviour, and the copy is what the drift gate found: two
+  // byte-identical class strings in two files, which is one component wearing two names.
+  const open = given ?? own
+  const setOpen = (next: boolean) => {
+    if (given === undefined) setOwn(next)
+    onOpenChange?.(next)
+  }
 
   return (
     <>
@@ -38,9 +54,10 @@ export function TopMenu({ label, children, align = 'start' }: TopMenuProps) {
       <button
         ref={button}
         type="button"
+        {...(title === undefined ? {} : { title })}
         aria-expanded={open}
         aria-haspopup="dialog"
-        onClick={() => setOpen((was) => !was)}
+        onClick={() => setOpen(!open)}
         className="flex items-center rounded-control px-2 py-1 text-sm text-ink-secondary hover:bg-surface-hover hover:text-ink focus-ring"
       >
         {label}

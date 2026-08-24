@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { DemoRow } from '../../.storybook/demo'
 
 import { TextField } from './TextField'
 
@@ -9,14 +10,6 @@ function Cell({ children }: { children: React.ReactNode }) {
   return <div className="h-control w-48 overflow-hidden rounded-control border border-stroke">{children}</div>
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-4 border-b border-stroke py-4 last:border-b-0">
-      <span className="w-40 shrink-0 text-sm text-ink-secondary">{label}</span>
-      <div className="flex flex-wrap items-center gap-3">{children}</div>
-    </div>
-  )
-}
 
 function Density({ density, label }: { density: string; label: string }) {
   const [typed, setTyped] = useState('Steel rod 12mm')
@@ -25,36 +18,36 @@ function Density({ density, label }: { density: string; label: string }) {
     <section data-density={density} className="mt-8">
       <h2 className="text-lg font-strong text-ink">{label}</h2>
       <div className="mt-2 rounded-card border border-stroke bg-surface px-5">
-        <Row label="Empty">
+        <DemoRow label="Empty">
           <Cell>
             <TextField placeholder="Search items…" aria-label="Item" />
           </Cell>
-        </Row>
-        <Row label="Holding a value">
+        </DemoRow>
+        <DemoRow label="Holding a value">
           <Cell>
             <TextField value={typed} onChange={(event) => setTyped(event.target.value)} aria-label="Item" />
           </Cell>
-        </Row>
-        <Row label="A number, right aligned">
+        </DemoRow>
+        <DemoRow label="A number, right aligned">
           <Cell>
             <TextField defaultValue="1250.00" align="end" aria-label="Price" />
           </Cell>
-        </Row>
-        <Row label="Invalid">
+        </DemoRow>
+        <DemoRow label="Invalid">
           <Cell>
             <TextField defaultValue="-4" invalid align="end" aria-label="Quantity" />
           </Cell>
-        </Row>
-        <Row label="Locked">
+        </DemoRow>
+        <DemoRow label="Locked">
           <Cell>
             <TextField value="As per party master" locked readOnly aria-label="Price" />
           </Cell>
-        </Row>
-        <Row label="Too much text">
+        </DemoRow>
+        <DemoRow label="Too much text">
           <Cell>
             <TextField defaultValue="Galvanised steel reinforcement rod, 12mm, bundle of fifty" aria-label="Item" />
           </Cell>
-        </Row>
+        </DemoRow>
       </div>
     </section>
   )

@@ -9,6 +9,7 @@
 .husky/pre-push
 .mirror-files
 .storybook/Welcome.stories.tsx
+.storybook/demo.tsx
 .storybook/main.ts
 .storybook/preview-head.component.test.tsx
 .storybook/preview-head.html
@@ -237,6 +238,9 @@ packages/ui/ComboBox.tsx
 packages/ui/ComboBoxList.stories.tsx
 packages/ui/ComboBoxList.tsx
 packages/ui/Dimensions.stories.tsx
+packages/ui/Disclosure.component.test.tsx
+packages/ui/Disclosure.stories.tsx
+packages/ui/Disclosure.tsx
 packages/ui/Drawer.stories.tsx
 packages/ui/Drawer.tsx
 packages/ui/Field.stories.tsx

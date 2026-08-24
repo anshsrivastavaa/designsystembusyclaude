@@ -2,6 +2,7 @@
 // and stuck.
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { DemoTable } from '../../.storybook/demo'
 
 import { TableHead } from './TableHead'
 import type { TableColumn } from './TableColumn'
@@ -22,7 +23,7 @@ const COLUMNS: TableColumn<Row>[] = [
 
 function Head({ stuck, sorted }: { stuck: boolean; sorted: boolean }) {
   return (
-    <table className="w-full rounded-card border border-stroke bg-surface text-body">
+    <DemoTable>
       <TableHead<Row>
         columns={COLUMNS}
         stuck={stuck}
@@ -40,7 +41,7 @@ function Head({ stuck, sorted }: { stuck: boolean; sorted: boolean }) {
           <td className="px-3 py-2 text-right text-ink">31,349.03</td>
         </tr>
       </tbody>
-    </table>
+    </DemoTable>
   )
 }
 
