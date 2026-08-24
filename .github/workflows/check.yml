@@ -1,30 +1,16 @@
 name: check
 
-# CI RUNS THE ONE COMMAND, AND THE COMMAND SAYS WHAT IT LEFT OUT.
+# THE DEV TEAM'S CI. The sync copies this file to .github/workflows/check.yml in their
+# repository; it does not run here, which is why it lives outside the workflows folder.
 #
-# The previous build's workflow listed checks by hand, one was left off, and it never ran on the
-# server at all while passing locally — the same shape of mistake three separate times. So there
-# is still no list here. `SKIP` names a group; `scripts/check-run.mjs` holds the only list of
-# groups there is, refuses to skip one that is covered nowhere else, and prints every group it
-# did not run with where that group runs instead.
+# IT IS NOT A FILTERED COPY OF OURS AND IT SHOULD NOT BE. Our workflow skips the flow journeys
+# because a free account's minutes ran out and a pre-push hook had already run them; and it ends
+# by feeding this repository, which is not a thing this repository does. Neither applies here.
+# So this runs the whole command, which is the honest default for somebody who has just been
+# handed a build and wants to know whether it stands up.
 #
-# WHY flow IS SKIPPED HERE, AND ONLY flow. Measured on 24-08: the whole check is about 88 seconds
-# on a laptop and 70 of those are the flow journeys — a production build plus 97 whole journeys
-# through a real browser. The pre-push hook runs the entire check, flow included, before anything
-# leaves the machine, so what CI adds for those 70 seconds is a second opinion on a clean box.
-# That is worth having and it is not worth having when the minutes it costs are the reason the
-# handoff repository stops being fed.
-#
-# The Storybook build was proposed for the same treatment and is NOT skipped, because the
-# measurement said 5 seconds rather than the ~30 the documents claimed. Dropping a five-second
-# check buys nothing and loses the catalogue, which is a deliverable.
-#
-# THE MIRROR IS THE LAST STEP OF THIS JOB, NOT A SEPARATE WORKFLOW. It used to wait on this one
-# finishing green. When this job stopped starting at all, the mirror reported `skipped` twelve
-# times, which is correct and is indistinguishable from silence — and the handoff repository went
-# three days behind with nothing anywhere saying so. In the same job it cannot skip quietly: if
-# the sync breaks, this job is red, and if this job never runs, `npm run check:mirror` in the
-# pre-push hook says how far behind the mirror is on the next push anybody makes.
+# There is nothing to keep in step between the two. If a group is added, it is added to
+# scripts/check-run.mjs, and both workflows pick it up without being edited.
 
 on:
   push:
@@ -42,19 +28,5 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-
-      # Still needed with flow skipped: the component tier of the tests group runs in a real
-      # browser, which is the whole reason that tier exists.
       - run: npx playwright install --with-deps chromium
-
-      - run: SKIP=flow npm run check
-
-      # Only from main, and only after everything above passed. `npm run mirror` is the same
-      # script a person runs by hand, so there is one copy of what gets sent.
-      - name: Feed the handoff repository
-        if: github.ref == 'refs/heads/main'
-        env:
-          # Never printed, never echoed.
-          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
-          SKIP: flow
-        run: npm run mirror
+      - run: npm run check

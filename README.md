@@ -35,8 +35,10 @@ Every group reports how many things it ran and **fails if it ran nothing**, beca
 that runs nothing and reports green is the failure this suite exists to prevent.
 
 **A pre-push hook runs this whole command before anything leaves your machine. CI runs it again
-on a clean box, minus the journeys**, which take about eighty per cent of the wall clock for a
-second opinion on work the hook has already checked. The command prints what it left out and
+on a clean box, minus the journeys and the Storybook build**, which together are about eighty per
+cent of the wall clock for a second opinion on work the hook has already checked. Your own CI —
+the workflow in this repository — runs everything, because that is the honest default for
+somebody who has just been handed a build. The command prints what it left out and
 where that runs instead, every time — there is no arrangement in which a group is dropped
 without the run saying so.
 
@@ -51,7 +53,7 @@ What each group is protecting, so that none of them looks like an arbitrary obst
 | **docs** | hook and CI | Every package `docs/architecture.md`'s stack table names is actually installed. That document is your brief, so a promise in it has to be true. |
 | **dead** | hook and CI | Nothing is exported that nothing imports. Dead code still gets read by whoever is working out how something behaves. |
 | **tests** | hook and CI | Two tiers: pure logic in Node, components in a real browser. The browser tier exists because the failure this build is named after was seven fields that were never hidden while every test asked whether the hiding *class* was present. |
-| **stories** | hook and CI | Every component in `packages/ui` has a story Storybook can actually show. The catalogue is a deliverable, not a workbench. |
+| **stories** | **hook only** | Every component in `packages/ui` has a story Storybook can actually show. It builds Storybook to find out, which is why it sits with `flow` in the hook rather than in the design team's CI. The catalogue is a deliverable, not a workbench. |
 | **flow** | **hook only** | Whole journeys through a real production build. It is the expensive one — measured on 24-08, 70 seconds of a 91-second run — so CI leaves it to the hook, which runs it on every push before the code exists anywhere else. The full run is always written to `reports/flow-run.log`, so a red run can be read even if the summary was piped away. |
 | **deps** | hook and CI | Every package a workspace imports is declared in that workspace's own `package.json`. npm hoists a workspace tree into one `node_modules` at the top, so an undeclared import resolves perfectly on your machine and fails the moment anything installs or builds one workspace on its own — which is what a deploy does, and what your first three commands do. Twelve deploys failed on this before the check existed. |
 | **visual** | hook and CI | Screenshot comparison. Switched off until baselines are taken on CI — it says so, and says how to turn it on, because a check that is off for a good reason quietly becomes a check that is off. |
