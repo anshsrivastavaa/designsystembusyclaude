@@ -1,0 +1,91 @@
+/* Palette — the raw values, light theme.
+ *
+ * Nothing outside this package may hold a raw colour, and nothing outside the semantic
+ * layer may name one of these. They are deliberately kept out of Tailwind's @theme block,
+ * so no utility class exists for them and a component cannot type one by accident.
+ *
+ * The scale is twelve steps in three bands, numbered by the job they do and not by how
+ * light they are:
+ *
+ *   1-6   surfaces. Six roles, unordered, and that is not a defect — only surface, its
+ *         hover and its pressed ever step. Sunken and raised are separate roles that sit
+ *         in the same band, not points further along a ramp.
+ *   7-8   lines, getting stronger.
+ *   9-12  ink, getting darker, in order.
+ *
+ * The ordering rule is the same in every theme. Whoever authors dark follows the bands,
+ * not this theme's particular values. Each theme authors its own twelve; the semantic
+ * layer above them is written once.
+ */
+
+:root {
+  /* Surfaces — six roles, no ranking between them. */
+
+  --neutral-1: #e6e9ec; /* page — the window everything sits on */
+  --neutral-2: #ffffff; /* surface — cards, the table body, the main plane */
+  --neutral-3: #eef0f2; /* sunken — wells cut into a surface: inputs, table headings */
+  --neutral-4: #e4e7ea; /* surface pressed — the plane while it is being pressed */
+  --neutral-5: #f2f4f6; /* surface hovered — the plane under the pointer */
+  --neutral-6: #ffffff; /* raised — lifted off the page: popovers, menus, dialogs */
+
+  /* Lines — getting stronger. */
+
+  --neutral-7: #dfe2e6; /* stroke — the line that divides most things */
+  --neutral-8: #c9cdd3; /* stroke strong — a line that has to be seen */
+
+  /* Ink — getting darker, in order. */
+
+  --neutral-9: #666c76;  /* ink muted — placeholders, empty states */
+  --neutral-10: #4f545c; /* ink secondary — labels, calculated values */
+  --neutral-11: #1a1c20; /* ink — what you read */
+  --neutral-12: #0f0f11; /* ink strongest — the end of the ink band */
+
+  /* Step 2 and step 6 hold the same white, and that is the point of naming them apart: a
+   * popover cannot be brighter than a white card, so this theme separates them with a
+   * border and a shadow, while a dark theme makes the raised plane genuinely lighter.
+   *
+   * Step 4 and step 12 have no semantic name pointing at them. That means no semantic
+   * name needs that step yet, not that the step is dead — nothing in the previous build
+   * had a pressed state at all, and nothing has yet needed an ink stronger than body ink.
+   */
+
+  /* Coloured ramps. Only the stops a seeded name actually uses are authored. A new stop
+   * arrives with the name that needs it, never in anticipation — the previous build
+   * carried 235 tokens and 8 of them were used nowhere at all. */
+
+  --brand-soft: #e9f2ff;   /* selected rows, and the tint behind a notice */
+  --brand-ring: #007aff;   /* the Busy blue from the logo — the focus ring */
+  --brand: #0063d6;        /* fills and links; white on it measures 5.59:1 */
+  --brand-strong: #0050b3; /* the same fill with a pointer on it — a step, never a fade */
+
+  --green-soft: #ecfdf3;
+  --green: #157f3c;
+
+  --amber-soft: #fff8eb;
+  --red-soft: #fef2f2;
+
+  /* --amber and --red are TEXT stops, tuned to pass contrast as words on a surface.
+   * They read brown and maroon as fills. A warning triangle or a delete button needs a
+   * brighter stop, and that is a NEW token, not this one reused. The previous build
+   * carried two stops per status colour for exactly this reason.
+   *
+   * Do not lighten either of these to make an icon look right. Lightening them breaks
+   * the text they were authored for — amber clears 5.08:1 as words on white and has no
+   * headroom to spare. */
+  --amber: #a85a08;
+  --red: #a11d22;
+
+  /* The second red the status note above said to expect: a FILL, for the one control that
+   * has to be seen before it is read. White on it measures 5.62:1, and 4.92:1 on a hovered
+   * row, which is where it actually lives.
+   *
+   * The reds people reach for fail that: Apple's systemRed is 3.55:1 and Radix red-9 is
+   * 3.91:1, because both are tuned for red TEXT ON WHITE rather than white on red. Tailwind's
+   * red-600 clears 4.83:1 with nothing to spare, and this palette already carries one stop
+   * with no headroom and a comment telling nobody to touch it. One is enough. */
+  --red-fill: #c62828;
+
+  /* The one value that does not move with the theme. What sits on an accent fill is white
+   * in every theme, because the accent fill itself is the same blue in every theme. */
+  --white: #ffffff;
+}

@@ -1,0 +1,25 @@
+/* Corner radius. Not a colour, so it does not move with the theme. Not a size that changes
+ * with density either: radius perception is not linear, and a 6px corner reads the same on
+ * a 32px control and a 44px one.
+ *
+ * Two stops, because two surfaces exist. A stop arrives with the surface that needs it —
+ * the previous build grew six, and two of them were a single measured value away from a
+ * neighbour, which is below the threshold anyone can see.
+ *
+ * These sit inside @theme because radius is one of Tailwind's own namespaces, so naming them
+ * here is all it takes to get rounded-control and rounded-card. Nothing is hand-authored.
+ */
+
+@theme static {
+  /* THE SAME HOLE THE COLOUR NAMESPACE WAS CLOSED FOR, closed here on 20-08. Tailwind ships
+   * --radius-md and --radius-lg, so `rounded-md` built and Button.tsx used it — and it was
+   * 6px BY COINCIDENCE, the same as --radius-control. Nothing looked wrong, and nothing would
+   * have looked wrong until --radius-control moved and every button in the product silently
+   * stayed behind. A namespace half ours is worse than one that is not ours at all, because
+   * the wrong one still works. */
+  --radius-*: initial;
+
+  --radius-control: 6px; /* anything you click or type into: a button, a field */
+  --radius-card: 20px;   /* the outer surfaces: the item grid card, the totals card */
+  --radius-pill: 9999px; /* a track or a badge whose ends are meant to be semicircles */
+}

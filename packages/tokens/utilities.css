@@ -1,0 +1,189 @@
+/* Hand-authored utilities for the dimensions that flip with density.
+ *
+ * These tokens sit outside Tailwind's @theme block, because putting them inside would mean
+ * renaming them into Tailwind's own namespaces — --font-size-body to --text-body, --row-h to
+ * --spacing-row — which would make "spacing" the family word for both a row height and an
+ * icon size, and would break the name-for-name match with the mobile build.
+ *
+ * So the classes are written by hand instead. The win is that each one is a real utility
+ * Tailwind generates, so the existing gate that every class typed in the source is one
+ * Tailwind actually builds covers these for nothing: a typo goes red and names the file. A
+ * mistyped var() name inside a bracket, or in plain CSS, is dropped by the browser without
+ * a word and turns up later as a row that looks wrong.
+ *
+ * ONE UTILITY PER TOKEN, AUTHORED AT THE FIRST COMPONENT THAT NEEDS IT. Not the whole set
+ * up front — writing the set in anticipation is how the previous build finished with eight
+ * tokens nothing used. These eight are what the Button needs and nothing more. A check
+ * fails any utility here that points at a token which does not exist.
+ */
+
+/* Heights — the Button, and every control after it. */
+@utility h-control {
+  height: var(--control-h);
+}
+@utility h-control-sm {
+  height: var(--control-h-sm);
+}
+@utility h-control-lg {
+  height: var(--control-h-lg);
+}
+
+/* One row of the item grid. Authored late and painfully: it was typed in the grid before it
+ * existed here, generated nothing, and the rows were sized by whatever happened to be inside
+ * them — so a row grew by three pixels when the cursor entered its item cell, and the line
+ * the eye was tracking moved on every press of Enter. */
+@utility h-row {
+  height: var(--row-h);
+}
+
+/* The wash behind a drawer or a dialog. It is a colour, but it is not one of the nine
+ * families and cannot be forced into one — a scrim is not a surface, an ink or a stroke — so
+ * it stays a token outside the theme block with a utility written by hand for it. */
+@utility bg-scrim {
+  background-color: var(--scrim);
+}
+
+/* The drawer panel: how wide it is, and the shadow that lifts it off the page. Authored here
+ * because the party drawer is the first thing that needs either. */
+@utility w-drawer {
+  width: var(--panel-drawer-w);
+}
+/* THE ELEVATIONS, AS CLASSES. The same hole as radius and type, found a third time on 20-08:
+ * --elevation-2 is documented as "a popover or a menu" and had no class, so ComboBoxList used
+ * Tailwind's `shadow-lg` instead — a different shadow nobody chose, and on screen it resolved
+ * to no shadow at all, leaving a white panel on a white card with only a hairline to separate
+ * them. Tailwind's --shadow-* namespace is cleared in semantic.css so it cannot win again. */
+@utility shadow-raised {
+  box-shadow: var(--elevation-1);
+}
+
+@utility shadow-popover {
+  box-shadow: var(--elevation-2);
+}
+
+@utility shadow-dialog {
+  box-shadow: var(--elevation-3);
+}
+
+@utility shadow-drawer {
+  box-shadow: var(--elevation-drawer);
+}
+
+/* Square, for a button that is only an icon. */
+@utility size-control {
+  width: var(--control-h);
+  height: var(--control-h);
+}
+@utility size-control-sm {
+  width: var(--control-h-sm);
+  height: var(--control-h-sm);
+}
+@utility size-control-lg {
+  width: var(--control-h-lg);
+  height: var(--control-h-lg);
+}
+
+/* Body text, which grows with density rather than staying at fourteen. */
+/* THE WHOLE SIZE SCALE, NOT JUST THE BODY. Until 20-08 only text-body was authored, so every
+ * `text-sm` in the product was TAILWIND's 0.875rem and not our --font-size-sm — which meant
+ * the type scale ruled that day changed nothing anybody could see, and none of these sizes
+ * moved with density. The token existed, the decision was written down, and the screen never
+ * read either. Tailwind's own text-* namespace is cleared in scaled.css so it cannot happen
+ * again by the same route. */
+/* The scanning size. Authored the same day the token was, because a token with no class is a
+ * decision that never reaches the screen — which has happened five times here. */
+@utility text-caps {
+  font-size: var(--font-size-caps);
+}
+
+@utility text-sm {
+  font-size: var(--font-size-sm);
+}
+
+@utility text-lg {
+  font-size: var(--font-size-lg);
+}
+
+@utility text-heading {
+  font-size: var(--font-size-heading);
+}
+
+@utility text-title {
+  font-size: var(--font-size-title);
+}
+
+@utility text-body {
+  font-size: var(--font-size-body);
+}
+
+/* The two ends of the icon scale. Authored because a token with no class is unwriteable, and
+ * the nearest Tailwind default silently wins — which is how `text-sm` came to mean 14px for
+ * eighty-three uses while our own 13px token sat beside it unused. */
+@utility size-icon-xs {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+@utility size-icon-lg {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+
+@utility size-icon-xl {
+  width: var(--icon-xl);
+  height: var(--icon-xl);
+}
+
+/* An icon sitting inside a control. */
+@utility size-icon-md {
+  width: var(--icon-md);
+  height: var(--icon-md);
+}
+
+/* An icon sitting inside a line of text rather than inside a control — the mark on a wrong
+   cell, a chevron on a fold. The --icon-sm token has existed since step 1 and had no class,
+   so every use of it was unwriteable and the nearest size got used instead. */
+@utility size-icon-sm {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+
+/* ── Motion ─────────────────────────────────────────────────────────────────────────────────
+   Durations get classes for the same reason every other token does: a token with no class is
+   unwriteable, so the nearest default silently wins — and Tailwind's `duration-<number>`
+   utilities accept any bare number, which means the default is always within reach. These are
+   the only four durations that exist. `--motion-travel` deliberately has no class; it is read
+   by the keyframes in motion.css and by nothing a screen writes.
+
+   Named after what is moving, never after how long it takes. A class called `duration-200` is
+   a raw value wearing a token's coat. */
+
+/* Colour, opacity, a toggle flipping — nothing changes position. */
+@utility duration-swift {
+  transition-duration: var(--motion-swift);
+}
+
+/* A shape changing: a field growing, a row expanding, a panel folding. */
+@utility duration-glide {
+  transition-duration: var(--motion-glide);
+}
+
+/* Something arriving from off screen. It travels furthest, so it gets the most time. */
+@utility duration-enter {
+  transition-duration: var(--motion-enter);
+}
+
+/* Anything going away, whichever of the three brought it in. Leaving is always faster than
+   arriving: arriving has to be understood, leaving has already been decided. */
+@utility duration-leave {
+  transition-duration: var(--motion-leave);
+}
+
+/* The two ways a thing may arrive. Both MOVE as well as fade, because a pure fade has no
+   direction and tells the eye nothing about where the thing belongs. */
+@utility motion-rise {
+  animation: motion-rise var(--motion-glide) var(--ease-settle) both;
+}
+@utility motion-drop {
+  animation: motion-drop var(--motion-glide) var(--ease-settle) both;
+}

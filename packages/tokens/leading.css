@@ -1,0 +1,48 @@
+/* Line height. Three named ratios, and the body one moves with density.
+ *
+ * There was none of this until 20-08: five sizes and no line heights, so 14px text in a 34px
+ * row was whatever the browser felt like. Leading is the thing that makes a grid feel tight or
+ * loose while nobody can name why, so it is the last thing that should be left to a default.
+ *
+ * THREE RATIOS, TAKEN FROM v2 RATHER THAN INVENTED. v2 settled on tight for things being
+ * scanned, normal for things being read, and a third, wider one for Indic scripts.
+ *
+ * --leading-indic IS A DECISION KEPT, NOT A BEHAVIOUR BUILT. Devanagari stacks its marks above
+ * and below the line — matras, and conjuncts that hang two deep — and at 1.5 they collide with
+ * the line above. 1.75 is the room they need. NOTHING RENDERS IN DEVANAGARI YET: there is no
+ * Indic font in this build, so today this ratio changes only Latin text set at Comfortable.
+ * It is here because the reasoning is settled and would otherwise have to be rediscovered; the
+ * day an Indic face is added, the ratio is already right and only the font has to arrive.
+ */
+
+:root {
+  --leading-tight: 1.25;  /* a column heading, a badge, a number in a row — scanned, not read */
+  --leading-normal: 1.5;  /* body text, a narration, anything with more than a few words */
+  --leading-indic: 1.75;  /* Devanagari and the other stacking scripts */
+}
+
+/* Comfortable is not a zoom. It is the density for people who found the shipped app too tight
+ * to read, and for Indic text — so body leading opens up AND body weight steps up with it.
+ * 450 rather than 400: at a larger size on a heavier grid, 400 reads thin, and Devanagari's
+ * thin horizontal strokes are the first thing to disappear. Both come from v2. */
+:root,
+[data-density='standard'] {
+  --leading-body: var(--leading-normal);
+  --weight-body-density: var(--weight-body);
+}
+
+[data-density='comfortable'] {
+  --leading-body: var(--leading-indic);
+  --weight-body-density: 450;
+}
+
+@theme static {
+  /* Tailwind's own leading names — leading-snug, leading-relaxed, leading-loose — are cleared,
+   * so the only line-height classes that exist are the three below. Without this they would sit
+   * beside ours looking equally legitimate, which is how the ad-hoc ones arrived. */
+  --leading-*: initial;
+
+  --leading-tight: 1.25;
+  --leading-body: var(--leading-body);
+  --leading-indic: 1.75;
+}

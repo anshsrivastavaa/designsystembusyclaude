@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    // `@busy/ui/Button`, not a five-deep relative climb. Declared here for the type
+    // checker, in vite.config.ts for the bundler and in vitest.config.ts for the test
+    // runner — three tools resolve modules and none of them reads the others, so a
+    // missing one shows up as "cannot find module" in exactly one command.
+    "paths": { "@busy/ui/*": ["./packages/ui/*"] },
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    "useDefineForClassFields": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["vitest.config.ts", "playwright.config.ts", "playwright.visual.config.ts", "apps/magic/flow", "apps/magic/visual", ".storybook/*.ts", ".storybook/*.tsx", "packages/*/*.ts", "packages/*/*.tsx"]
+}

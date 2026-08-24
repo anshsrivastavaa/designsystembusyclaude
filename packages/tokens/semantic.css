@@ -1,0 +1,101 @@
+/* Semantic — what a colour is FOR.
+ *
+ * Twenty-three names, and not one more. A new one needs a written decision recorded in
+ * the same commit, because the previous build grew to 235 tokens with 8 used nowhere, and
+ * every dead one had sound reasoning written beside it.
+ *
+ * Every name reads --color-<family>-<job>, family word first, so the web name and the
+ * mobile path read alike: --color-ink-muted and ink.muted. The family list is closed at
+ * nine: surface, ink, stroke, accent, success, warning, danger, info, on. The family word
+ * standing alone names the default member of that family.
+ *
+ * Every one points at a palette step. None holds a raw value. This layer is written once
+ * and does not change when the theme changes — only the palette underneath it does.
+ *
+ * These sit inside Tailwind's @theme block, which is what turns them into classes you can
+ * type: bg-surface, text-ink-muted, border-stroke. Palette steps sit outside it and have
+ * no classes at all.
+ */
+
+@theme static {
+  /* Tailwind ships its own palette — bg-red-500, text-slate-900, bg-white. Those are not
+   * arbitrary values, so the arbitrary-value lint rule never sees them, and they would sit
+   * beside our names looking equally legitimate. This clears the whole colour namespace
+   * before ours are defined, so the only colour classes that exist are the twenty-three
+   * below. It has to come first: anything after it would be cleared too. */
+  --color-*: initial;
+  /* Tailwind's own shadows — shadow-sm, shadow-lg — are cleared, so the only elevation classes
+   * that exist are the four authored against our tokens in utilities.css. */
+  --shadow-*: initial;
+
+  /* Surfaces — what sits behind. */
+  --color-surface-page: var(--neutral-1);
+  --color-surface: var(--neutral-2);
+  /* THESE TWO SWAPPED STEPS ON 20-08, and the swap is the fix rather than the side effect.
+   * Hover was the DEEPER of the two and sunken the shallower, which is upside down: a heading
+   * is a well cut into a card and a hover is a lift on top of it, so the well has to be the
+   * deeper. Sunken at four points off the card was half the separation the reference builds
+   * use; at six it reads as a heading rather than as a slightly different white. */
+  --color-surface-hover: var(--neutral-5);
+  --color-surface-sunken: var(--neutral-3);
+  --color-surface-raised: var(--neutral-6);
+  --color-surface-selected: var(--brand-soft);
+
+  /* Ink — what you read. Secondary and muted are two meanings, not one drawn twice.
+   * Secondary is information that matters less: field labels, a calculated cell value.
+   * Muted is scaffolding and absence: placeholders, empty states, serial numbers. */
+  --color-ink: var(--neutral-11);
+  --color-ink-secondary: var(--neutral-10);
+  --color-ink-muted: var(--neutral-9);
+  --color-ink-accent: var(--brand);
+
+  /* Strokes — what divides. Line WIDTH is not a colour and is not here: Tailwind's plain
+   * `border` already means one pixel. */
+  /* INK AT 12%, NOT A SOLID GREY. On white the two are within a point of each other, so this
+   * is not about how it looks on a card — it is about the three other things a line has to sit
+   * on. A solid grey stays put while the surface under it darkens, so the same line measures
+   * 1.30 against a card, 1.14 against the sunken heading and 1.07 against the page: it fades
+   * out exactly where a table gets busiest. Ink at 12% darkens with whatever it sits on and
+   * holds 1.27, 1.26, 1.27. One value instead of four. */
+  --color-stroke: color-mix(in srgb, var(--neutral-11) 12%, transparent);
+  --color-stroke-strong: var(--neutral-8);
+  --color-stroke-focus: var(--brand-ring);
+
+  /* Accent — the brand blue, for the one action that matters on a screen. Three names
+   * carry the word and they are three different things: the fill, the link, and what
+   * sits on top of the fill. */
+  --color-accent: var(--brand);
+  /* Hover is a step on the scale, never the fill faded. A fade has to be computed, React
+   * Native cannot compute a colour, and anything derived then needs two implementations
+   * that have to agree for ever. Authored here because the Button needs it — the first
+   * control in the product that has to say "you can press me". */
+  --color-accent-hover: var(--brand-strong);
+  --color-on-accent: var(--white);
+
+  /* Status. Colour is for exceptions, never for the norm: green means "this action
+   * completed" and never profit, red means a validation error or a genuinely exceptional
+   * amount and never a negative number. Roughly one man in twelve cannot separate red
+   * from green, and these users are largely male billing operators. */
+  --color-success: var(--green);
+  --color-success-soft: var(--green-soft);
+  --color-warning: var(--amber);
+  --color-warning-soft: var(--amber-soft);
+  --color-danger: var(--red);
+  /* For a control, not for words. --color-danger is a text stop and reads maroon as a fill. */
+  --color-danger-fill: var(--red-fill);
+  --color-danger-soft: var(--red-soft);
+  --color-info: var(--brand);
+  --color-info-soft: var(--brand-soft);
+}
+
+/* Elevation and the scrim are semantic too, but they are not colours and Tailwind has no
+ * class to build from them, so they sit outside the block above. Their transparency is
+ * colour and moves with the theme; their geometry is not and does not. */
+:root {
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.12);   /* a raised card or button */
+  --elevation-2: 0 12px 32px rgba(0, 0, 0, 0.22); /* a popover or a menu */
+  --elevation-3: 0 24px 64px rgba(0, 0, 0, 0.32); /* a dialog */
+  --elevation-drawer: -8px 0 40px rgba(0, 0, 0, 0.25);
+
+  --scrim: rgba(0, 0, 0, 0.4); /* the wash behind a dialog or a drawer */
+}

@@ -1,0 +1,177 @@
+// What the invoice says about itself, on one line to the right of the party: Inv No, Date,
+// Due, and the lorry.
+//
+// v2's arrangement, copied rather than derived. Party first because it is the first keystroke
+// of every invoice, then the fields that are CHECKED rather than typed — the number and the
+// date are already right nearly every time, so they sit where the eye confirms them and moves
+// on. The lorry is the one Delivery & Transport control in v2 and it is the one here.
+//
+// EVERY LABEL IS A DOOR. What is optional about each field lives behind its own label, and a
+// line appears under the field only when something other than the usual is in effect. That is
+// what keeps four fields to four fields instead of four fields and nine controls.
+
+import { useEffect, useRef } from 'react'
+
+import { Icon } from '@busy/ui/Icon'
+import { TextField } from '@busy/ui/TextField'
+import { data } from '../../data/source'
+import { isRefusal } from '../../data/schema/refusal'
+import { dayFromText, dayText, today } from '../../lib/day'
+import { FieldSettings } from './FieldSettings'
+import { InEffect } from './InEffect'
+import { useInvoice } from './store'
+
+const SERIES = [
+  { id: 'Main', label: 'Main' },
+  { id: 'Export', label: 'Export', note: 'a separate run of numbers for export invoices' },
+  { id: 'Retail', label: 'Retail', note: 'counter sales' },
+]
+
+// WHAT THE DATE FIELD CAN BE. v2 keeps exactly one choice here — the rest of what used to sit
+// on this label (back-dated, future-dated) are allow / warn / block rules and belong to warning
+// configuration, not to a field's own popover.
+const DATE_CARRY = [
+  { id: 'today', label: 'Today', note: 'a new invoice opens on today' },
+  { id: 'last', label: 'The last invoice date', note: 'for a day of back-dated entry' },
+]
+
+const DUE_TERMS = [
+  { id: 'none', label: 'No due date', note: 'a cash sale is not owed' },
+  { id: 'onReceipt', label: 'On receipt' },
+  { id: 'net15', label: '15 days' },
+  { id: 'net30', label: '30 days' },
+]
+
+const DAYS: Record<string, number> = { onReceipt: 0, net15: 15, net30: 30 }
+
+/** The box every header field sits in: one label, one line for the field, one for what is in
+ * effect. Written once because four fields with three different gaps read as four accidents. */
+function MetaField({ width, children }: { width: string; children: React.ReactNode }) {
+  return <div className={`flex shrink-0 flex-col ${width}`}>{children}</div>
+}
+
+const BOX = 'mt-1 flex h-control items-center rounded-control border border-stroke bg-surface focus-within:outline focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-stroke-focus'
+
+export function HeaderFields({ onOpenTransport, onOpenSettings }: { onOpenTransport: () => void; onOpenSettings: () => void }) {
+  const series = useInvoice((state) => state.series)
+  const number = useInvoice((state) => state.number)
+  const numberAuto = useInvoice((state) => state.numberAuto)
+  const date = useInvoice((state) => state.date)
+  const dueDate = useInvoice((state) => state.dueDate)
+  const setSeries = useInvoice((state) => state.setSeries)
+  const offerNumber = useInvoice((state) => state.offerNumber)
+  const setNumber = useInvoice((state) => state.setNumber)
+  const setDate = useInvoice((state) => state.setDate)
+  const setDueDate = useInvoice((state) => state.setDueDate)
+
+  // THE NUMBER COMES FROM THE SERIES, and asking again is what changing the series MEANS. It
+  // never lands on a number somebody has typed — the slice guards that, not this.
+  useEffect(() => {
+    void data.nextInvoiceNumber(series).then((answer) => {
+      if (!isRefusal(answer)) offerNumber(answer)
+    })
+  }, [series, offerNumber])
+
+  // The date field holds text while it is being typed and only becomes a date when it is a
+  // date. Writing every keystroke back would turn "2" into the year 2 on the way to 21-08.
+  const typing = useRef<string | null>(null)
+
+  return (
+    <div className="flex items-end gap-3">
+      <MetaField width="w-52">
+        <FieldSettings
+          choices={SERIES}
+          chosen={series}
+          onChoose={setSeries}
+          onOpenSettings={onOpenSettings}
+          settingsLabel="All series & numbering"
+        >
+          Inv No
+        </FieldSettings>
+        <div className={BOX}>
+          <TextField
+            aria-label="Invoice number"
+            value={number}
+            onChange={(event) => setNumber(event.target.value)}
+          />
+        </div>
+        {/* Auto is what the number IS, so it is said under it rather than drawn as a badge
+            beside it. Typing over the number is what turns it off, and then the line says the
+            number is set by hand — which is the fact somebody needs at save. */}
+        <InEffect>{numberAuto ? null : 'Set by hand'}</InEffect>
+      </MetaField>
+
+      <MetaField width="w-36">
+        <FieldSettings
+          choices={DATE_CARRY}
+          chosen="today"
+          onChoose={() => setDate(today())}
+          onOpenSettings={onOpenSettings}
+          settingsLabel="All date settings"
+        >
+          Date
+        </FieldSettings>
+        <div className={BOX}>
+          <TextField
+            aria-label="Invoice date"
+            defaultValue={dayText(date)}
+            key={date}
+            onChange={(event) => {
+              typing.current = event.target.value
+            }}
+            // ON LEAVING, NOT ON EVERY KEY. A half-typed date is not a date, and writing one
+            // back put the invoice in the year 2 on the way to 2026.
+            onBlur={(event) => {
+              const read = dayFromText(typing.current ?? event.target.value)
+              if (read !== null) setDate(read)
+              typing.current = null
+            }}
+          />
+          <Icon name="calendar" className="mr-2 size-icon-sm shrink-0 text-ink-muted" />
+        </div>
+        <InEffect>{date === today() ? null : 'Not today'}</InEffect>
+      </MetaField>
+
+      <MetaField width="w-36">
+        <FieldSettings
+          choices={DUE_TERMS}
+          chosen={dueDate === '' ? 'none' : 'onReceipt'}
+          onChoose={(id) => {
+            if (id === 'none') {
+              setDueDate('')
+              return
+            }
+            const at = new Date(`${date}T00:00:00Z`)
+            at.setUTCDate(at.getUTCDate() + (DAYS[id] ?? 0))
+            setDueDate(at.toISOString().slice(0, 10))
+          }}
+          onOpenSettings={onOpenSettings}
+          settingsLabel="All due date settings"
+        >
+          Due
+        </FieldSettings>
+        <div className={BOX}>
+          <TextField
+            aria-label="Due date"
+            // A dash, not today's date. An invoice with no term is not due today.
+            placeholder="—"
+            value={dueDate === '' ? '' : dayText(dueDate)}
+            readOnly
+          />
+        </div>
+      </MetaField>
+
+      {/* THE LORRY IS THE ONE TRANSPORT CONTROL. v2 retired the labelled button for it, and
+          everything an E-Way Bill needs is behind this one icon. */}
+      <button
+        type="button"
+        onClick={onOpenTransport}
+        aria-label="Delivery and transport"
+        title="Delivery & Transport — bill-to / ship-to and everything an E-Way Bill needs"
+        className="mb-1 grid size-control shrink-0 place-items-center rounded-control border border-stroke text-ink-muted hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-focus"
+      >
+        <Icon name="transport" className="size-icon-lg" />
+      </button>
+    </div>
+  )
+}

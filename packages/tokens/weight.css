@@ -1,0 +1,36 @@
+/* Type weight — four steps, named by the job they do.
+ *
+ * There was no weight scale until 20-08. Components reached for font-medium and
+ * font-semibold as each was written, which is why the screen read as default Tailwind
+ * wearing our colours: the weights were the framework's opinion, not a decision anybody
+ * made. Four steps, and a check that no component may type a raw one — the same rule
+ * colour already lives under.
+ *
+ * 510 rather than 500 is the whole point of the label step. At 12px, 500 is not reliably
+ * distinguishable from 400 on Windows, and 600 tips into bold beside it. 510 reads firmer
+ * than body without becoming an emphasis.
+ *
+ * Inter is a variable font, so every value between 100 and 900 is available and none of
+ * these costs a download. On a fallback face they snap to the nearest static weight, which
+ * is why the ladder is four steps and not eight: a ladder finer than the fallback can
+ * render is a ladder that disappears on the machine that needed it most.
+ */
+
+:root {
+  --weight-body: 400;   /* cell values, body text, anything being read rather than scanned */
+  --weight-label: 510;  /* column headings and field labels — the words around the data */
+  --weight-strong: 590; /* item names, the label on a total line */
+  --weight-total: 680;  /* the grand total, and nothing else on the screen */
+}
+
+@theme static {
+  /* Tailwind's own weight names — font-medium, font-semibold, font-bold — are cleared, so
+   * the only weight classes that exist are the four below. Without this they would sit
+   * beside ours looking equally legitimate, which is exactly how the ad-hoc ones got in. */
+  --font-weight-*: initial;
+
+  --font-weight-body: var(--weight-body);
+  --font-weight-label: var(--weight-label);
+  --font-weight-strong: var(--weight-strong);
+  --font-weight-total: var(--weight-total);
+}

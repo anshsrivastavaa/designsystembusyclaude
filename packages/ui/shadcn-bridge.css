@@ -1,0 +1,58 @@
+/* The shadcn bridge. One file. Delete it the day shadcn goes, and nothing else moves.
+ *
+ * shadcn's component files are copied into this repository as source we own, and they type
+ * shadcn's own colour names. This is the only place those names exist, and every one of
+ * them reads from one of our tokens. Nothing of ours ever reads from shadcn, and new code
+ * never types a shadcn name — a check fails any use outside this file and the copied
+ * components listed beside it.
+ *
+ * It is not a mechanical mapping. Three of shadcn's names mean something different from the
+ * word they share with us:
+ *   - shadcn's `muted` is a BACKGROUND. The text one is `muted-foreground`.
+ *   - shadcn's `secondary` is a quiet BUTTON FILL, not secondary text.
+ *   - shadcn's `accent` is the pale highlight behind a hovered menu row, not the brand blue.
+ *
+ * TWO OF THE THIRTY-ONE ARE NOT HERE, DELIBERATELY.
+ *
+ * `secondary` and `secondary-foreground` are dropped with the variant they serve. The quiet
+ * button in this product is white with a border, not a grey fill — grey surfaces here
+ * already mean input well and table header, so a grey button is a rectangle the user has to
+ * work out. It returns at step 4 as Cancel, next to Save, mapped to shadcn's `outline`.
+ *
+ * `accent` and `accent-foreground` CANNOT be bridged, because --color-accent already exists
+ * and is the Busy blue. Two different things cannot share one class name. The copied
+ * components type our names for that hover highlight instead: bg-surface-hover and text-ink.
+ * This is the single place where a copied file speaks our vocabulary rather than shadcn's,
+ * and it is the trap that would otherwise have painted every hovered menu row brand blue.
+ *
+ * Thirteen more are unmapped: five chart colours and eight sidebar colours. We have no
+ * chart palette and our navigation is our own. Reach for one and the class does not exist,
+ * so the build goes red and names the file.
+ */
+
+@theme static {
+  --color-background: var(--color-surface-page);
+  --color-foreground: var(--color-ink);
+
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-ink);
+
+  --color-popover: var(--color-surface-raised);
+  --color-popover-foreground: var(--color-ink);
+
+  --color-primary: var(--color-accent);
+  --color-primary-foreground: var(--color-on-accent);
+  /* shadcn writes a button's hover as the fill at ninety per cent opacity. This system says
+   * hover is a step on the scale and never a computed colour, so the bridge carries one name
+   * shadcn does not have rather than let a copied file fade a fill. */
+  --color-primary-hover: var(--color-accent-hover);
+
+  --color-muted: var(--color-surface-sunken);
+  --color-muted-foreground: var(--color-ink-muted);
+
+  --color-destructive: var(--color-danger);
+
+  --color-border: var(--color-stroke);
+  --color-input: var(--color-stroke);
+  --color-ring: var(--color-stroke-focus);
+}

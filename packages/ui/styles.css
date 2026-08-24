@@ -1,0 +1,65 @@
+/* Everything the library needs in order to look like itself.
+
+   This lived in the application, and six of the library's own tests reached back up into
+   apps/ to get it — which meant the library could not be rendered, tested or looked at
+   without the application present. A design system that cannot be seen on its own is not a
+   design system yet. The application imports this file; nothing here imports the
+   application. */
+
+@import 'tailwindcss';
+
+/* The three token layers, in the order they depend on each other: raw values, then what
+   those values are for, then the dimensions that flip on density. The semantic layer
+   carries its own @theme block, which is what turns those names into classes you can
+   type. The palette sits outside any @theme block on purpose, so no class exists for a
+   palette step and a component cannot reach past the semantic layer to a raw value. */
+@import '../tokens/palette.css';
+@import '../tokens/semantic.css';
+@import '../tokens/scaled.css';
+@import '../tokens/radius.css';
+@import '../tokens/weight.css';
+@import '../tokens/leading.css';
+@import '../tokens/motion.css';
+@import '../tokens/utilities.css';
+
+/* shadcn's own colour names, reading from ours. One file, deleted whole the day shadcn goes. */
+@import './shadcn-bridge.css';
+
+/* Dark is a class on the root element, not the operating system setting. A switch — in
+   Storybook's toolbar today, in the app later — has to be able to turn it on and off.
+   Nothing is authored behind it yet; the dark palette is step 5. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Tailwind only builds the classes it can see, and it looks next to the file that imports
+   it — which is now this folder. The application names its own sources in its own
+   stylesheet; @source directives from every file in the import tree are collected together. */
+@source '.';
+
+/* The page itself. Without this the window is browser-white rather than the page colour,
+   and every screen would have to remember to paint its own background. */
+@layer base {
+  body {
+    background-color: var(--color-surface-page);
+    color: var(--color-ink);
+
+    /* Every figure on every screen, aligned on its digits. Set here rather than remembered
+       per component: it was on in three components and off in the item grid, which is the one
+       place a column of numbers is actually read down. Checked on 20-08, not assumed. */
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* A KEY CAP IS SET IN THE PRODUCT'S OWN FACE, NOT THE BROWSER'S MONOSPACE.
+   *
+   * The user-agent stylesheet gives <kbd> `font-family: monospace`, and nothing here ever
+   * overrode it — so every shortcut hint on every screen was drawn in SF Mono while the words
+   * beside it were SF Pro. The zero in F10 is what gives it away, and it is a different
+   * TYPEFACE rather than a font feature: measured on the running build, the hint resolved to
+   * `ui-monospace, SFMono-Regular, Menlo, …` while the body resolved to `-apple-system, …`.
+   *
+   * v2 has carried `kbd{font-family:inherit}` since its first stylesheet. This is that line.
+   * It sits in the base layer rather than in the component, so a hint written by hand anywhere
+   * is fixed too — which is the point of there being one of these. */
+  kbd {
+    font-family: inherit;
+  }
+}

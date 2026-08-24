@@ -1,0 +1,66 @@
+<script>
+  // Storybook draws its error screens from inside the preview bundle. When that bundle fails
+  // to load at all, there is nothing left to draw them and the story spins for ever with the
+  // reason only in the browser console. That happened, and it cost a session. This script is
+  // injected ahead of the bundle and lives outside it, so it survives that failure and puts
+  // the reason on the screen.
+  //
+  // It only speaks when the bundle never started — `__STORYBOOK_PREVIEW__` is the flag a
+  // booted preview sets. After that, Storybook's own error screens are better than this one
+  // and this stays quiet.
+  (function () {
+    var shown = false
+
+    function show(heading, detail) {
+      if (shown || window.__STORYBOOK_PREVIEW__) return
+      shown = true
+
+      var panel = document.createElement('div')
+      panel.setAttribute('role', 'alert')
+      panel.style.cssText =
+        'position:fixed;inset:0;z-index:2147483647;overflow:auto;padding:2rem;' +
+        'background:#fff;color:#111;font:16px/1.5 ui-sans-serif,system-ui,sans-serif'
+
+      var title = document.createElement('h1')
+      title.textContent = heading
+      title.style.cssText = 'margin:0 0 .5rem;font-size:1.4rem;color:#b00020'
+
+      var lead = document.createElement('p')
+      lead.textContent =
+        'Storybook could not start this story. This is the error the browser reported.'
+      lead.style.cssText = 'margin:0 0 1rem'
+
+      var message = document.createElement('pre')
+      message.textContent = detail
+      message.style.cssText =
+        'margin:0 0 1rem;padding:1rem;white-space:pre-wrap;word-break:break-word;' +
+        'background:#f5f5f5;border-left:4px solid #b00020;font:13px/1.5 ui-monospace,monospace'
+
+      var next = document.createElement('p')
+      next.textContent = 'Nothing here is broken by clicking. Send this text to the build session.'
+      next.style.cssText = 'margin:0;color:#555'
+
+      panel.appendChild(title)
+      panel.appendChild(lead)
+      panel.appendChild(message)
+      panel.appendChild(next)
+      document.body.appendChild(panel)
+    }
+
+    window.addEventListener('error', function (event) {
+      show(
+        'This story could not load',
+        (event.message || 'Unknown error') +
+          (event.filename ? '\n\n' + event.filename + ':' + event.lineno : ''),
+      )
+    })
+
+    window.addEventListener('unhandledrejection', function (event) {
+      var reason = event.reason
+      show(
+        'This story could not load',
+        (reason && (reason.stack || reason.message)) || String(reason),
+      )
+    })
+  })()
+</script>

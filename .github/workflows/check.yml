@@ -1,0 +1,24 @@
+name: check
+
+# CI runs the one command and nothing else. The previous build's workflow listed checks by
+# hand, one was left off, and it never ran on the server at all while passing locally — the
+# same shape of mistake three separate times. There is nothing to leave off a list here.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run check

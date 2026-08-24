@@ -1,0 +1,43 @@
+name: visual baselines
+
+# TAKES THE PICTURES THE VISUAL GROUP COMPARES AGAINST, on the same Linux the comparing happens
+# on. A baseline taken on a Mac is red on Linux for reasons that have nothing to do with the
+# design — different hinting, different sub-pixel rendering — so they cannot be produced on the
+# machine most of this is written on.
+#
+# It is DISPATCHED BY HAND on purpose. The group's whole value is that a picture was approved
+# rather than accepted, so the pictures arrive as an artefact for somebody to look at, and
+# become baselines only when a person commits them. A job that committed them itself would be
+# the group approving its own work.
+#
+# To use it: run this workflow, download the `visual-baseline` artefact, unzip it at the
+# repository root, look at every picture, and commit. The visual group turns itself on from
+# there — there is no line to flip.
+#
+# THE ARTEFACT IS NAMED FOR THE FOLDER THE CHECK READS, and that is not a tidy-up. It was
+# `visual-baselines`, one letter out, and the instruction two lines above was the only thing
+# saying so — so the pictures were unzipped under the artefact's name, into a folder nothing
+# reads, and the group went on politely reporting itself off with the baselines sitting right
+# there. An unzip now lands where the check looks, and check-visual.mjs is red rather than
+# quiet if pictures ever turn up beside it again.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  take:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run visual:accept
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-baseline
+          path: visual-baseline/
+          if-no-files-found: error

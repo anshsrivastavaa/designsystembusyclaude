@@ -1,0 +1,12 @@
+/* The library's stylesheet is the stylesheet: Tailwind, the token layers, the shadcn bridge
+   and the page's own paint all live in packages/ui, so a component can be rendered without
+   this application anywhere near it. What is left here is the one thing that is genuinely
+   this app's — where to look for the classes it uses. */
+
+@import '@busy/ui/styles.css';
+
+/* Tailwind builds only the classes it can see, and it looks next to the file that imports
+   it, which is now packages/ui. These are the other two places classes are written: this
+   application, and the Storybook that renders its screens. */
+@source '.';
+@source '../../../.storybook';

@@ -1,0 +1,103 @@
+/* Scaled — the dimensions that flip on DENSITY, never on theme.
+ *
+ * Standard is the default and needs no attribute. Comfortable is switched on with
+ * <html data-density="comfortable"> and exists for the people who found the shipped app
+ * too tight to read — it is not a zoom, it is a second authored set.
+ *
+ * The two switches are independent, so theme and density compose without either one
+ * having to know about the other.
+ *
+ * At comfortable, --control-h is 44px, which clears Apple's minimum touch target and is
+ * what makes the tablet build the web build at comfortable rather than a third codebase.
+ * --control-h-sm is 36px and does NOT clear it. Whether a small control is acceptable under
+ * a finger is a question for the first screen that puts one on a touch surface, at step 4.
+ */
+
+:root,
+[data-density='standard'] {
+  --control-h: 32px;    /* the default control: a field, a select, a normal button */
+  --control-h-sm: 26px; /* chrome — toolbar buttons, chips */
+  --control-h-lg: 38px; /* the emphasised control: the party field, Save */
+  --row-h: 34px;        /* one row of the item grid */
+
+  --space-cell-x: 12px; /* grid cell padding, left and right */
+  --space-cell-y: 4px;  /* grid cell padding, top and bottom */
+
+  /* 13 / 14 / 16 / 18 / 22. Aj's ruling, 20-08, and two of those numbers moved.
+   *
+   * THE TITLE IS 22, NOT 24. Stakeholders want a title PRESENT, not large. 22 against a
+   * 14 body is 1.57x where 20 was 1.43x — that is the gap that was missing, and it is the
+   * whole reason the title reads as a title.
+   *
+   * THE SMALLEST SIZE IS 13, NOT 12. Column headings, the item strip and the small labels
+   * are single rows rather than two thousand, so a pixel costs nothing there, and 12 is the
+   * size Aj has squinted at twice.
+   *
+   * BODY STAYS 14. The item grid is at nine rows on a 1280x720 screen with the breakdown
+   * folded, and every step up costs a row off it.
+   *
+   * WHAT THAT DOES TO THE SCALE, AND IT IS DELIBERATE. At 13 against 14 the SIZE step is no
+   * longer what carries hierarchy — the WEIGHT ladder is. A column heading at 13/510 beside
+   * a value at 14/400 reads as QUIETER rather than SMALLER, which is what a heading over a
+   * column of figures should be. Nobody should later expect size alone to signal rank, and
+   * nobody should "fix" the one-pixel gap by widening it. Widening it is the change that
+   * would break this, not the gap. */
+  /* CAPS IS FOR TEXT THAT IS SCANNED, NOT READ — a column heading, a section label, a keyboard
+   * chip. Uppercase and letterspaced, it is a LANDMARK you glance at on the way to the figures
+   * under it, and eleven pixels of caps carries roughly the apparent size of thirteen of
+   * lowercase. The 13px floor is for text a person reads at arm's length, which this is not.
+   * v2 uses it and argued it into place there. Never for a sentence. */
+  --font-size-caps: 11px;
+  --font-size-sm: 13px;
+  --font-size-body: 14px;
+  --font-size-lg: 16px;
+  --font-size-heading: 18px; /* a section or card heading */
+  --font-size-title: 22px;   /* the screen title, one per screen */
+
+  /* Panel geometry does not scale with density — a drawer is as wide as its content needs,
+   * and its content is what changes. Kept here beside the other dimensions rather than in a
+   * file of its own for one value. */
+  --panel-drawer-w: 520px;
+
+  --icon-xs: 12px;
+  --icon-sm: 14px;
+  --icon-md: 16px;
+  --icon-lg: 18px;
+  --icon-xl: 20px;
+}
+
+[data-density='comfortable'] {
+  --control-h: 44px;
+  --control-h-sm: 36px;
+  --control-h-lg: 50px;
+  --row-h: 48px;
+
+  --space-cell-x: 16px;
+  --space-cell-y: 8px;
+
+  /* 13 / 15 / 16 / 18 / 22 / 26 — the same six steps, one notch up. Caps scales with the rest:
+   * the eyes this mode is for do not stop scanning column headings. */
+  --font-size-caps: 13px;
+  --font-size-sm: 15px;
+  --font-size-body: 16px;
+  --font-size-lg: 18px;
+  --font-size-heading: 22px;
+  --font-size-title: 26px;
+
+  /* One step up across the board, for the fifty-plus eyes this mode is for. */
+  --panel-drawer-w: 520px;
+
+  --icon-xs: 14px;
+  --icon-sm: 16px;
+  --icon-md: 18px;
+  --icon-lg: 20px;
+  --icon-xl: 24px;
+}
+
+@theme static {
+  /* Tailwind's own size names — text-xs, text-sm, text-2xl — are cleared, so the only size
+   * classes that exist are the five authored in utilities.css against our tokens. Without
+   * this, `text-sm` silently meant Tailwind's 14px on every screen in the product while our
+   * own 13px token sat unused beside it. */
+  --text-*: initial;
+}

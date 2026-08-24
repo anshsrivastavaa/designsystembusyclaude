@@ -1,0 +1,2 @@
+npm run check
+node scripts/check-session.mjs

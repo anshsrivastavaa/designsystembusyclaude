@@ -1,0 +1,95 @@
+/* Motion. Ported from the demo build on 22-08, which is where the set was authored and proved.
+ *
+ * Until this file the product had no motion tokens at all, so every transition was Tailwind's
+ * default — one duration, one curve, applied to whatever somebody remembered to type — and that
+ * is the single largest reason the screens read as flat.
+ *
+ * THE RULE BEHIND THE NUMBERS. Motion earns its place by explaining where a thing came from. If
+ * a panel simply appears, the eye has to find it; if it slides in from the edge it entered from,
+ * the eye already knows. Anything that fades without moving is decoration and should be cut.
+ *
+ * THREE SPEEDS, AND THE NAMES SAY WHAT MOVES RATHER THAN HOW LONG IT TAKES. A name that is a
+ * number is a raw value wearing a token's coat: the moment two things both want "200ms" for
+ * unrelated reasons, the number can never be changed again.
+ *
+ * LEAVING IS ALWAYS FASTER THAN ARRIVING. Arriving has to be understood; leaving has already
+ * been decided, and a slow exit is a door that sticks. That is why --motion-leave is its own
+ * value and not one of the three.
+ */
+
+@theme static {
+  /* THE SAME HOLE THE COLOUR AND RADIUS NAMESPACES WERE CLOSED FOR. Tailwind ships ease-in,
+   * ease-out and ease-in-out, and a curve half ours is worse than one that is not ours at all,
+   * because the wrong one still works and nothing looks broken until ours moves. */
+  --ease-*: initial;
+
+  /* The workhorse. Leaves immediately, arrives gently, never overshoots — the curve for
+   * anything moving INTO place. */
+  --ease-settle: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* For anything leaving, and for a value counting up. Starts at full speed. */
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* One small overshoot, for a thing that should feel physical: a toggle knob, a chip being
+   * added. Never on anything large — a panel that bounces reads as a mistake rather than as
+   * life. */
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+:root {
+  /* Colour, opacity, a toggle flipping. Nothing changes position, so anything slower reads as
+   * lag on something that should feel instant. */
+  --motion-swift: 120ms;
+
+  /* A field growing, docked fields appearing, a row expanding. The eye needs to follow a shape
+   * changing, and below roughly this it cannot. */
+  --motion-glide: 200ms;
+
+  /* A panel or a drawer arriving from off screen. It travels furthest, so it gets the most
+   * time. */
+  --motion-enter: 280ms;
+
+  /* Anything going away, whichever of the three brought it in. */
+  --motion-leave: 160ms;
+
+  /* How far a thing travels while appearing. Far enough to read as movement, short enough that
+   * it never looks like it flew in. */
+  --motion-travel: 8px;
+}
+
+/* Anything appearing MOVES as well as fades. A pure fade has no direction, so it tells the eye
+ * nothing about where the thing belongs — which is the whole job motion is here to do. */
+@keyframes motion-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-travel));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes motion-drop {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--motion-travel) * -1));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Some people get motion sick, and the operating system already knows. This is not a courtesy,
+ * it is WCAG 2.3.3, and it is one block. It sits in the token layer rather than in a component
+ * so that nothing anybody writes later can be exempt from it by forgetting. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+}
