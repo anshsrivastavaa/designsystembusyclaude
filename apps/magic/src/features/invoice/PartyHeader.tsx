@@ -5,25 +5,14 @@ import { useEffect, useRef, useState } from 'react'
 
 import { data } from '../../data/source'
 import { isRefusal } from '../../data/schema/refusal'
-import { formatBalancePaise } from '../../lib/money'
 import type { Party } from '../../data/schema/party'
 import { PartyDetails } from './PartyDetails'
 import { PartyDrawer } from './PartyDrawer'
-import { Button } from '@busy/ui/Button'
-import { Label } from '@busy/ui/Label'
+import { FieldLabel } from './FieldLabel'
 import { PartyBadge } from './PartyBadge'
 import { HeaderFields } from './HeaderFields'
-import { InEffect } from './InEffect'
 import { PartyPicker } from './PartyPicker'
 import { useInvoice } from './store'
-
-/** The one line under the party field. Outstanding first, because that is what the person
- * asking "can I sell to them" is looking for; overdue only when there is some. */
-function partyLine(party: Party): string {
-  const parts = [party.city, `Outstanding ${formatBalancePaise(party.outstandingPaise)}`]
-  if (party.overduePaise > 0) parts.push(`${formatBalancePaise(party.overduePaise)} overdue`)
-  return parts.filter((part) => part !== '').join(' · ')
-}
 
 export function PartyHeader({ onOpenTransport, onOpenSettings }: { onOpenTransport: () => void; onOpenSettings: () => void }) {
   const party = useInvoice((state) => state.party)
@@ -58,9 +47,10 @@ export function PartyHeader({ onOpenTransport, onOpenSettings }: { onOpenTranspo
   const [options, setOptions] = useState<readonly Party[]>([])
   const [recentIds, setRecentIds] = useState<readonly string[]>([])
   const [showing, setShowing] = useState(false)
-  // WHICHEVER CONTROL OPENED THE PANEL, so closing can hand the keyboard back to it. Two things
-  // open it — the grade badge and the Details control — and the screen is the only thing that
-  // knows which was pressed.
+  // WHATEVER OPENED THE PANEL, so closing can hand the keyboard back to it. The grade badge is
+  // the only door today — the Details control beside the party line went with the line — and
+  // this is kept a ref rather than dropped because the panel is opened from a screen that will
+  // grow a second way in.
   //
   // THE SCREEN DOES THIS, NOT THE DRAWER, and the reason is a race that only showed once the
   // panel started loading its facts. The Drawer returns the keyboard on its way out, and the
@@ -96,21 +86,32 @@ export function PartyHeader({ onOpenTransport, onOpenSettings }: { onOpenTranspo
 
   return (
     <section aria-label="Party" className="flex shrink-0 items-end gap-4 px-2 pt-2">
-      <div className="min-w-0 flex-1">
-        <div className="relative flex items-baseline justify-between gap-4">
-          {/* ON THE BORDER, like every other field — v2's treatment, approved as the rule. */}
-          <Label className="absolute top-0 left-2 z-10 -translate-y-1/2 bg-surface px-1 text-caps font-label uppercase tracking-wide">
-            Party
-          </Label>
-          {/* Above the field, not below it: the list opens over anything underneath, and a
-              message the person cannot see is the same as no message. */}
-          {asking?.field === 'party' ? (
-            <p role="alert" className="text-sm text-danger">
-              {asking.message}
-            </p>
-          ) : null}
-        </div>
-        <div className="group/party mt-1 flex h-control items-center rounded-control border border-stroke bg-surface">
+      {/* AS WIDE AS v2's PARTY FIELD, WHICH IS 537 AT 1440 — AND NOT AS WIDE AS THE ROW.
+          It was flex-1 and measured 756. v2 leaves the space between the party field and the
+          invoice number empty on purpose; a field's width is a promise about what goes in it,
+          and three quarters of a header row promises a party name nobody has. w-134 is 536,
+          which is the nearest stop on the scale. It still SHRINKS on a narrow window — the
+          fixed width is a ceiling, not a floor. */}
+      <div className="w-134 min-w-0">
+        {/* Above the field, not below it: the list opens over anything underneath, and a
+            message the person cannot see is the same as no message.
+            ABSENT, NOT EMPTY, WHEN THERE IS NOTHING WRONG. The row was always drawn and held
+            nothing, and an empty baseline box is not quite zero high. Measured after: all three
+            bordered field boxes now sit at exactly the same top, height and bottom. */}
+        {asking?.field === 'party' ? (
+          <p role="alert" className="text-right text-sm text-danger">
+            {asking.message}
+          </p>
+        ) : null}
+        {/* RELATIVE, AND IT IS THE FIELD'S OWN BOX. The notch is absolutely placed against its
+            nearest positioned ancestor, and that used to be the row holding the label and the
+            error — which sits ABOVE the field. So the party label rode four pixels higher than
+            the other three: measured at 97 against 101 with everything else identical. A label whose
+            job is to break a stroke has to be anchored to the box that draws the stroke. */}
+        <div className="group/party relative mt-1 flex h-control items-center rounded-control border border-stroke bg-surface">
+          {/* THE SAME NOTCH THE OTHER THREE WEAR, and now literally the same file. It was
+              written out here as its own set of classes, which is one rule authored twice. */}
+          <FieldLabel>Party</FieldLabel>
           <PartyPicker
             listId="party-list"
             value={search}
@@ -137,22 +138,24 @@ export function PartyHeader({ onOpenTransport, onOpenSettings }: { onOpenTranspo
           <PartyBadge party={party} onOpen={openPanel} />
         </div>
 
-        {/* WHAT IS KNOWN ABOUT THIS PARTY, DOCKED UNDER THE FIELD — v2's third header row, and
-            the same partner the settings labels have: a line that appears only when there is
-            something to say. It was a block to the right of the field, which put the party's
-            standing further from the party's name than the invoice number was. */}
-        {party === null ? null : (
-          <div className="flex items-baseline gap-3">
-            <InEffect>{partyLine(party)}</InEffect>
-            {/* v2 keeps the readout as TEXT and puts a named control beside it. The line was
-                itself a button here, which made a paragraph of facts look pressable and gave
-                the one thing you can actually do no name of its own. */}
-            <Button variant="ghost" size="sm" onClick={openPanel} className="shrink-0">
-              Details
-            </Button>
-          </div>
-        )}
+        {/* NOTHING UNDER THE PARTY FIELD, AND NO INSIGHT INFORMATION OUTSIDE THE DRAWER AT ALL.
+            Ruled by Aj on 23-08 and confirmed twice on 24-08, the second time in those words.
+            The city, the outstanding balance and a Details control used to sit here as v2's
+            third header row; the whole line goes, not just the control.
+            IT IS A RULE ABOUT WHERE A FACT LIVES, not about this one line — so a later pass
+            that wants to show the credit limit, the overdue count or the GSTIN standing here
+            is breaking it, however small the thing it wants to show.
+            THE TRUST FACTOR IS THE DOOR. It is a real button inside the field and therefore
+            reached by Tab, which was the other half of the 23-08 finding and is why deleting
+            the Details control loses no way in. */}
       </div>
+
+      {/* THE SPACE GOES BETWEEN THEM, WHICH IS v2's ARRANGEMENT. The party field used to fill
+          the row, so the number, date and due sat against the right edge as a side effect of
+          it. Fixing the party field's width took that away and left the four fields huddled
+          on the left with the void after them — and the void is the wrong side, because the
+          paperclip above and the grid's last column below are both hard against the right. */}
+      <span className="flex-1" />
 
       <HeaderFields onOpenTransport={onOpenTransport} onOpenSettings={onOpenSettings} />
 

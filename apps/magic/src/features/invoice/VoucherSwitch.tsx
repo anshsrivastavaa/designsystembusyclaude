@@ -74,7 +74,7 @@ export function VoucherSwitch({ type, onSwitch }: { type: VoucherType; onSwitch:
         aria-label={`${type} — switch voucher type`}
         title="Switch voucher type"
         onClick={() => setOpen((was) => !was)}
-        className="flex items-center gap-1 rounded-control px-1 hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-focus"
+        className="flex items-center gap-1 rounded-control px-1 pressable hover:bg-surface-hover focus-ring"
       >
         <h1 className="text-title font-strong tracking-tight text-ink">{type}</h1>
         <Icon name="chevronDown" className="size-icon-sm text-ink-muted" />

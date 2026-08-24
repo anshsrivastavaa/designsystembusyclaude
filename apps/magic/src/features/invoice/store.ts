@@ -13,6 +13,7 @@ import type { ItemFacts } from './cellHands'
 import { particulars, type Particulars } from './particulars'
 import { TYPED_INTO } from './typedInto'
 import { selection, type Selection } from './selection'
+import { attaching, type Attaching } from './attaching'
 import type { Item } from '../../data/schema/item'
 import type { Party } from '../../data/schema/party'
 
@@ -32,7 +33,7 @@ const UNTIL_SETTINGS_ARRIVE: InvoiceSettings = {
   companyStateCode: '23',
 }
 
-type InvoiceState = SundryActions & NoteAndRights & Particulars & Selection & {
+type InvoiceState = SundryActions & NoteAndRights & Particulars & Selection & Attaching & {
   /** Columns this user may look at and not change. It comes from their rights, so it is the same
    * all day — drawn as shape, never a tint: an exception that never ends is not an exception. */
   readOnlyColumns: readonly ColumnId[]
@@ -102,7 +103,7 @@ function replace(rows: InvoiceRow[], index: number, change: Partial<InvoiceRow>)
   const row = rows[index]
   if (!row) return rows
   const next = { ...row, ...change }
-  next.amountPaise = lineAmount(next.quantity, next.pricePaise)
+  next.amountPaise = lineAmount(next.quantity, next.pricePaise, next.discountPercent)
   // A new array for the list, the same object for every row that did not change, so a
   // memoised row does not re-render because its neighbour did.
   const copy = rows.slice()
@@ -151,6 +152,7 @@ export const useInvoice = create<InvoiceState>((set) => ({
       ...noteAndRights(set),
       ...particulars(set),
       ...selection(set),
+      ...attaching(set),
     })),
 
   load: (rows, paidPaise = 0) =>
@@ -164,6 +166,7 @@ export const useInvoice = create<InvoiceState>((set) => ({
   ...noteAndRights(set),
   ...particulars(set),
   ...selection(set),
+  ...attaching(set),
 
   setRoundOff: (roundOffOn) => set({ roundOffOn, roundOffTouched: true }),
   moveTo: (cursor) => set((state) => ({ cursor, gridEngaged: true, cursorClaim: state.cursorClaim + 1 })),

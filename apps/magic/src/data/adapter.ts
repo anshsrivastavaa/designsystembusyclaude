@@ -5,6 +5,7 @@
 // This is the whole handover story: the dev team implements one interface and the front end
 // works.
 
+import type { Attachment } from './schema/attachment'
 import type { Invoice, InvoiceDraft } from './schema/invoice'
 import type { InvoiceSettings } from './schema/settings'
 import type { Item } from './schema/item'
@@ -82,5 +83,16 @@ export interface DataAdapter {
   getInvoice(id: string): Promise<Answer<Invoice>>
   /** The backend is authoritative here. What the screen worked out on the way is for the
    * person typing; what comes back from this is what is true. */
+  /** Take a file the person has chosen and give back the record of it.
+   *
+   * WHETHER THE FILE IS ALLOWED IS DECIDED BEFORE THIS IS CALLED, in `lib/attachments.ts` — the
+   * extension and the byte count are the front end's to check, and the refusal has to arrive in
+   * the same instant as the file rather than after a round trip. What comes back from here is
+   * the half a browser cannot know: an id, WHO is signed in, and WHEN by a clock that is not
+   * the operator's laptop.
+   *
+   * The bytes are not sent yet. The screen keeps them and hands them over at save. */
+  attachFile(name: string, bytes: number): Promise<Answer<Attachment>>
+
   saveInvoice(draft: InvoiceDraft): Promise<Answer<Invoice>>
 }

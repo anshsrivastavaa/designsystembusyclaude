@@ -72,7 +72,7 @@ export function DrawerField({
             value={value}
             onChange={(event) => onChange(event.target.value)}
             aria-label={label}
-            className="h-control min-w-0 flex-1 rounded-control border border-stroke bg-surface px-2 text-body text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-focus"
+            className="h-control min-w-0 flex-1 rounded-control border border-stroke bg-surface px-2 text-body text-ink focus-ring"
           >
             {options.map((option) => (
               <option key={option} value={option}>

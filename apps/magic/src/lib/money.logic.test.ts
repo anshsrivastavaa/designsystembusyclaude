@@ -97,3 +97,33 @@ describe('numbers the arithmetic cannot hold', () => {
     expect(toPaise('-4')).toBe(-400)
   })
 })
+
+describe('a discount on the line', () => {
+  // Typeable, shown in the Disc% column, and applied to nothing until 24-08.
+  it('comes off the line amount', () => {
+    expect(lineAmount(4, 10000, 5)).toBe(38000)
+    expect(lineAmount(1, 11800, 100)).toBe(0)
+  })
+
+  it('no discount is the same answer as before it existed', () => {
+    expect(lineAmount(3, 1250, 0)).toBe(3750)
+    expect(lineAmount(3, 1250)).toBe(3750)
+  })
+
+  // Rounding the discount and subtracting it loses a paisa on about half of all lines, and
+  // two thousand of those is twenty rupees the invoice cannot account for.
+  it('is rounded once, at the end', () => {
+    // 7 × 333 = 2331, less 7.5% is 2156.175 — one answer, rounded once.
+    expect(lineAmount(7, 333, 7.5)).toBe(2156)
+    // Rounding the discount first would give 2331 - 175 = 2156 here too, so a case where the
+    // two disagree: 3 × 505 = 1515, less 3.5% is 1461.975 → 1462. Discount-first rounds 53.025
+    // to 53 and gives 1462 as well; 9 × 777 = 6993, less 12.5% is 6118.875 → 6119, where
+    // discount-first rounds 874.125 to 874 and gives 6119. The disagreement is at the half:
+    // 1 × 1000 less 0.05% is 999.5 → 1000, where discount-first rounds 0.5 to 1 and gives 999.
+    expect(lineAmount(1, 1000, 0.05)).toBe(1000)
+  })
+
+  it('rubbish in a discount box leaves the amount alone rather than emptying the line', () => {
+    expect(lineAmount(4, 10000, Number.NaN)).toBe(40000)
+  })
+})

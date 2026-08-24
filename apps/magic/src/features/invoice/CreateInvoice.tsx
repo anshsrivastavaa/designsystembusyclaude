@@ -143,7 +143,21 @@ export function CreateInvoice({
     // ONE SCROLLING COLUMN, AND THE ACTION BAR IS THE ONLY PINNED THING ON IT. The header, the
     // party row, the grid and the footer travel together; the bar stays, because an action you
     // have to scroll to find is an action people stop using.
-    <main ref={invoice} className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-surface-page text-ink">
+    // A PAGE INSET, BECAUSE SIXTEEN PIXELS IS A SEAM RATHER THAN A MARGIN. The white plane ran
+    // hard against the rail's border — rail right edge 56, plane left edge 56 — so the header
+    // read as attached to the chrome rather than as the page the chrome is holding.
+    //
+    // THE NUMBER IS v2's PAGE INSET, AND IT IS NOT v2's RAIL GAP, BECAUSE v2 HAS NO RAIL HERE.
+    // Measured at 1470: v2's create screen carries a top menu and no side rail at all, and its
+    // content sits 28 from the window's left edge. So there was no gap to copy, and 28 is the
+    // only number v2 actually offers for "how far the page stands off the edge of everything".
+    // Written down because "take v2's number" was the instruction and v2 turned out not to have
+    // one — the next person should not go looking for it again.
+    //
+    // BOTH SIDES. On the left alone the plane would be a banner with a gap down one edge; it
+    // already ran to the window's right edge, so insetting one side and not the other reads as
+    // a mistake rather than as a margin.
+    <main ref={invoice} className="mx-7 flex min-h-0 flex-1 flex-col overflow-y-auto bg-surface-page text-ink">
       {/* ONE WHITE PLANE, running down from the top bar and carrying both the title row and the
           party row. That is what makes the chrome read as one object instead of three stacked
           strips — v2's arrangement, and the thing Aj has asked for three times. */}
@@ -154,7 +168,6 @@ export function CreateInvoice({
           favourite={favourite}
           onFavourite={() => setFavourite((was) => !was)}
           onBack={onBack ?? (() => undefined)}
-          onAttach={() => undefined}
           onSettings={onOpenSettings ?? (() => undefined)}
         />
         <PartyHeader onOpenTransport={() => setTransport(true)} onOpenSettings={onOpenSettings ?? (() => undefined)} />

@@ -64,7 +64,7 @@ export function Breakdown() {
             aria-expanded={open}
             aria-label={open ? 'Hide the breakdown' : 'Show the breakdown'}
             onClick={() => setOpen((was) => !was)}
-            className="rounded-control px-1 text-ink-muted hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-focus"
+            className="rounded-control px-1 text-ink-muted hover:text-ink focus-ring"
           >
             {/* A drawn icon, not a typed character. ⌃ and ⌄ are a font's opinion: they sit
                 off the baseline, change size between faces, and are absent from some. */}

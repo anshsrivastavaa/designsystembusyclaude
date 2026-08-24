@@ -134,7 +134,7 @@ export function DatePanel({
                 // A PILL WITH A BORDER, which is what v2 draws. Bare text in a column reads as a
                 // list of words rather than a row of things you can press, and nothing about it
                 // says where one stops and the next starts.
-                className="h-control-sm rounded-pill border border-stroke bg-surface px-3 text-sm text-ink hover:border-stroke-strong hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-focus"
+                className="h-control-sm rounded-pill border border-stroke bg-surface px-3 text-sm text-ink pressable hover:border-stroke-strong hover:bg-surface-hover focus-ring"
               >
                 {pick.label}
               </button>
@@ -167,7 +167,7 @@ function Step({ label, onStep, glyph }: { label: string; onStep: () => void; gly
       // A SINGLE GLYPH AT A READABLE SIZE, which is v2's. Two chevron icons shoved together made
       // the year steps read as four stray arrows at two heights, and shrinking them to fit made
       // them unreadable. « and » are one character each and say "further" without any of that.
-      className="grid size-control-sm place-items-center rounded-control text-body text-ink-muted hover:bg-surface-hover hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-focus"
+      className="grid size-control-sm place-items-center rounded-control text-body text-ink-muted pressable hover:bg-surface-hover hover:text-ink focus-ring"
     >
       {glyph}
     </button>

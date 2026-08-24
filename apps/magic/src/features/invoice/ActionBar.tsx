@@ -67,7 +67,7 @@ export function ActionBar({
               type="button"
               aria-pressed={chosen}
               onClick={() => onPaid(which === 'Paid')}
-              className={`h-full rounded-control px-3 text-body focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-focus ${
+              className={`h-full rounded-control px-3 text-body focus-ring ${
                 chosen ? 'bg-surface font-label text-ink shadow-raised' : 'text-ink-secondary'
               }`}
             >

@@ -19,20 +19,33 @@ import { expect, type Page } from '@playwright/test'
 // screen" — the one fact that decides what the press does. Same discipline as openInvoice
 // waiting for rows rather than for the screen to have been drawn.
 //
-// ONLY FOR A LIST THAT HIGHLIGHTS ITS FIRST MATCH, which the party and bill sundry lists do. The
-// item list deliberately highlights nothing on arrival — the section walk passes through it — so
-// a journey there arrows onto the row it wants first, and must not use this.
+// FOR EVERY LIST ON THIS SCREEN, WHICH IS A CORRECTION. This said the item list "deliberately
+// highlights nothing on arrival ... and must not use this", and on that basis four journeys
+// were left with the raw wait the helper exists to replace — one of them five lines under three
+// correct uses in the same file. The first half is true and the second does not follow.
+// `ComboBox.tsx` sets the highlight to the first row the moment `asked` is set, and typing is
+// what sets it: on ARRIVAL the item list highlights nothing, and after a single keystroke it
+// behaves exactly like the party list. Every one of those four journeys types before it
+// presses, so every one of them was racing the same answer.
+//
+// NAME THE LIST. Two lists can be on screen at once — the party list is still there for a beat
+// after a party is picked — and an unnamed `getByRole('option')` is answered by whichever one
+// the browser reaches first. A journey that meant the item list and got the party list is not a
+// slower version of the same check; it is a different check that happens to pass.
 
 /** Types `term` into the list that already holds the keyboard and takes the row reading `row`,
- * once that row is the one the list is offering. */
-export async function takeFromTheList(page: Page, term: string, row: string): Promise<void> {
+ * once that row is the one the list is offering. `list` names the listbox to ask — "Party",
+ * "Item", "Bill sundry" — and defaults to whichever is open when only one can be. */
+export async function takeFromTheList(page: Page, term: string, row: string, list?: string): Promise<void> {
   await page.keyboard.type(term)
 
-  await expect(page.getByRole('option').filter({ hasText: row }).first()).toBeVisible()
+  const within = list === undefined ? page : page.getByRole('listbox', { name: list })
+
+  await expect(within.getByRole('option').filter({ hasText: row }).first()).toBeVisible()
   // The highlight, not the mere presence of the row. This is the whole point of the helper, and
   // it is asked of the accessible state the browser reports rather than of a class or an
   // attribute standing in for it.
-  await expect(page.getByRole('option', { selected: true })).toContainText(row)
+  await expect(within.getByRole('option', { selected: true })).toContainText(row)
 
   await page.keyboard.press('Enter')
 }

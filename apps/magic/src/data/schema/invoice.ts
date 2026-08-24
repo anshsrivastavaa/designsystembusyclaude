@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { attachmentSchema } from './attachment'
 import { taxTreatmentSchema } from './item'
 import { sundryRowSchema } from './sundry'
 
@@ -126,6 +127,17 @@ export const invoiceDraftSchema = invoiceSchema
     narration: z.string(),
     narrationPrinted: z.boolean(),
     roundOffOn: z.boolean(),
+    /** SAVED WITH THE INVOICE, which is the product document's word for it and the reason the
+     * records ride on the draft rather than going up a channel of their own. The bytes do not
+     * travel in this object — the screen holds those and hands them over beside it; what is
+     * here is what the invoice records ABOUT each file.
+     *
+     * IT IS ON THE DRAFT AND NOT YET ON THE INVOICE. What comes back from a save does not carry
+     * attachments, so opening a saved invoice cannot show them — that is owed by the modify
+     * screen, which is not built, and it is filed in docs/owed.md against that moment. Adding
+     * the field to `invoiceSchema` now would put an empty array on sixty-seven seeded invoices
+     * and tell the listing it had an attachment marker it does not have. */
+    attachments: z.array(attachmentSchema),
   })
 
 export type InvoiceDraft = z.infer<typeof invoiceDraftSchema>

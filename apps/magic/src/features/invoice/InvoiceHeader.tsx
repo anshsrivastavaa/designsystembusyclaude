@@ -13,8 +13,19 @@
 // INVOICE SETTINGS LIVES HERE, not in the shell. Settings that belong to an invoice belong on
 // the invoice: a gear in the frame says "the application", and this one governs one screen.
 
+// EVERY PRESSABLE THING IN THIS HEADER GIVES WAY UNDER THE FINGER, and the class is `pressable`.
+//
+// IT WAS FOUR CLASSES WRITTEN OUT AT SIX PLACES FOR HALF A DAY, while the utility that owns this
+// was Session B's to write and had not landed. It has now, so they collapse onto it — and it is
+// not the same thing spelled differently: the hand-written run set Tailwind's `scale` PROPERTY,
+// which `transition-property: transform` does not cover, so the eased press was easing nothing
+// the transition knew about. `pressable` sets `transform` and owns the whole transition, because
+// an element gets one `transition-property` and `transition-colors` beside it wins the fight.
+//
+// The star, the paperclip and the gear need nothing here: `Button` wears it now.
 import { Button } from '@busy/ui/Button'
 import { Icon } from '@busy/ui/Icon'
+import { Attachments } from './Attachments'
 import { VoucherSwitch } from './VoucherSwitch'
 import type { VoucherType } from './voucherTypes'
 
@@ -26,11 +37,10 @@ export type InvoiceHeaderProps = {
   favourite: boolean
   onFavourite: () => void
   onBack: () => void
-  onAttach: () => void
   onSettings: () => void
 }
 
-export function InvoiceHeader({ type, onSwitch, favourite, onFavourite, onBack, onAttach, onSettings }: InvoiceHeaderProps) {
+export function InvoiceHeader({ type, onSwitch, favourite, onFavourite, onBack, onSettings }: InvoiceHeaderProps) {
   return (
     <div className="flex shrink-0 items-center gap-2 pr-2">
       {/* Filled, and rounded on its right side only — it runs off the left edge of the plane,
@@ -39,7 +49,7 @@ export function InvoiceHeader({ type, onSwitch, favourite, onFavourite, onBack, 
         type="button"
         onClick={onBack}
         aria-label="Back"
-        className="grid size-control-sm shrink-0 place-items-center rounded-r-card bg-surface-sunken text-ink-muted hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-focus"
+        className="grid size-control-sm shrink-0 place-items-center rounded-r-card bg-surface-sunken text-ink-muted pressable hover:text-ink focus-ring"
       >
         <Icon name="chevronLeft" className="size-icon-lg" />
       </button>
@@ -71,9 +81,12 @@ export function InvoiceHeader({ type, onSwitch, favourite, onFavourite, onBack, 
 
       <span className="flex-1" />
 
-      <Button size="icon-sm" variant="ghost" aria-label="Attachments" onClick={onAttach} className="text-ink-muted">
-        <Icon name="attach" />
-      </Button>
+      {/* THE PAPERCLIP BRINGS ITS OWN PANEL. It was a bare button here with an `onAttach` the
+          screen filled in with `() => undefined` — a control that looks live, announces nothing
+          and does nothing, which is the one thing this codebase bans outright. What is behind
+          it is the invoice's business rather than the header's, so the header holds the named
+          wrapper and knows nothing about files. */}
+      <Attachments />
       <Button size="icon-sm" variant="ghost" aria-label="Invoice settings" onClick={onSettings} className="text-ink-muted">
         <Icon name="settings" />
       </Button>

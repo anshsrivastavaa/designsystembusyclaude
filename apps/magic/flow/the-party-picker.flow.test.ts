@@ -99,8 +99,11 @@ test('typing is asking, so the first match is highlighted and Enter takes it', a
 
   await page.keyboard.type('Sharma T')
   await expect(page.getByRole('option').filter({ hasText: 'Sharma Traders' }).first()).toBeVisible()
-  // The keyboard walk this screen has always had, and it must survive the fix for the trap.
+  // WHICH ROW, NOT HOW MANY. This asked that exactly one row was highlighted and never which —
+  // and a list still showing the answer to "Sharma " has exactly one row highlighted too, so
+  // the assertion was satisfied by the stale list this journey exists to rule out.
   await expect(page.getByRole('option', { selected: true })).toHaveCount(1)
+  await expect(page.getByRole('option', { selected: true })).toContainText('Sharma Traders')
   await page.keyboard.press('Enter')
   await expect(page.getByRole('combobox', { name: 'Party' })).toHaveValue('Sharma Traders')
 })
@@ -162,9 +165,11 @@ test('the party drawer opens, closes on Escape, and gives the keyboard back', as
   await page.getByRole('combobox', { name: 'Party' }).click()
   await page.getByRole('option').filter({ hasText: 'Sharma Traders' }).first().click()
 
-  // The header says who the invoice is for on a line under the field, and a named control
-  // beside it opens the rest. The line itself is text: a paragraph of facts is not a button.
-  await page.getByRole('button', { name: 'Details' }).click()
+  // THE GRADE BADGE IS THE DOOR, and it is the only one. A line under the field carrying the
+  // city and the outstanding, with a Details control beside it, was ruled out on 23-08 — so
+  // this walks the way that is left, and walking it is what proves the way in still exists.
+  const badge = page.getByRole('button', { name: /trust grade/i })
+  await badge.click()
   const drawer = page.getByRole('dialog')
   await expect(drawer).toBeVisible()
   // The panel looks the party up when it opens, so wait for the answer before pressing.
@@ -176,7 +181,7 @@ test('the party drawer opens, closes on Escape, and gives the keyboard back', as
   await expect(drawer).toBeHidden()
 
   // The keyboard comes back to what opened it, rather than being dropped on the page.
-  await expect(page.getByRole('button', { name: 'Details' })).toBeFocused()
+  await expect(badge).toBeFocused()
 })
 
 test('an invoice begins at the party field, with its list already open', async ({ page }) => {

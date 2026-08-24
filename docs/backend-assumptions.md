@@ -64,6 +64,35 @@ to find and delete.
   backend cannot say which field a refusal is about, the screen can only show it beside the
   button, which is worse.
 
+### Attachments
+
+- **Whether a file MAY be attached is decided in the front end**, in `lib/attachments.ts`: the
+  extension against a list of eleven, and the size against ten megabytes. That is deliberate and
+  it is the exception rather than the rule here — a refusal has to arrive in the same instant as
+  the file, not after a round trip. Everything else about an attachment is yours.
+- **Who attached it and when are YOUR answers, and the front end never writes them.** They come
+  back from `attachFile`, which is called once per accepted file. A browser's clock is whatever
+  the machine is set to and a browser cannot know who is signed in, so a screen that stamped
+  either would be writing two facts onto a record that later gets audited. The mock returns a
+  fixed name and the laptop's clock; a real one must not.
+- **The bytes do not travel through `attachFile`.** It takes a name and a size and gives back a
+  record. The screen holds the picked file beside the record and hands it over at save. Where
+  the bytes actually go — a direct upload, a signed URL, a multipart save — is yours, and
+  nothing on the screen depends on which you choose.
+- **The audit trail must record an attachment added or removed, with the file name.** The
+  product document asks for it and this front end does not do it, on purpose: an audit trail is
+  a record of what happened to a business document, and a client that kept its own would be
+  writing business truth. There is no audit trail screen in this build either — it is a
+  `NOT_BUILT` row on the listing's kebab.
+- **`InvoiceDraft` carries `attachments`; `Invoice` does not yet.** A save sends them; what
+  comes back has no attachments on it, so an invoice reopened from the listing cannot show the
+  files it was saved with. That is the modify screen's to close and it is filed in
+  `docs/owed.md`. When you add the field, the listing's Attachment column and its Attachment
+  filter — both `NOT_BUILT` today — become buildable in the same move.
+- **Duplicating an invoice does not carry attachments over.** Duplicate is not built here, so
+  the rule lives where it can be enforced today: starting a new invoice clears them, and a test
+  holds that.
+
 ### Items
 
 - An item is searched by **name, alias and barcode** — three fields on the item, not three

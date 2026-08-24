@@ -12,6 +12,7 @@
 import { z } from 'zod'
 
 import type { DataAdapter, Answer } from './adapter'
+import { attachmentSchema } from './schema/attachment'
 import { invoiceSchema } from './schema/invoice'
 import { itemSchema } from './schema/item'
 import { partySchema } from './schema/party'
@@ -44,6 +45,7 @@ export function checked(adapter: DataAdapter): DataAdapter {
   const invoice = against(invoiceSchema, 'invoice')
   const settings = against(invoiceSettingsSchema, 'settings')
   const insights = against(partyInsightsSchema, 'party insights')
+  const attachment = against(attachmentSchema, 'attachment')
 
   return {
     listItems: (search) => adapter.listItems(search).then(items),
@@ -63,5 +65,6 @@ export function checked(adapter: DataAdapter): DataAdapter {
     listInvoices: (query) => adapter.listInvoices(query).then(invoices),
     getInvoice: (id) => adapter.getInvoice(id).then(invoice),
     saveInvoice: (draft) => adapter.saveInvoice(draft).then(invoice),
+    attachFile: (name, bytes) => adapter.attachFile(name, bytes).then(attachment),
   }
 }

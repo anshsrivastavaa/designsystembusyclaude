@@ -27,7 +27,7 @@ export function Narration() {
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((was) => !was)}
-        className="flex w-full items-center gap-2 rounded-control px-3 py-1 text-sm font-strong text-ink-secondary hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-focus"
+        className="flex w-full items-center gap-2 rounded-control px-3 py-1 text-sm font-strong text-ink-secondary hover:bg-surface-hover focus-ring"
       >
         <Icon name="chevronDown" className={`size-icon-sm ${open ? 'rotate-180' : ''}`} />
         Narration
@@ -46,7 +46,7 @@ export function Narration() {
             onChange={(event) => setNarration(event.target.value)}
             placeholder="Add a note for this invoice…"
             rows={2}
-            className="w-full resize-none rounded-control border border-stroke bg-surface px-2 py-1 text-body leading-body text-ink outline-none placeholder:text-ink-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-focus"
+            className="w-full resize-none rounded-control border border-stroke bg-surface px-2 py-1 text-body leading-body text-ink outline-none placeholder:text-ink-muted focus-ring"
           />
 
           {/* Two words and a switch, in the smallest size, in muted ink. Whether the customer
@@ -60,7 +60,7 @@ export function Narration() {
                   type="button"
                   aria-pressed={chosen}
                   onClick={() => setPrinted(which === 'Printed')}
-                  className={`rounded-control px-2 py-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-focus ${
+                  className={`rounded-control px-2 py-0.5 focus-ring ${
                     chosen ? 'bg-surface-hover text-ink-secondary' : 'hover:text-ink-secondary'
                   }`}
                 >

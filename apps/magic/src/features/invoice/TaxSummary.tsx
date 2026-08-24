@@ -66,7 +66,7 @@ export function TaxSummary() {
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((was) => !was)}
-        className="flex w-full items-center gap-2 rounded-t-card px-3 py-2 text-sm font-strong text-ink-secondary hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-focus"
+        className="flex w-full items-center gap-2 rounded-t-card px-3 py-2 text-sm font-strong text-ink-secondary hover:bg-surface-hover focus-ring"
       >
         <Icon name="chevronDown" className={`size-icon-sm ${open ? 'rotate-180' : ''}`} />
         Tax summary — rate wise

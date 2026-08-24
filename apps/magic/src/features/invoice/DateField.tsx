@@ -17,12 +17,7 @@ import { TextField } from '@busy/ui/TextField'
 import { dayFromText, dayText } from '../../lib/day'
 import { actionFor } from '../../lib/shortcuts'
 import { DatePanel, type DatePick } from './DatePanel'
-
-// THE SAME BOX THE OTHER HEADER FIELDS WEAR. Written out here rather than guessed at: a date
-// field that is a hair taller than the number beside it is the sort of thing nobody reports and
-// everybody sees.
-const BOX =
-  'flex h-control items-center rounded-control border border-stroke bg-surface focus-within:outline focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-stroke-focus'
+import { FieldBox } from './FieldBox'
 
 export function DateField({
   label,
@@ -97,15 +92,15 @@ export function DateField({
 
   if (instalments) {
     return (
-      <div ref={box} className={BOX}>
+      <FieldBox ref={box}>
         <TextField aria-label={label} value="Multiple" readOnly onFocus={onOpenSchedule} onClick={onOpenSchedule} />
-      </div>
+      </FieldBox>
     )
   }
 
   return (
     <>
-      <div ref={box} className={BOX}>
+      <FieldBox ref={box}>
         <TextField
           aria-label={label}
           // The field IS the control that opens the calendar, so arriving at it by any route
@@ -123,7 +118,7 @@ export function DateField({
           // put the invoice in the year 2 on the way to 2026.
           onBlur={readWhatWasTyped}
         />
-      </div>
+      </FieldBox>
 
       <DatePanel
         open={open}

@@ -125,11 +125,11 @@ test('a new invoice starts empty, and does not hold the last one', async ({ page
   await page.getByRole('button', { name: /New/ }).first().click()
   await expect(page.getByRole('combobox', { name: 'Party' })).toBeFocused()
   await takeFromTheList(page, 'Sharma T', 'Sharma Traders')
-  await page.keyboard.type('Steel rod')
   // The ITEM list, not whichever list happens to be open — the party list is still on screen
-  // for a moment after picking, and asserting "an option is visible" was satisfied by it.
-  await expect(page.getByRole('listbox', { name: 'Item' })).toBeVisible()
-  await page.keyboard.press('Enter')
+  // for a moment after picking. This waited for the item LISTBOX and then pressed Enter, which
+  // is the wrong fact: Enter takes the HIGHLIGHTED row, and a list that has arrived may still be
+  // a keystroke behind. The helper waits on the row the press will act on.
+  await takeFromTheList(page, 'Steel rod', 'Steel rod', 'Item')
   // The cell, not a combobox: picking an item moves the cursor on to Qty, so the Item cell is
   // read-only text by the time anybody looks at it.
   await expect(await cellUnder(page, 1, 'Item Name')).toHaveText(/Steel rod/)

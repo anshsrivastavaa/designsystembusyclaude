@@ -84,7 +84,7 @@ function Day({
       //
       // TABULAR FIGURES, so the columns of a month line up. Proportional digits put the 1s half a
       // stroke left of the 8s and the grid stops reading as a grid.
-      className={`relative grid size-control shrink-0 place-items-center rounded-pill border text-body tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-focus ${
+      className={`relative grid size-control shrink-0 place-items-center rounded-pill border text-body tabular-nums focus-ring ${
         chosen
           ? 'border-transparent bg-accent text-on-accent'
           : `${isToday ? 'border-stroke-strong' : 'border-transparent'} ${

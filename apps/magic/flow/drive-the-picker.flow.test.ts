@@ -1,6 +1,7 @@
 import { expect, type Page, test } from '@playwright/test'
 
 import { enterTheGrid } from './enterTheGrid'
+import { takeFromTheList } from './takeFromTheList'
 
 // The three that stopped the screen being driveable.
 
@@ -52,11 +53,9 @@ test('Enter from Unit on the last row lands somewhere instead of losing the keyb
   await enterTheGrid(page)
 
   // A brand new item: type it, pick it, then tab across to Unit and type one.
-  await page.keyboard.type('Steel rod')
-  await expect(page.getByRole('option').filter({ hasText: 'Steel rod' }).first()).toBeVisible()
-  await expect(page.getByRole('option')).toHaveCount(8)
-  await page.keyboard.press('ArrowDown')
-  await page.keyboard.press('Enter')
+  // Through the helper: typing highlights the first row, so the ArrowDown that used to be here
+  // moved OFF the row this journey names and onto whichever one came after it.
+  await takeFromTheList(page, 'Steel rod', 'Steel rod', 'Item')
   await expect(page.getByRole('textbox', { name: 'quantity' })).toBeFocused()
 
   // Unit has left the tab order for this row, because the item arrived with one. The arrows

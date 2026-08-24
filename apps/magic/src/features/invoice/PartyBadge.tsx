@@ -27,6 +27,21 @@
 // THREE CHANNELS, NEVER COLOUR ALONE: the mark is a SHAPE the badge does not otherwise have, it
 // is red because a dead registration is genuinely the exceptional case, and the badge's
 // accessible name and tooltip say it in words.
+//
+// IT WEARS THE SAME FACE AS THE F10 CHIP, AND THAT IS THE 24-08 RULING. Aj: "weird and looks
+// awful", on the third reworking of this control, so it was sketched and agreed before it was
+// touched again.
+//
+// WHAT WAS WRONG WITH IT, AND IT WAS NOT THE MISSING COLOUR. v2 draws a solid coloured disc with
+// the grade in white. Dropping the colour was right and stays — a third of any ledger is a C, and
+// a grade wearing the alarm colour leaves nothing for the row that actually needs chasing. But
+// the container went with the colour, and a bare capital letter floating at the end of a field
+// reads as a stray character rather than as a control.
+//
+// SO IT TAKES BACK A CONTAINER AND NOT A COLOUR — the hairline, the sunken fill and the caps
+// treatment `Shortcut` already draws. The two share ONE SLOT and take turns in it: no party
+// shows F10, a party shows the grade. Two things taking turns in one slot should look like one
+// slot, and until now they looked like a key cap and a loose letter.
 
 import { Button } from '@busy/ui/Button'
 import { Shortcut } from '@busy/ui/Shortcut'
@@ -66,7 +81,11 @@ export function PartyBadge({ party, onOpen }: { party: Party | null; onOpen: () 
       size="icon-sm"
       variant="ghost"
       onClick={onOpen}
-      className="relative mr-1 rounded-control font-label text-ink-secondary"
+      // THE CHIP'S OWN FACE, and the classes are `Shortcut`'s because this is the same object in
+      // the same slot. It is not a `Shortcut`: that component is a `<kbd>`, which is the element
+      // for a key and would be a lie about a grade — and this one is pressed, where a shortcut
+      // hint deliberately is not. Same face, different thing, which is what a variant means.
+      className="relative mr-1 size-auto rounded-control border border-stroke bg-surface-sunken px-1.5 py-1 text-caps font-label tracking-wide uppercase leading-tight text-ink-secondary hover:border-stroke-strong hover:bg-surface-hover hover:text-ink"
       // The reason is the NAME, so it is read out rather than only seen.
       aria-label={says}
       title={says}
@@ -87,7 +106,7 @@ export function PartyBadge({ party, onOpen }: { party: Party | null; onOpen: () 
           // It still takes no width. A mark that pushed the layout would move the party field's
           // contents the first time a party had a dead registration, which is the one moment
           // nothing else should move.
-          className="absolute top-0.5 right-0.5 size-1.5 rounded-pill bg-danger-fill"
+          className="absolute -top-0.5 -right-0.5 size-1.5 rounded-pill bg-danger-fill"
         />
       ) : null}
     </Button>

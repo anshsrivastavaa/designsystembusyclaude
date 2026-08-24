@@ -5,12 +5,13 @@ import { refuse } from '../schema/refusal'
 import { items } from './items'
 import { invoiceOf } from './lines'
 import { insightsOf } from './insights'
+import { kindOf } from '../../lib/attachments'
 import { today as todayIs } from '../../lib/day'
 import { invoices } from './invoices'
 import { parties, recentPartyIds } from './parties'
 import { lastUsedByParty, sundryMaster } from './sundries'
 import { slowly } from './slowly'
-import { summed } from './invoices'
+import { headerFor, invoiceNumberFor } from './invoices'
 import { refuseTheSave } from './switches'
 
 /** Search by name, alias or barcode, which is what the item column has to do. */
@@ -110,7 +111,10 @@ const answers: DataAdapter = {
       .filter((party) => party !== undefined)
   },
 
-  // A running number in the current financial year, the way v2 shows it: 4/2026-27.
+  // A running number in the current financial year, the way v2 shows it: 4/2026-27 — and the
+  // shape comes from `invoiceNumberFor`, which is also what the seeded book and `saveInvoice`
+  // use. There were two shapes: this one offered `68/2026-27` and the save handed back
+  // `INV/2026/0068`, so the number changed shape at the moment it became real.
   //
   // THE SERIES NAME IS NEVER IN THE NUMBER. This appended " (Export)" to anything but the main
   // book, which put the series in the one place both Aj and the product document say it must
@@ -121,7 +125,7 @@ const answers: DataAdapter = {
   // Each book counts separately, which is the whole point of having more than one.
   async nextInvoiceNumber(series: string) {
     const already = invoices.length + (series === 'Main' ? 1 : 64)
-    return `${already}/2026-27`
+    return invoiceNumberFor(already)
   },
 
   async listInvoices(query) {
@@ -152,13 +156,43 @@ const answers: DataAdapter = {
     return dates[dates.length - 1] ?? null
   },
 
+  // WHO IS SIGNED IN IS THE BACKEND'S ANSWER, and the mock is the only place in this build
+  // that has one at all — the shell has a ROLE switch (owner / operator) and no person behind
+  // it. So the name here is a stand-in for a session the front end will never own, and
+  // docs/backend-assumptions.md says so to the dev team.
+  //
+  // THE CLOCK IS THE SERVER'S TOO, and this is the seam where that stops being pretend. The
+  // mock reads the machine's clock because it has nothing else; a real one must not.
+  async attachFile(name, bytes) {
+    return {
+      id: `attachment-${name}-${String(bytes)}`,
+      name,
+      kind: kindOf(name) ?? 'File',
+      bytes,
+      attachedBy: 'Aj Sharma',
+      attachedAt: new Date().toISOString(),
+    }
+  },
+
   async saveInvoice(draft) {
     // The mock keeps nothing. It can be told to come back refused with `?refuse`, so that the
     // refusal state is designed and looked at rather than discovered on the day a real backend
     // first says no. The reason below stands in for THEIR decision, not a rule of ours — see
     // docs/backend-assumptions.md.
     if (refuseTheSave()) {
-      return refuse('save-refused', 'This invoice was not accepted. Check it and try again.')
+      // IT NAMES THE FIELD, AND UNTIL 24-08 NOTHING EVER DID. `Refusal.field` exists so the
+      // screen can put the cursor on the thing to correct — docs/backend-assumptions.md
+      // promises the dev team exactly that — and the mock never set it, so the one refusal
+      // anybody could look at was the one kind of refusal the field does not help with. A
+      // promise the sample data cannot demonstrate is a promise nobody has tested.
+      //
+      // The reason stands in for THEIR decision, not a rule of ours: a credit limit is the
+      // backend's to enforce and the wording is theirs to write.
+      return refuse(
+        'save-refused',
+        'This party is over its credit limit. Reduce the invoice or take a payment against the outstanding first.',
+        'party',
+      )
     }
     // THE BACKEND DECIDES THE NUMBER AND THE DATES. That is the whole reason a draft does not
     // carry them, and the reason a screen must read what comes back rather than what it sent.
@@ -166,13 +200,17 @@ const answers: DataAdapter = {
     return {
       ...draft,
       id: `invoice-${invoices.length + 1}`,
-      number: `INV/2026/${String(invoices.length + 1).padStart(4, '0')}`,
+      number: invoiceNumberFor(invoices.length + 1),
       date: today,
       dueDate: today,
       // AND THE BACKEND DECIDES WHAT IT IS WORTH. The draft does not carry these for the same
       // reason it does not carry the number: they are the backend's answer, not the screen's.
-      ...summed(draft.rows),
-      totalPaise: draft.rows.reduce((running, row) => running + row.amountPaise, 0),
+      //
+      // ALL THREE FROM ONE PLACE. The total used to be worked out separately, right here, as
+      // the sum of the line amounts — which is the TAXABLE value. So a save handed back an
+      // invoice whose total was its own sub-total with the tax missing, and the listing then
+      // showed it that way.
+      ...headerFor(draft.rows),
       paidPaise: 0,
       cancelledAt: null,
     }

@@ -17,6 +17,18 @@ export const sundryMaster: SundryMaster[] = [
   { id: 'sundry-handling', name: 'Handling charges', kind: 'flat', defaultValue: 15000, taxable: true, taxComponent: null },
   { id: 'sundry-discount', name: 'Trade discount', kind: 'percent', defaultValue: -5, taxable: true, taxComponent: null },
 
+  // THE ONE CHARGE THAT IS NOT PART OF THE TAXABLE VALUE, and the only reason it is here is
+  // that `taxable: false` had never once reached a screen: every pickable charge was seeded
+  // taxable, and the four entries that were not are the tax components, which are generated
+  // rather than picked and are filtered out of the list before anybody sees it. A field the
+  // arithmetic branches on and the data can never exercise is a branch nobody has looked at.
+  //
+  // TCS because it is real rather than convenient. Tax collected at source is collected ON the
+  // invoice value and is not itself part of it, so GST does not fall on it. Whether this
+  // company actually charges it is theirs to say — the point here is that one charge in the
+  // list answers "no" to taxable.
+  { id: 'sundry-tcs', name: 'TCS', kind: 'percent', defaultValue: 0.1, taxable: false, taxComponent: null },
+
   // The tax components. An invoice in bill-wise mode generates its own rows from these — one
   // per component per rate band on the invoice — and item-level modes refuse them outright.
   { id: 'sundry-cgst', name: 'CGST', kind: 'percent', defaultValue: 0, taxable: false, taxComponent: 'cgst' },

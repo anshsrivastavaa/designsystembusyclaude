@@ -27,14 +27,12 @@ test('a whole invoice can be entered from the keyboard alone', async ({ page }) 
 
   for (let line = 0; line < 3; line += 1) {
     // The cursor is already in the Item cell of the row being filled.
-    await page.keyboard.type('Steel rod')
-    // The list takes a moment to arrive, the way it will from a real backend — and it has to
-    // be the list for what was typed, not the one still on screen from a keystroke ago.
-    await expect(page.getByRole('option').filter({ hasText: 'Steel rod' }).first()).toBeVisible()
-    await expect(page.getByRole('option')).toHaveCount(8)
-
-    await page.keyboard.press('ArrowDown')
-    await page.keyboard.press('Enter')
+    //
+    // THROUGH THE HELPER, WHICH THIS DID NOT DO. It waited for the row to be VISIBLE and then
+    // arrowed onto it — but typing already highlights the first row, so the arrow moved off it
+    // onto the second, or onto the first if the answer was still in the air. Which item this
+    // line got depended on how fast the mock replied.
+    await takeFromTheList(page, 'Steel rod', 'Steel rod', 'Item')
 
     // Picking an item lands on Qty with its default already in place.
     await expect(page.getByRole('textbox', { name: 'quantity' })).toBeFocused()

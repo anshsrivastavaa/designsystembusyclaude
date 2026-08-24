@@ -61,10 +61,28 @@ export function formatBalancePaise(paise: Paise): string {
   return `${GROUPED.format(Math.abs(paise) / 100)} ${paise > 0 ? 'Dr' : 'Cr'}`
 }
 
-/** Quantity times price. Both arrive as the user typed them; the answer is whole paise. */
-export function lineAmount(quantity: number, pricePaise: Paise): Paise {
+/** Quantity times price, less the discount on the line. All three arrive as the user typed
+ * them; the answer is whole paise.
+ *
+ * THE DISCOUNT WAS TYPEABLE, SHOWN, AND APPLIED TO NOTHING. `discountPercent` was on the row
+ * schema, in the grid's Disc% column, in the cell that reads what was typed into it, and on one
+ * seeded line in six — and this function never looked at it. So the column showed a discount
+ * that cost nothing: the amount, the sub-total, the tax and the grand total were all the
+ * undiscounted figures. Found by the independent audit on 24-08.
+ *
+ * IT COMES OFF BEFORE THE TAX, WHICH IS NOT THIS FUNCTION'S DOING BUT IS WHY IT IS RIGHT HERE.
+ * Everything downstream — the sub-total, each tax band, the grand total — is worked out from
+ * `amountPaise`, so taking the discount off here is what makes GST fall on the discounted
+ * taxable value, which is what a trade discount on the face of an invoice means.
+ *
+ * ROUNDED ONCE, AT THE END. Rounding the discount and then subtracting it loses a paisa on
+ * about half of all lines, and two thousand of those is twenty rupees the invoice cannot
+ * account for. */
+export function lineAmount(quantity: number, pricePaise: Paise, discountPercent: number = 0): Paise {
   if (!Number.isFinite(quantity)) return 0
-  return Math.round(quantity * pricePaise)
+  const gross = quantity * pricePaise
+  if (!Number.isFinite(discountPercent) || discountPercent === 0) return Math.round(gross)
+  return Math.round(gross * (1 - discountPercent / 100))
 }
 
 /** A column of amounts. Integers throughout, so two thousand of them still add up exactly. */

@@ -34,7 +34,6 @@ async function show(favourite: boolean): Promise<HTMLDivElement> {
       favourite={favourite}
       onFavourite={() => {}}
       onBack={() => {}}
-      onAttach={() => {}}
       onSettings={() => {}}
     />,
   )

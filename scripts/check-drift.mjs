@@ -38,17 +38,16 @@ const BARE = new Set([
 const isUtility = (word) => BARE.has(word) || /[-:[\]/]/.test(word)
 
 // EACH LINE NAMES ITS OWNER AND THE MOMENT IT GOES. An exemption with no end is a deletion of
-// the rule, so nothing goes here without the thing that removes it.
+// the rule, so nothing goes here without the thing that removes it — and a line whose moment has
+// ARRIVED is worse than one that never had a moment, because it goes on permitting something
+// nobody is doing any more. The invoice header's field box was here until 24-08; the other
+// session adopted `focus-ring-within-inset` and gave the frame a component, so the line came
+// out. The way to find one of these is to empty this list and read what the gate still finds.
 const ALLOWED = [
   {
     run: 'flex h-full items-center border-r border-stroke px-2 text-body text-ink-secondary',
     why: "the sundry grid's cell, in SundryGrid.tsx and SundryLine.tsx",
     until: 'A owns features/invoice until Create Invoice is finished, and is taking this into one cell component',
-  },
-  {
-    run: 'flex h-control items-center rounded-control border border-stroke bg-surface focus-within:outline focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-stroke-focus',
-    why: "the invoice header's field box, in DateField.tsx and HeaderFields.tsx",
-    until: 'A adopts focus-ring-within-inset, which is already authored in packages/tokens and is what the rest of the build now wears — this run is four of the five focus rings that utility replaced',
   },
   {
     run: 'rounded-control border border-stroke bg-surface-raised shadow-popover',

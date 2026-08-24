@@ -26,6 +26,7 @@ export function SaveInvoice({ onReady }: { onReady?: (save: () => void) => void 
   const narrationPrinted = useInvoice((state) => state.narrationPrinted)
   const roundOffOn = useInvoice((state) => state.roundOffOn)
   const paidPaise = useInvoice((state) => state.paidPaise)
+  const attachments = useInvoice((state) => state.attachments)
   const askFor = useInvoice((state) => state.askFor)
   const [saving, setSaving] = useState(false)
   const [paid, setPaid] = useState(false)
@@ -87,9 +88,24 @@ export function SaveInvoice({ onReady }: { onReady?: (save: () => void) => void 
         narration,
         narrationPrinted,
         roundOffOn,
+        // A COPY, because the draft's shape is a plain array and the store holds a frozen one.
+        attachments: [...attachments],
       })
       .then((answer) => {
         if (isRefusal(answer)) {
+          // THE CURSOR GOES WHERE THEY SAY, WHEN THEY SAY. A refusal may name the field it is
+          // about, and being told what is wrong and then having to find it is most of the work
+          // of being told — which is the same reasoning the party field's own error already
+          // runs on. Nothing had ever exercised this: the mock never set `field`, so a refusal
+          // could only ever be shown beside the button.
+          //
+          // ONLY THE TWO FIELDS THIS SCREEN CAN PLACE A CURSOR IN. A refusal about anything
+          // else still shows beside the button, which is worse and is honest — a screen that
+          // silently swallowed an unknown field would report a state it is not in.
+          if (answer.field === 'party' || answer.field === 'item') {
+            askFor(answer.field, answer.message)
+            return
+          }
           setRefused(answer.message)
           return
         }

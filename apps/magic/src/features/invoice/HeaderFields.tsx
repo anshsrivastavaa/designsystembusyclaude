@@ -18,26 +18,30 @@ import { data } from '../../data/source'
 import { isRefusal } from '../../data/schema/refusal'
 import { dayText, daysAfter, monthStart, today } from '../../lib/day'
 import { DateField } from './DateField'
+import { FieldBox } from './FieldBox'
 import { FieldSettings } from './FieldSettings'
 import { InEffect } from './InEffect'
 import { useInvoice } from './store'
 
+// NO SECOND LINE UNDER A NAME. Export and Retail each carried a grey sentence saying what
+// they were for, and between them they set the width of the whole panel. A series is named
+// after the run of numbers it is, and the name is the whole of it.
 const SERIES = [
   { id: 'Main', label: 'Main' },
-  { id: 'Export', label: 'Export', note: 'a separate run of numbers for export invoices' },
-  { id: 'Retail', label: 'Retail', note: 'counter sales' },
+  { id: 'Export', label: 'Export' },
+  { id: 'Retail', label: 'Retail' },
 ]
 
 // WHAT THE DATE FIELD CAN BE. v2 keeps exactly one choice here — the rest of what used to sit
 // on this label (back-dated, future-dated) are allow / warn / block rules and belong to warning
 // configuration, not to a field's own popover.
 const DATE_CARRY = [
-  { id: 'today', label: 'Today', note: 'a new invoice opens on today' },
-  { id: 'last', label: 'The last invoice date', note: 'for a day of back-dated entry' },
+  { id: 'today', label: 'Today' },
+  { id: 'last', label: 'The last invoice date' },
 ]
 
 const DUE_TERMS = [
-  { id: 'none', label: 'No due date', note: 'a cash sale is not owed' },
+  { id: 'none', label: 'No due date' },
   { id: 'onReceipt', label: 'On receipt' },
   { id: 'net15', label: '15 days' },
   { id: 'net30', label: '30 days' },
@@ -52,8 +56,6 @@ function MetaField({ width, children }: { width: string; children: React.ReactNo
   // it. See FieldSettings.
   return <div className={`relative flex shrink-0 flex-col ${width}`}>{children}</div>
 }
-
-const BOX = 'flex h-control items-center rounded-control border border-stroke bg-surface focus-within:outline focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-stroke-focus'
 
 export function HeaderFields({ onOpenTransport, onOpenSettings }: { onOpenTransport: () => void; onOpenSettings: () => void }) {
   const series = useInvoice((state) => state.series)
@@ -131,17 +133,16 @@ export function HeaderFields({ onOpenTransport, onOpenSettings }: { onOpenTransp
           chosen={series}
           onChoose={setSeries}
           onOpenSettings={onOpenSettings}
-          settingsLabel="All series & numbering"
         >
           Inv No
         </FieldSettings>
-        <div className={BOX}>
+        <FieldBox>
           <TextField
             aria-label="Invoice number"
             value={number}
             onChange={(event) => setNumber(event.target.value)}
           />
-        </div>
+        </FieldBox>
         {/* Auto is what the number IS, so it is said under it rather than drawn as a badge
             beside it. Typing over the number is what turns it off, and then the line says the
             number is set by hand — which is the fact somebody needs at save. */}
@@ -154,7 +155,6 @@ export function HeaderFields({ onOpenTransport, onOpenSettings }: { onOpenTransp
           chosen="today"
           onChoose={() => setDate(today())}
           onOpenSettings={onOpenSettings}
-          settingsLabel="All date settings"
         >
           Date
         </FieldSettings>
@@ -184,7 +184,6 @@ export function HeaderFields({ onOpenTransport, onOpenSettings }: { onOpenTransp
             setDueDate(at.toISOString().slice(0, 10))
           }}
           onOpenSettings={onOpenSettings}
-          settingsLabel="All due date settings"
         >
           Due
         </FieldSettings>
@@ -209,7 +208,7 @@ export function HeaderFields({ onOpenTransport, onOpenSettings }: { onOpenTransp
         onClick={onOpenTransport}
         aria-label="Delivery and transport"
         title="Delivery & Transport — bill-to / ship-to and everything an E-Way Bill needs"
-        className="mb-1 grid size-control shrink-0 place-items-center rounded-control border border-stroke text-ink-muted hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-focus"
+        className="mb-1 grid size-control shrink-0 place-items-center rounded-control border border-stroke text-ink-muted pressable hover:text-ink focus-ring"
       >
         <Icon name="transport" className="size-icon-lg" />
       </button>

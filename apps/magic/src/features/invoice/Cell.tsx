@@ -121,7 +121,7 @@ export function Cell({ column, row, index, cursor, invalid, width, onCursorRow, 
   const shell = `flex h-full items-center overflow-hidden border-r border-stroke last:border-r-0 ${width} ${
     // The cell that is wrong, in v2's own shape: a red ring on a pink fill, with the mark.
     isInvalid ? 'bg-danger-soft ring-1 ring-inset ring-danger' : ''
-  } focus-within:outline focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-stroke-focus`
+  } focus-ring-within-inset`
 
   if (isCursor && column === 'item' && !readOnly) {
     return (
