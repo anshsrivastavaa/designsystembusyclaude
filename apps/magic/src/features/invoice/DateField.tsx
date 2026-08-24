@@ -22,7 +22,7 @@ import { DatePanel, type DatePick } from './DatePanel'
 // field that is a hair taller than the number beside it is the sort of thing nobody reports and
 // everybody sees.
 const BOX =
-  'mt-1 flex h-control items-center rounded-control border border-stroke bg-surface focus-within:outline focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-stroke-focus'
+  'flex h-control items-center rounded-control border border-stroke bg-surface focus-within:outline focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-stroke-focus'
 
 export function DateField({
   label,

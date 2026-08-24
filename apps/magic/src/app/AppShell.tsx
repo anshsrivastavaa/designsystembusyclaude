@@ -78,7 +78,8 @@ export function AppShell({ children, onOpenSales }: AppShellProps) {
               with no gap at the corner. v2 heads the rail with it. */}
           <Button
             variant="ghost"
-            size="icon-sm"
+            size="icon"
+            shape="round"
             className="mb-1 self-start"
             aria-label={railOpen ? 'Collapse the menu' : 'Expand the menu'}
             aria-expanded={railOpen}
@@ -103,6 +104,9 @@ export function AppShell({ children, onOpenSales }: AppShellProps) {
               disabled={area.built !== true}
               className={cn(
                 'relative flex h-10 items-center gap-3 rounded-control px-3 text-body',
+                // The rail's glyphs are the label when it is collapsed, so they take the
+                // chrome size rather than the one meant to sit beside body text.
+                '[&_svg]:size-icon-lg',
                 'focus-ring',
                 'disabled:cursor-not-allowed disabled:opacity-50',
                 area.built === true

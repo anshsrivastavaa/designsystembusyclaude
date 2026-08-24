@@ -85,8 +85,9 @@ export function TopBar() {
         <DensitySwitch />
 
         <Button
-          variant="ghost"
-          size="icon-sm"
+          variant="outline"
+          size="icon"
+          shape="round"
           className="relative"
           disabled
           // Disabled controls take no pointer, so the browser never shows their title. The

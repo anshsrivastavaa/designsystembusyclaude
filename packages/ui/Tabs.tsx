@@ -90,8 +90,13 @@ export function Tabs<Value extends string>({ options, value, onChange, label }: 
             onClick={() => onChange(option.value)}
             {...(option.icon === undefined ? {} : { 'aria-label': option.label, title: option.label })}
             className={cn(
-              'flex h-control-sm items-center gap-2 rounded-control',
-              option.icon === undefined ? 'px-3' : 'px-2',
+              'flex items-center gap-2 rounded-control',
+              // AN ICON-ONLY OPTION IS SIZED LIKE AN ICON BUTTON, because that is what it looks
+              // like sitting in the chrome next to one. With words it stays the shorter control:
+              // a row of text tabs at the full height is a toolbar, not a segmented control.
+              option.icon === undefined
+                ? 'h-control-sm px-3'
+                : 'h-control px-2 [&_svg]:size-icon-lg',
               'text-body font-label whitespace-nowrap transition-colors',
               'focus-ring',
               chosen ? 'bg-surface text-ink shadow-raised' : 'text-ink-secondary hover:bg-surface-hover hover:text-ink',

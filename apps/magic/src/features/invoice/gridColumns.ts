@@ -36,7 +36,9 @@ export const AMOUNT_HEADING: Record<'itemExclusive' | 'itemInclusive' | 'billWis
 }
 
 export const WIDTHS: Record<ColumnId, string> = {
-  serial: 'w-14',
+  // MEASURED OFF v2, not derived: 46px there against 56 here, for a column that holds a
+  // two-digit number beside a 34px row. w-12 is 48 and is the nearest stop on the scale.
+  serial: 'w-12',
   item: 'flex-1',
   alias: 'w-24',
   hsn: 'w-24',

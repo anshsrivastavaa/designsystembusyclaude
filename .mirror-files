@@ -111,6 +111,7 @@ apps/magic/src/features/invoice/ItemGrid.tsx
 apps/magic/src/features/invoice/ItemPicker.tsx
 apps/magic/src/features/invoice/ItemRow.tsx
 apps/magic/src/features/invoice/ItemStrip.tsx
+apps/magic/src/features/invoice/MonthGrid.tsx
 apps/magic/src/features/invoice/Narration.tsx
 apps/magic/src/features/invoice/PartyBadge.tsx
 apps/magic/src/features/invoice/PartyDetails.tsx

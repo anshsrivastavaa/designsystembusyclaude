@@ -79,7 +79,8 @@ export function invoiceBreakdown({ rows, sundries, settings, place }: BreakdownI
     taxPercent: row.taxPercent,
   }))
 
-  const taxBands = bands(taxable, charged.taxableChargesPaise)
+  // The charge is quoted INCLUSIVE in item-inclusive mode, the same as the lines beside it.
+  const taxBands = bands(taxable, charged.taxableChargesPaise, settings.taxMode === 'itemInclusive')
 
   // Bill-wise puts tax in the sundry list as its own rows — one per component per band, made
   // here rather than typed by anybody. The item-level modes put tax on the lines. Whichever it

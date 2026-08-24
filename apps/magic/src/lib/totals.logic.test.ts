@@ -135,3 +135,25 @@ describe('rounding each line before adding', () => {
     expect(breakdown({ rows: taxed, settings }).taxPaise).toBe(Math.round(10100 * 0.18))
   })
 })
+
+// A CHARGE IN ITEM-INCLUSIVE MODE IS QUOTED INCLUSIVE. Ruled by Aj on 24-08: freight of 500
+// means the customer pays 500. Its taxable value is 500 ÷ 1.18 and the tax inside it flows into
+// the bands — it is NOT 500 with tax added on top.
+//
+// The fault this replaces: lines were taken ex-tax before banding and the charge was not, so the
+// band charged tax ON the charge while the total added none. 618.00 was taken where 627.00 was
+// due, with "of which tax" printed beside it.
+describe('a taxable charge when prices include tax', () => {
+  const inclusive = { ...SETTINGS, taxMode: 'itemInclusive' as const }
+  const priced = () => breakdown({ rows: [line(11800, 18)], sundries: [freight(50000)], settings: inclusive })
+
+  it('adds the charge at its face value, because that is what the customer pays', () => {
+    expect(priced().grandTotalPaise).toBe(11800 + 50000)
+  })
+
+  it('takes the tax out of the charge rather than adding it on top', () => {
+    // 11800 at 18% holds 1800 inside it. 50000 holds 50000 - round(50000 * 100 / 118) = 7627.
+    expect(priced().taxPaise).toBe(1800 + 7627)
+    expect(priced().taxIsInside).toBe(true)
+  })
+})

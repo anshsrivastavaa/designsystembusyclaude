@@ -97,8 +97,11 @@ export function PartyHeader({ onOpenTransport, onOpenSettings }: { onOpenTranspo
   return (
     <section aria-label="Party" className="flex shrink-0 items-end gap-4 px-2 pt-2">
       <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-4">
-          <Label className="text-caps uppercase tracking-wide">Party</Label>
+        <div className="relative flex items-baseline justify-between gap-4">
+          {/* ON THE BORDER, like every other field — v2's treatment, approved as the rule. */}
+          <Label className="absolute top-0 left-2 z-10 -translate-y-1/2 bg-surface px-1 text-caps font-label uppercase tracking-wide">
+            Party
+          </Label>
           {/* Above the field, not below it: the list opens over anything underneath, and a
               message the person cannot see is the same as no message. */}
           {asking?.field === 'party' ? (

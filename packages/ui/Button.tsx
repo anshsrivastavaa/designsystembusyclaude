@@ -27,7 +27,7 @@ import { cn } from './cn'
 
 const buttonVariants = cva(
   [
-    'inline-flex shrink-0 items-center justify-center gap-2 rounded-control font-label whitespace-nowrap',
+    'inline-flex shrink-0 items-center justify-center gap-2 font-label whitespace-nowrap',
     'text-body transition-colors outline-none',
     // The same ring every other control in the build wears. shadcn shipped this as a box-shadow
     // ring with an offset painted in the page colour, which is a different shape from the
@@ -54,14 +54,28 @@ const buttonVariants = cva(
         default: 'h-control px-4',
         sm: 'h-control-sm px-3',
         lg: 'h-control-lg px-6',
-        icon: 'size-control',
-        'icon-sm': 'size-control-sm',
-        'icon-lg': 'size-control-lg',
+        // AN ICON-ONLY BUTTON CARRIES A BIGGER GLYPH than one with words in it. 16px is
+        // --icon-md, and --icon-md exists to sit beside 14px body text — right inside the grid,
+        // wrong in the chrome, where the icon IS the label and there is no text next to it to be
+        // sized against. Measured on the running build: every chrome control drew at 16, because
+        // the base rule below says so and nothing had ever overridden it.
+        icon: 'size-control [&_svg]:size-icon-lg',
+        'icon-sm': 'size-control-sm [&_svg]:size-icon-md',
+        'icon-lg': 'size-control-lg [&_svg]:size-icon-xl',
+      },
+      // ROUND MEANS ICON-ONLY. It is the shape v2 gave every icon button in the chrome and the
+      // one this build lost: a circle says "one action, no label", where the 6px corner every
+      // other control wears says "this is a control with words in it". Two shapes, one meaning
+      // each, and nothing has to be read to tell them apart.
+      shape: {
+        control: 'rounded-control',
+        round: 'rounded-pill',
       },
     },
     defaultVariants: {
       variant: 'primary',
       size: 'default',
+      shape: 'control',
     },
   },
 )
@@ -70,6 +84,11 @@ function Button({
   className,
   variant,
   size,
+  // EVERY VARIANT THIS COMPONENT DECLARES IS DESTRUCTURED AND HANDED TO cva. `shape` was
+  // declared, typed, accepted at the call site — and not listed here, so it fell into `...props`
+  // and was spread onto the <button> as an HTML attribute nobody reads. TypeScript was happy;
+  // the screen still drew a 6px corner. Found by measuring the running page, not by the types.
+  shape,
   asChild = false,
   ...props
 }: React.ComponentProps<'button'> &
@@ -81,7 +100,7 @@ function Button({
   return (
     <Component
       data-slot="button"
-      className={cn(buttonVariants({ variant, size }), className)}
+      className={cn(buttonVariants({ variant, size, shape }), className)}
       {...props}
     />
   )

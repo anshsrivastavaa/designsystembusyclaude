@@ -48,11 +48,20 @@ export function FieldSettings({ children, choices, chosen, onChoose, onOpenSetti
   const anchor = useRef<HTMLSpanElement>(null)
 
   return (
-    <span ref={anchor} className="inline-flex">
+    // ON THE FIELD'S BORDER, NOT ABOVE IT. v2's treatment, approved as the rule for every field.
+    // The label straddles the top stroke and paints the surface behind itself, which breaks the
+    // stroke cleanly rather than sitting on a second line and pushing every field down.
+    <span
+      ref={anchor}
+      className="absolute top-0 left-2 z-10 inline-flex -translate-y-1/2 bg-surface px-1"
+    >
       <Label
         onOpenSettings={() => setOpen((was) => !was)}
         settingsName={`${children} settings`}
-        className="text-caps uppercase tracking-wide"
+        // WEIGHT 510, NOT BODY. A field label inherited body weight, so the word above the field
+        // was drawn LIGHTER than the word inside it — measured at 400 where --weight-label was
+        // authored for this and nothing used it.
+        className="text-caps font-label uppercase tracking-wide"
       >
         {children}
       </Label>

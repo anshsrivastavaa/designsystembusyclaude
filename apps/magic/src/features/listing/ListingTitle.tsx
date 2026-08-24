@@ -62,14 +62,19 @@ export function ListingTitle({ onCreate }: { onCreate?: () => void }) {
         </div>
       </Popover>
 
+      {/* A CONTROL THAT REPORTS A STATE IT IS NOT IN IS WORSE THAN NO CONTROL. This drew the
+          outline star whether or not the listing was a favourite — only the ink changed, and an
+          accent-blue outline star beside a grey outline star is a difference nobody reads as
+          on and off. `filled` is the one state Icon has, and this is what it is for. */}
       <Button
-        variant="ghost"
-        size="icon-sm"
+        variant="outline"
+        size="icon"
+        shape="round"
         aria-pressed={favourite}
         aria-label={favourite ? 'Remove from favourites' : 'Add to favourites'}
         onClick={() => setFavourite((was) => !was)}
       >
-        <Icon name="star" className={favourite ? 'text-ink-accent' : ''} />
+        <Icon name="star" filled={favourite} className={favourite ? 'text-ink-accent' : ''} />
       </Button>
 
       <span className="flex-1" />

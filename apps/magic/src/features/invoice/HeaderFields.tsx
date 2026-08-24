@@ -48,10 +48,12 @@ const DAYS: Record<string, number> = { onReceipt: 0, net15: 15, net30: 30 }
 /** The box every header field sits in: one label, one line for the field, one for what is in
  * effect. Written once because four fields with three different gaps read as four accidents. */
 function MetaField({ width, children }: { width: string; children: React.ReactNode }) {
-  return <div className={`flex shrink-0 flex-col ${width}`}>{children}</div>
+  // RELATIVE, because the label is positioned ON the field's border rather than stacked above
+  // it. See FieldSettings.
+  return <div className={`relative flex shrink-0 flex-col ${width}`}>{children}</div>
 }
 
-const BOX = 'mt-1 flex h-control items-center rounded-control border border-stroke bg-surface focus-within:outline focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-stroke-focus'
+const BOX = 'flex h-control items-center rounded-control border border-stroke bg-surface focus-within:outline focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-stroke-focus'
 
 export function HeaderFields({ onOpenTransport, onOpenSettings }: { onOpenTransport: () => void; onOpenSettings: () => void }) {
   const series = useInvoice((state) => state.series)

@@ -75,12 +75,24 @@ export type Band = {
 /** One band per rate actually used on the invoice, in ascending rate order. A rate nobody
  * sold at does not appear — including 0%, which appears only when something really is
  * nil-rated, and then it appears with its taxable value and no tax. */
-export function bands(lines: readonly TaxableLine[], taxableChargesPaise: Paise = 0): Band[] {
+export function bands(
+  lines: readonly TaxableLine[],
+  taxableChargesPaise: Paise = 0,
+  /** True when the charge is QUOTED INCLUSIVE — freight of 500 means the customer pays 500, and
+   * the tax is inside it. Ruled 24-08.
+   *
+   * The lines are already handed in ex-tax in that mode; the charge was not, so tax was worked
+   * out ON TOP of it and then never added to the total, because an inclusive total adds no tax.
+   * The screen therefore printed a tax figure larger than the money it collected. */
+  chargesIncludeTax = false,
+): Band[] {
   const shares = spread(lines, taxableChargesPaise)
   const byRate = new Map<number, Paise>()
 
   lines.forEach((line, index) => {
-    const taxable = line.amountPaise + shares[index]!
+    const share = shares[index]!
+    const chargeTaxable = chargesIncludeTax ? share - taxInside(share, line.taxPercent) : share
+    const taxable = line.amountPaise + chargeTaxable
     byRate.set(line.taxPercent, (byRate.get(line.taxPercent) ?? 0) + taxable)
   })
 
