@@ -110,8 +110,8 @@ export function Tabs<Value extends string>({ options, value, onChange, label, lo
               option.icon === undefined
                 ? 'h-control-sm px-3'
                 : 'h-control px-2 [&_svg]:size-icon-lg',
-              'text-body font-label whitespace-nowrap transition-colors',
-              'focus-ring',
+              'text-body font-label whitespace-nowrap',
+              'focus-ring pressable',
               look === 'tray'
                 ? chosen
                   ? 'bg-surface text-ink shadow-raised'

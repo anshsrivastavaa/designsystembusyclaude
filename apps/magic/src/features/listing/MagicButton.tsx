@@ -56,7 +56,7 @@ export function MagicButton({ narrowed }: { narrowed: Invoice[] }) {
           'focus-ring',
         )}
       >
-        <Icon name="sparkle" className="animate-pulse" />
+        <Icon name="sparkle" className="motion-pulse" />
         AI Insight
         {worthReading === 0 ? null : (
           <span className="rounded-full bg-accent px-2 text-sm text-on-accent">{worthReading}</span>

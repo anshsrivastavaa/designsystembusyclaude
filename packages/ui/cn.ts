@@ -39,7 +39,10 @@ const twMerge = extendTailwindMerge({
       // A duration and an animation are different properties, so they are different groups: a
       // component may carry both `motion-rise` and `duration-swift` without either winning.
       duration: ['duration-swift', 'duration-glide', 'duration-enter', 'duration-leave'],
-      animate: ['motion-rise', 'motion-drop'],
+      animate: ['motion-rise', 'motion-drop', 'motion-pulse'],
+      // Its own group: it sets a transition AND a transform, and nothing else here does either,
+      // so there is nothing for it to conflict with and nothing that should quietly beat it.
+      transform: ['pressable'],
       // The four rings go in tailwind-merge's outline-offset group, which is the property that
       // actually differs between them, so a component that inherits one and sets another gets
       // the one it set rather than two rings fighting. A brand-new group id would have been the

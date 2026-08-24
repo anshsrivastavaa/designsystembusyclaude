@@ -18,6 +18,20 @@
  */
 
 @theme static {
+  /* THE FOURTH NAMESPACE, CLOSED FOR THE REASON THE OTHER THREE WERE. Tailwind ships
+   * animate-pulse, animate-spin, animate-ping and animate-bounce, and every one of them is a
+   * duration and a curve nobody here chose. This is not a hypothetical: `animate-pulse` was
+   * already in the build, on the sparkle in MagicButton — which is the whole argument in one
+   * line, because a reachable namespace gets reached. Ours are authored in utilities.css and
+   * are named `motion-*`, so nothing reaches for a second set by accident.
+   *
+   * It is also what let a real fault in: Tailwind's pulse is a 2s INFINITE loop, and the
+   * reduced-motion block below shortens durations without touching iteration counts. Measured
+   * under prefers-reduced-motion: reduce, that sparkle read
+   * {"name":"pulse","duration":"0.001s","iterations":"infinite"} — a strobe at the refresh
+   * rate, shown to the one person who asked the operating system for less movement. */
+  --animate-*: initial;
+
   /* THE SAME HOLE THE COLOUR AND RADIUS NAMESPACES WERE CLOSED FOR. Tailwind ships ease-in,
    * ease-out and ease-in-out, and a curve half ours is worse than one that is not ours at all,
    * because the wrong one still works and nothing looks broken until ours moves. */
@@ -89,6 +103,11 @@
   *::before,
   *::after {
     animation-duration: 1ms !important;
+    /* AND IT ONLY HAPPENS ONCE. A duration of 1ms with the iteration count left alone is not
+     * "no animation", it is the same animation at the refresh rate — which is a strobe, and a
+     * strobe is the exact thing 2.3.3 exists to prevent. Without this line the block reads as
+     * complete and makes the problem worse for the people it is for. */
+    animation-iteration-count: 1 !important;
     animation-delay: 0ms !important;
     transition-duration: 1ms !important;
   }

@@ -14,6 +14,7 @@
 .storybook/preview-head.component.test.tsx
 .storybook/preview-head.html
 .storybook/preview.ts
+.storybook/vercel.json
 README.md
 apps/magic/flow/bill-sundry.flow.test.ts
 apps/magic/flow/cells.ts
@@ -25,6 +26,8 @@ apps/magic/flow/enter-an-invoice.flow.test.ts
 apps/magic/flow/enterTheGrid.ts
 apps/magic/flow/group-the-listing.flow.test.ts
 apps/magic/flow/invoice.ts
+apps/magic/flow/it-gives-way-under-the-finger.flow.test.ts
+apps/magic/flow/less-motion-means-less-motion.flow.test.ts
 apps/magic/flow/one-door-to-the-audit-trail.flow.test.ts
 apps/magic/flow/open-an-invoice.flow.test.ts
 apps/magic/flow/pick-a-date.flow.test.ts

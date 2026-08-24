@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "npm run dev --workspace @busy/magic",
     "storybook": "storybook dev -p 6006",
-    "build": "npm run build --workspaces --if-present && storybook build",
+    "build": "npm run build --workspaces --if-present && npm run storybook:build",
+    "storybook:build": "storybook build --output-dir .storybook/dist",
     "tokens:write": "node scripts/token-dtcg.mjs --write",
     "mutate": "stryker run",
     "prepare": "husky || echo \"husky is not installed, so git hooks are not set up. Install dev dependencies and run npm run prepare to get them.\"",

@@ -238,3 +238,66 @@
     outline-offset: -2px;
   }
 }
+
+/* THE ONE ANIMATION THAT REPEATS.
+ *
+ * `motion-rise` and `motion-drop` happen once, on arrival. This carries on, which makes it the
+ * only utility here that had to be thought about twice under prefers-reduced-motion — and the
+ * Tailwind class it replaces, `animate-pulse`, is exactly the one that was found strobing.
+ *
+ * Two seconds is written here rather than as a token because one place uses it and because it is
+ * not the same KIND of number as the four --motion-* durations: those are how long a thing takes
+ * to get somewhere, and this is how slowly something breathes. Sharing a scale between them
+ * would mean a change to how fast a popover arrives also changed how fast a sparkle pulses. */
+@keyframes motion-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@utility motion-pulse {
+  animation: motion-pulse 2s var(--ease-settle) infinite;
+}
+
+/* THE PRODUCT ANSWERS WHEN YOU TOUCH IT.
+ *
+ * Six controls in the invoice header were said to have this already; they do not — there is no
+ * `active:scale` anywhere in the source, so there was nothing to match and the numbers below are
+ * the ones that were specified rather than ones measured off a working example. Say so here
+ * rather than let the comment claim a precedent that is not there.
+ *
+ * IT IS A UTILITY FOR THE REASON focus-ring IS ONE, and that reason is written a few blocks up:
+ * thirty-seven hand-written buttons cannot each grow their own version of this without it
+ * drifting inside a fortnight. One name, one number, one curve.
+ *
+ * WHY SO SMALL. Three per cent is under a pixel of travel on a 26px control. It is not meant to
+ * be seen — it is meant to be felt, in the same way a key that does not move feels broken even
+ * when it works. Anything larger reads as the control jumping away from the pointer.
+ *
+ * NOT IN THE ITEM GRID. Cell, ItemRow and ItemStrip are driven from the keyboard a hundred times
+ * a day and their stillness is deliberate: a transition on a cell that Enter walks through turns
+ * a two-thousand-row invoice into a screen that is always mid-animation.
+ *
+ * `transform` RATHER THAN THE `scale` PROPERTY, deliberately. Tailwind v4 writes `scale-*` to
+ * the standalone `scale` property, which `transition-property: transform` does not cover — so a
+ * utility written that way would jump rather than ease, and a test reading `transform` would
+ * read an empty string for ever and pass whatever the element did. That trap has already cost
+ * this build one afternoon on the chevron. */
+@utility pressable {
+  /* IT OWNS THE WHOLE TRANSITION, AND IT HAS TO. An element gets ONE `transition-property`, and
+   * the last declaration wins — so `transition-colors pressable` on the same button is not two
+   * transitions, it is a fight, and the colours won: measured on the rendering, the Button's
+   * transitionProperty read `color, background-color, …` with no `transform` in it at all, so
+   * the press snapped instead of easing. The test caught it before anybody saw it.
+   *
+   * The list is therefore transform plus what `transition-colors` covers, and anything wearing
+   * this class drops `transition-colors`. One declaration, one owner, nothing to lose a fight
+   * with — and the duration becomes a token on the way, which it was not before. */
+  transition-property: transform, color, background-color, border-color, box-shadow;
+  transition-duration: var(--motion-swift);
+  transition-timing-function: var(--ease-settle);
+
+  &:active {
+    transform: scale(0.97);
+  }
+}

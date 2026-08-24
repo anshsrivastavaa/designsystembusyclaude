@@ -145,6 +145,13 @@ export function Table<Row>({
               // are two different things and a row can be both at once, so they cannot share
               // one channel — that fault is already logged against the item grid.
               className={cn(
+                // NOT pressable, and this is the one place on the list where it is wrong.
+                // Three per cent is under a pixel on a 26px control and TWENTY-TWO on a
+                // full-width row: measured at 900px wide, holding the mouse down moved the
+                // row's first cell 14px sideways. A button giving way reads as a button
+                // listening; a whole row sliding under the cursor reads as a mis-click. A row
+                // already answers with a hover fill and a focus ring, and if it needs a press
+                // state it is a third colour, not geometry.
                 'group h-row',
                 chosen ? 'bg-surface-selected' : 'bg-surface hover:bg-surface-hover',
                 'focus-ring-within-inset',

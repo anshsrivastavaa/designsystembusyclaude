@@ -16,6 +16,7 @@ npm-debug.log*
 .Trashes
 
 storybook-static/
+.storybook/dist/
 .vitest-attachments/
 __screenshots__/
 .stryker-tmp/

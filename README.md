@@ -99,6 +99,17 @@ build     npm run build -w @busy/magic
 output    apps/magic/dist
 ```
 
+**Two projects, two config files, and that is not a style choice.** Vercel reads `vercel.json`
+from a project's Root Directory, so one file at the repository root is read by *every* project
+pointed at this repository. There were two, both read the root file, and the Storybook deploy
+dutifully built and served the invoice listing. The app keeps the root file; Storybook has
+`.storybook/vercel.json` and a Root Directory to match. Both still install at the root:
+
+```
+app         root directory  (repo root)   → vercel.json
+Storybook   root directory  .storybook    → .storybook/vercel.json, whose commands cd .. first
+```
+
 **Install at the repository root, not inside `apps/magic`.** This is an npm workspace: the app
 reaches `packages/ui` through an alias to the source folder, and that folder's own imports —
 React among them — resolve from the tree the root install builds. Installing inside `apps/magic`

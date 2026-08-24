@@ -28,12 +28,14 @@ import { cn } from './cn'
 const buttonVariants = cva(
   [
     'inline-flex shrink-0 items-center justify-center gap-2 font-label whitespace-nowrap',
-    'text-body transition-colors outline-none',
+    'text-body outline-none',
     // The same ring every other control in the build wears. shadcn shipped this as a box-shadow
     // ring with an offset painted in the page colour, which is a different shape from the
     // outline everything else draws — and on a Button sitting on a sunken surface the offset
     // painted the wrong colour behind it. One ring, one utility.
     'focus-ring',
+    // It gives way under the finger. See the utility for why three per cent and why it is one.
+    'pressable',
     'disabled:pointer-events-none disabled:opacity-50',
     '[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-icon-md',
   ].join(' '),

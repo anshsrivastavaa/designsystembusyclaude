@@ -34,7 +34,7 @@ export function Toggle({ checked, onCheckedChange, children, className, disabled
       onClick={() => onCheckedChange(!checked)}
       className={cn(
         'group flex items-center gap-3 rounded-control text-left text-body text-ink',
-        'focus-ring',
+        'focus-ring pressable',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
@@ -43,7 +43,7 @@ export function Toggle({ checked, onCheckedChange, children, className, disabled
       <span
         aria-hidden="true"
         className={cn(
-          'relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors',
+          'relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill',
           // On is the accent fill; off is a plain sunken track with a border, so the two
           // states differ in shape and weight as well as in colour and survive greyscale.
           checked ? 'bg-accent' : 'border border-stroke-strong bg-surface-sunken',

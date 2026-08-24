@@ -45,7 +45,7 @@ export function MenuItem({ kind = 'choice', chosen = false, detail, onClick, dis
       title={disabled ? reason : undefined}
       className={cn(
         'flex w-full items-center gap-2 px-3 py-1.5 text-left text-body',
-        'focus-visible:bg-surface-hover focus-visible:outline-none',
+        'focus-visible:bg-surface-hover focus-visible:outline-none pressable',
         'disabled:cursor-not-allowed disabled:opacity-50',
         disabled ? '' : 'hover:bg-surface-hover',
         chosen ? 'font-label text-ink-accent' : 'text-ink',
@@ -80,7 +80,7 @@ export function MenuFooterAction({ onClick, children }: { onClick: () => void; c
       className={cn(
         'flex w-full shrink-0 items-center justify-between gap-2 border-t border-stroke px-3 py-2',
         'text-body font-label text-ink-accent hover:bg-surface-hover',
-        'focus-visible:bg-surface-hover focus-visible:outline-none',
+        'focus-visible:bg-surface-hover focus-visible:outline-none pressable',
       )}
     >
       {children}
