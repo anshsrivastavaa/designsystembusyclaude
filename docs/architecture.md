@@ -25,7 +25,7 @@ adapter**, not a second repo. Dev swaps one file.
 | Components | shadcn/ui on Radix | Copied into our repo as source we own and edit, not a dependency we wrap. **cmdk (not installed)** was named here for weeks. `ComboBox` is hand-written because that library owns the highlight, and this build needs a pinned lead row the keyboard walks past — see the comment at the top of `packages/ui/ComboBox.tsx` |
 | Item grid | hand-written | **TanStack Table (not installed).** It was named here for weeks with zero imports anywhere. The grid's keyboard rules are bespoke — Enter walks Item, Qty, Price, then the next row — and column freezing is a sticky-position offset rather than the bookkeeping a table library exists to do. See the note below for the day that stops being true |
 | Client state | Zustand | One small store per feature. No ceremony, readable by a stranger |
-| Server state | none — `data/source.ts` and `useEffect` | **TanStack Query (not installed).** Not used. Every screen calls the adapter in an effect and holds the answer in local state. That is honest for a mock with seven calls and it is what the dev team will find; it is named as a gap below rather than as a decision |
+| Server state | none — `data/source.ts` and `useEffect` | **TanStack Query (not installed).** Not used. Every screen calls the adapter in an effect and holds the answer in local state. That is honest for a mock this size and it is what the dev team will find; it is named as a gap below rather than as a decision |
 | Forms | zod schemas, hand-written fields | **react-hook-form (not installed).** Not used. Fields hold their own draft state; see `EditableCell` for why a numeric field must |
 | Tests | Vitest in Node and in a real browser, Playwright for whole journeys | `npm run check` is the list — every group prints how many things it ran and fails if it ran none |
 | Component catalogue | Storybook | Doubles as the handover document |
@@ -72,7 +72,7 @@ apps/
     src/
       lib/         money, gst, dates, keyboard - pure functions, held by a check
       data/
-        schema/    zod schemas: invoice, party, item, sundry, settings, insights, refusal
+        schema/    zod schemas, one file per shape — read the folder, not this line
         adapter.ts the one interface between the app and its data
         mock/      the mock world
       features/
@@ -92,13 +92,15 @@ mock world directly.
 
 **The interface is `apps/magic/src/data/adapter.ts`. Read it there, not here.** This document
 used to print a copy of it, and the copy said five methods returning the plain thing. The real
-one has fourteen, and **every single one returns `Answer<T>`** — either the value or a `Refusal`
+one has more of them and **every single one returns `Answer<T>`** — either the value or a `Refusal`
 saying why not. Anyone who implemented what the copy showed would have written the wrong
 interface and found out at compile time, having built it.
 
 That is why there is no code in this section any more. A printed copy of a live file is a second
 version of it that nothing keeps in step, and this one drifted by ten methods and the entire
-error model before anybody noticed.
+error model before anybody noticed. It carried a COUNT for a while afterwards, which drifted twice
+more in two days — fifteen, then fourteen, then fifteen again. A number the code can change does
+not belong in prose either.
 
 `Answer<T>` is the piece that matters most and is easiest to skip:
 
@@ -171,8 +173,8 @@ never installed, and the dev team's brief is "implement one interface and the fr
 by looking for it. A gate now fails the build if this document names a package `package.json`
 does not carry.
 
-- **No server-state library.** Every call is a `useEffect` and local state. Seven calls, no
-  caching, no refetching, no request de-duplication. A real backend wants one; the decision is
+- **No server-state library.** Every call is a `useEffect` and local state. No caching, no
+  refetching, no request de-duplication. A real backend wants one; the decision is
   not made and nothing depends on it yet.
 - **No virtualisation.** The item grid renders every row. Measured at 2000 rows: 20,020 cells,
   54,199 elements. This is the one gap that is already costing something. **The number is

@@ -1,0 +1,36 @@
+/* THE TYPEFACE, AND THE FACT THAT THERE WAS NOT ONE.
+ *
+ * Until 25-08 no token in this package declared a family, so every screen rendered in whatever
+ * the operating system offered — measured on the built app, `document.fonts` held ZERO faces and
+ * the body computed to `-apple-system, system-ui, Segoe UI, Roboto, …`. Meanwhile `weight.css`
+ * reasons a whole 400/510/590/680 ladder out of Inter, in detail, about a font that had never
+ * been on the page. Every weight decision in this build was made against a substitute.
+ *
+ * IT IS THE VARIABLE FILE, AND THAT IS NOT A PREFERENCE. Static Inter ships weights in hundreds.
+ * Against it, 510 snaps to 500, 590 to 600 and 680 to 700 — three of the four rungs collapse into
+ * their neighbours and the ladder stops meaning anything. `InterVariable` is what makes those
+ * numbers real, so the package below is the variable one and the fallback stack is what a person
+ * gets for the moment before it arrives.
+ *
+ * THE FALLBACK IS DELIBERATELY THE SYSTEM STACK, not a second webfont. A face that has to be
+ * fetched before anything can be read is a blank screen on a slow connection; the system stack is
+ * already on the machine, and Inter is close enough to it in metrics that the swap does not
+ * reflow the page into a different shape. */
+
+@import '@fontsource-variable/inter';
+
+@theme {
+  /* Tailwind's own name for the sans family, so `font-sans` and every unprefixed element pick
+   * this up without a single component having to say so. */
+  /* 'Inter Variable' WITH THE SPACE, which is what the face actually declares. Written as
+   * `InterVariable` — the name of the file in Inter's own distribution — it matches nothing, the
+   * stack falls straight through to the system font, and no woff2 is ever requested. It looked
+   * exactly like success: the family computed to `InterVariable`, and
+   * `document.fonts.check('16px InterVariable')` returned TRUE, because check() answers "could
+   * this be used" and not "is this here". The network said zero requests and
+   * `document.fonts.load()` returned zero faces, which is the answer that meant anything. */
+  --font-sans:
+    'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    'Noto Sans', Arial, sans-serif;
+  --default-font-family: var(--font-sans);
+}

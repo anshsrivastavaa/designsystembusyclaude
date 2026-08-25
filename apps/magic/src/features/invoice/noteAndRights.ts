@@ -17,6 +17,13 @@ export type NoteAndRights = {
   showsProfit: boolean
   setNarration: (text: string) => void
   setNarrationPrinted: (printed: boolean) => void
+  /** What the settlement panel decided has arrived — credits adjusted plus money taken now.
+   *
+   * IT WRITES THE SAME FIELD A LOADED INVOICE BRINGS, on purpose. "Partly paid · balance X" and
+   * the Paid tab are both worked out from `paidPaise`, and a settlement that kept its own total
+   * somewhere else would be a second answer to "how much has arrived" — with the chip reading
+   * one and the panel the other. */
+  setPaidPaise: (paise: number) => void
 }
 
 type Apply = (change: Partial<NoteAndRights>) => void
@@ -31,5 +38,6 @@ export function noteAndRights(set: Apply): NoteAndRights {
     showsProfit: typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('owner'),
     setNarration: (narration) => set({ narration }),
     setNarrationPrinted: (narrationPrinted) => set({ narrationPrinted }),
+    setPaidPaise: (paidPaise) => set({ paidPaise: Math.max(0, paidPaise) }),
   }
 }

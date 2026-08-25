@@ -18,6 +18,8 @@ import { data } from '../../data/source'
 import { isRefusal } from '../../data/schema/refusal'
 import { dayText, daysAfter, monthStart, today } from '../../lib/day'
 import { DateField } from './DateField'
+import { DueField } from './DueField'
+import { MetaField } from './MetaField'
 import { FieldBox } from './FieldBox'
 import { FieldSettings } from './FieldSettings'
 import { InEffect } from './InEffect'
@@ -40,40 +42,17 @@ const DATE_CARRY = [
   { id: 'last', label: 'The last invoice date' },
 ]
 
-const DUE_TERMS = [
-  { id: 'none', label: 'No due date' },
-  { id: 'onReceipt', label: 'On receipt' },
-  { id: 'net15', label: '15 days' },
-  { id: 'net30', label: '30 days' },
-]
 
-const DAYS: Record<string, number> = { onReceipt: 0, net15: 15, net30: 30 }
-
-/** The box every header field sits in: one label, one line for the field, one for what is in
- * effect. Written once because four fields with three different gaps read as four accidents. */
-function MetaField({ width, children }: { width: string; children: React.ReactNode }) {
-  // RELATIVE, because the label is positioned ON the field's border rather than stacked above
-  // it. See FieldSettings.
-  return <div className={`relative flex shrink-0 flex-col ${width}`}>{children}</div>
-}
 
 export function HeaderFields({ onOpenTransport, onOpenSettings }: { onOpenTransport: () => void; onOpenSettings: () => void }) {
   const series = useInvoice((state) => state.series)
   const number = useInvoice((state) => state.number)
   const numberAuto = useInvoice((state) => state.numberAuto)
   const date = useInvoice((state) => state.date)
-  const dueDate = useInvoice((state) => state.dueDate)
   const setSeries = useInvoice((state) => state.setSeries)
   const offerNumber = useInvoice((state) => state.offerNumber)
   const setNumber = useInvoice((state) => state.setNumber)
   const setDate = useInvoice((state) => state.setDate)
-  const setDueDate = useInvoice((state) => state.setDueDate)
-  const party = useInvoice((state) => state.party)
-
-  // READ, NEVER WORKED OUT. Credit days are a term agreed with the customer and they live on the
-  // party master; with nobody picked yet there are no terms to offer, which is not the same as
-  // terms of zero.
-  const creditDays = party?.creditDays ?? 0
 
   // THE LAST INVOICE'S DATE IS THE BACKEND'S ANSWER TOO. It is offered only when there is one:
   // the first invoice in a fresh book has no last date, and a chip that lands on today while
@@ -117,13 +96,6 @@ export function HeaderFields({ onOpenTransport, onOpenSettings }: { onOpenTransp
   //
   // Party credit days is READ, never worked out. It is a term agreed with the customer and it
   // lives on the party master; a front end that guessed a house default would be inventing one.
-  const duePicks = [
-    ...(creditDays === 0
-      ? []
-      : [{ label: `Party credit days (${creditDays})`, day: daysAfter(date, creditDays) }]),
-    { label: 'Invoice date', day: date },
-    ...[15, 30, 60, 90].map((days) => ({ label: `Net ${days}`, day: daysAfter(date, days) })),
-  ]
 
   return (
     <div className="flex items-end gap-3">
@@ -170,36 +142,10 @@ export function HeaderFields({ onOpenTransport, onOpenSettings }: { onOpenTransp
             subtext this screen does not have anywhere. The date itself says what the date is. */}
       </MetaField>
 
-      <MetaField width="w-36">
-        <FieldSettings
-          choices={DUE_TERMS}
-          chosen={dueDate === '' ? 'none' : 'onReceipt'}
-          onChoose={(id) => {
-            if (id === 'none') {
-              setDueDate('')
-              return
-            }
-            const at = new Date(`${date}T00:00:00Z`)
-            at.setUTCDate(at.getUTCDate() + (DAYS[id] ?? 0))
-            setDueDate(at.toISOString().slice(0, 10))
-          }}
-          onOpenSettings={onOpenSettings}
-        >
-          Due
-        </FieldSettings>
-        <DateField
-          label="Due date"
-          value={dueDate}
-          // An empty due date opens on the INVOICE's month, which is where the terms start from.
-          opensOn={date}
-          onPick={setDueDate}
-          picks={duePicks}
-          earliest={date}
-          earliestMessage={`A due date cannot be before the invoice date, ${dayText(date)}.`}
-          // A dash, not today's date. An invoice with no term is not due today.
-          placeholder="—"
-        />
-      </MetaField>
+      {/* Not a field until it has a reason to be — five states, and two of them are no field at
+          all. Its own file, because it is one box carrying a rule nothing else on this row has:
+          see DueField.tsx. */}
+      <DueField onOpenSettings={onOpenSettings} />
 
       {/* THE LORRY IS THE ONE TRANSPORT CONTROL. v2 retired the labelled button for it, and
           everything an E-Way Bill needs is behind this one icon. */}

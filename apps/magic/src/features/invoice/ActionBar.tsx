@@ -4,9 +4,15 @@
 // screens: v2 has a fixed bar, ours had Save floating in the page header where it read as a
 // page title's neighbour rather than as the end of a task.
 //
-// LEFT IS STATE, RIGHT IS ACTION. Unpaid or Paid, the derived part-paid chip, and the two
-// compliance switches on the left; Hold and Save on the right. Everything at one control
-// height — that rhythm is the whole point of a bar rather than a stack.
+// LEFT IS STATE, RIGHT IS ACTION. Unpaid or Paid and the derived part-paid chip on the left; the
+// two compliance switches, Hold and Save on the right. Everything at one control height — that
+// rhythm is the whole point of a bar rather than a stack, and it is true again: the bar was 130
+// and two rows while the save configuration was loose on it, and is 68 and one row now that the
+// configuration lives behind Save's caret.
+//
+// THE COMPLIANCE SWITCHES ARE ON THE RIGHT BECAUSE THEY ARE ABOUT THE SAVE. "On at save means
+// generated at save" is a sentence about the button, and the switch was a bar's width away from
+// it.
 //
 // PARTLY PAID IS A CHIP, NEVER A THIRD TAB. Unpaid and Paid are things you set; part-paid is
 // what the arithmetic says, and a tab you cannot choose is a tab that lies about being one.
@@ -16,10 +22,11 @@
 // you scroll to find.
 
 import { Button } from '@busy/ui/Button'
-import { Shortcut } from '@busy/ui/Shortcut'
 import { Tabs } from '@busy/ui/Tabs'
-import { Toggle } from '@busy/ui/Toggle'
 import { formatPaise } from '../../lib/money'
+import { ComplianceSwitches } from './ComplianceSwitches'
+import { SaveTail } from './SaveTail'
+import type { Landing, SenderSwitches } from './afterSave'
 
 /** The two you SET. Part-paid is not here and never will be: it is what the arithmetic says, so
  * it is the chip below rather than a third option nobody can choose. */
@@ -33,12 +40,15 @@ export type ActionBarProps = {
   onPaid: (paid: boolean) => void
   /** What is left to collect. Zero means nothing is outstanding. */
   balancePaise: number
-  eWayBill: boolean
-  onEWayBill: (on: boolean) => void
-  eInvoice: boolean
-  onEInvoice: (on: boolean) => void
   onHold: () => void
   onSave: () => void
+  /** The three copy-of-the-document switches on the tail. The two compliance ones are not here:
+   * they are a different question and they have their own pair. */
+  tail: SenderSwitches
+  onTailSwitch: (key: keyof SenderSwitches, on: boolean) => void
+  /** Where the save lands, chosen behind the caret rather than by pressing a second button. */
+  landing: Landing
+  onLanding: (landing: Landing) => void
   saving: boolean
   /** What just happened, or what went wrong. Sits with the button that caused it. */
   message?: string | null
@@ -49,12 +59,12 @@ export function ActionBar({
   paid,
   onPaid,
   balancePaise,
-  eWayBill,
-  onEWayBill,
-  eInvoice,
-  onEInvoice,
   onHold,
   onSave,
+  tail,
+  onTailSwitch,
+  landing,
+  onLanding,
   saving,
   message,
   refused = false,
@@ -98,35 +108,43 @@ export function ActionBar({
         </span>
       ) : null}
 
-      <span className="flex h-control items-center rounded-control border border-stroke px-3 text-sm text-ink-secondary">
-        <Toggle checked={eWayBill} onCheckedChange={onEWayBill}>
-          E-Way Bill
-        </Toggle>
-      </span>
-      <span className="flex h-control items-center rounded-control border border-stroke px-3 text-sm text-ink-secondary">
-        <Toggle checked={eInvoice} onCheckedChange={onEInvoice}>
-          E-Invoice
-        </Toggle>
-      </span>
-
       <span className="flex-1" />
 
-      {message == null ? null : (
-        <span role={refused ? 'alert' : 'status'} className={`max-w-xs text-sm ${refused ? 'text-danger' : 'text-success'}`}>
-          {message}
-        </span>
-      )}
+      {/* THE WHOLE RIGHT-HAND SIDE IS ONE GROUP, and that is not tidiness. The spacer above pushes
+          whatever comes next to the right edge, so with Hold and the tail as separate children the
+          bar wrapped the moment the tail arrived: Hold stayed on the first row, alone, and
+          everything that acts on the invoice dropped to a second. One group means the wrap, when
+          it comes, takes the actions together. */}
+      <div className="flex items-center gap-3">
+        {/* THE TWO COMPLIANCE SWITCHES SIT WITH HOLD AND SAVE (Aj, 25-08). They were over on the
+            left with the payment state, a bar's width away from the button whose press is what
+            makes them mean anything — "on at save" is a sentence about Save, so the switch belongs
+            beside it.
+            ONE COMPONENT, TWO ROOMS. The same pair is in the transport drawer and neither place
+            holds its own copy, which is also why the wording cannot drift between them: there is
+            one set of words, in one file. See ComplianceSwitches.tsx. */}
+        <ComplianceSwitches />
 
-      <Button variant="ghost" onClick={onHold}>
-        Hold
-      </Button>
-      {/* Save keeps its emphasis, the way the party field does in the header: it is the end of
-          the task and the only thing on this bar anybody presses twice. */}
-      <Button size="lg" aria-busy={saving} onClick={onSave}>
-        {saving ? 'Saving…' : 'Save'}
-        {/* strong, because this one sits ON the filled Save button rather than on the page. */}
-        <Shortcut keyName="F2" tone="strong" className="ml-1" />
-      </Button>
+        {message == null ? null : (
+          <span role={refused ? 'alert' : 'status'} className={`max-w-xs text-sm ${refused ? 'text-danger' : 'text-success'}`}>
+            {message}
+          </span>
+        )}
+
+        <Button variant="ghost" onClick={onHold}>
+          Hold
+        </Button>
+        {/* SAVE IS A SPLIT BUTTON: a face that always saves, and a caret holding what happens
+            around it — see SaveTail.tsx. */}
+        <SaveTail
+          switches={tail}
+          onSwitch={onTailSwitch}
+          landing={landing}
+          onLanding={onLanding}
+          onSave={onSave}
+          saving={saving}
+        />
+      </div>
     </div>
   )
 }

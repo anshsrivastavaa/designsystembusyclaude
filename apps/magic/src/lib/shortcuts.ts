@@ -23,6 +23,12 @@ export type Action =
    * is the grid's ends, which is the spreadsheet convention people already have in their hands. */
   | 'row-start'
   | 'row-end'
+  /** Move the COLUMN you are standing on, rather than moving to the next one. The same arrow in
+   * the same direction, held with Ctrl or Command — which is what a person already has in their
+   * hands from every list they can reorder, and it is the only keyboard path to reordering a
+   * column, so it may not be buried in a menu. */
+  | 'move-column-left'
+  | 'move-column-right'
   | 'create-record'
   /** Open the full record's drawer on what has been typed, rather than taking the list's answer.
    * The party field has worn an F10 cap for this since the first round; the item cell had the
@@ -38,6 +44,9 @@ export type Action =
   | 'show-help'
   /** Done with this part of the document — go to the next one, and on the last one finish. */
   | 'next-section'
+  /** Bring back an invoice that was put aside. With one held it comes straight back; with
+   * several it opens the chooser, because "the last one" is a guess about which one you meant. */
+  | 'resume-held'
 
 export type Press = {
   key: string
@@ -51,7 +60,7 @@ export type Press = {
  * Enter completes a row in the item grid and opens a record in a listing — and a table keyed
  * only on the key cannot say both. `grid` is the default so every binding written before this
  * existed keeps meaning exactly what it meant. */
-export type Where = 'grid' | 'list' | 'global'
+export type Where = 'grid' | 'list' | 'headings' | 'global'
 
 type Binding = { key: string; withCommand?: boolean; withShift?: boolean; where?: Where; action: Action }
 
@@ -99,6 +108,15 @@ const BINDINGS: readonly Binding[] = [
   // listing has no field under the cursor and this does.
   { key: ' ', withShift: true, action: 'select-record' },
 
+  // The item grid's HEADING ROW, which is its own place: the arrows walk between headings there
+  // rather than between cells, and held with Ctrl they carry the column with them. Its own
+  // `where` and not the grid's, because ArrowLeft cannot mean two things in one scope — the
+  // heading row and the rows underneath are two widgets that happen to share a box.
+  { key: 'ArrowLeft', where: 'headings', action: 'move-left' },
+  { key: 'ArrowRight', where: 'headings', action: 'move-right' },
+  { key: 'ArrowLeft', withCommand: true, where: 'headings', action: 'move-column-left' },
+  { key: 'ArrowRight', withCommand: true, where: 'headings', action: 'move-column-right' },
+
   // The listing. Arrows walk the rows, Enter opens the one you are on, Space picks it without
   // opening it, and Home and End go to the ends of the page you are looking at.
   { key: 'ArrowUp', where: 'list', action: 'move-up' },
@@ -120,6 +138,9 @@ const BINDINGS: readonly Binding[] = [
   // "?" opens the shortcut legend. The v2 build already does this and its users already have
   // it in their hands, so it is taken rather than re-chosen.
   { key: '?', where: 'global', action: 'show-help' },
+  // Ctrl or Command with H brings a held invoice back. The letter is the word — Hold — and the
+  // command key is what keeps it out of the way of typing an h into a cell.
+  { key: 'h', withCommand: true, where: 'global', action: 'resume-held' },
 ]
 
 export function actionFor(press: Press, where: Where = 'grid'): Action | null {

@@ -17,6 +17,14 @@ import tailwindcss from '@tailwindcss/vite'
 // adding a whole type package to turn one URL into a path is a dependency for a one-liner.
 const ui = new URL('./packages/ui', import.meta.url).pathname
 
+// WHAT IS NOT SOURCE. `actions-runner/` is the self-hosted runner, a TOOL, and once it has run a
+// job it holds a whole second checkout of this repository with its own `node_modules` — so every
+// test file exists twice, the second copy resolves its own React, and a full local run turns red
+// with sixty failures that have nothing to do with anything anybody wrote. `.gitignore` already
+// carries this lesson for the lint group, which read the runner's own source as 56 errors; this
+// is the same fault one group later.
+const EXCLUDE = ['**/node_modules/**', 'actions-runner/**']
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -38,7 +46,7 @@ export default defineConfig({
           // weakening four of them.
           env: { TZ: 'Asia/Kolkata' },
           include: ['**/*.logic.test.ts'],
-          exclude: ['**/node_modules/**'],
+          exclude: EXCLUDE,
         },
       },
       {
@@ -46,7 +54,7 @@ export default defineConfig({
         test: {
           name: 'component',
           include: ['**/*.component.test.tsx'],
-          exclude: ['**/node_modules/**'],
+          exclude: EXCLUDE,
           browser: {
             enabled: true,
             // The Chrome already on the machine, rather than a second copy downloaded into

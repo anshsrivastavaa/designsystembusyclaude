@@ -62,6 +62,8 @@ import {
   Receipt,
   Rows,
   ShareNetwork,
+  WhatsappLogo,
+  Envelope,
   ShoppingCart,
   Sparkle,
   SquaresFour,
@@ -121,6 +123,9 @@ const ICONS = {
   printer: Printer,
   download: DownloadSimple,
   share: ShareNetwork,
+  /** The three the save tail switches on: send it, print it, email it. */
+  whatsapp: WhatsappLogo,
+  email: Envelope,
   rupee: CurrencyInr,
   copy: Copy,
   trash: Trash,

@@ -12,7 +12,7 @@
 // looking live — a switch that does nothing is worse than a switch that is not offered.
 
 import type { InvoiceSettings } from '../data/schema/settings'
-import type { RoundMethod } from './roundOff'
+import { ROUND_OFF_DEFAULT, type RoundMethod } from './roundOff'
 
 export type SettingValues = Record<string, string | boolean>
 
@@ -24,16 +24,20 @@ export function invoiceSettingsFrom(values: SettingValues, companyStateCode: str
   const taxMode =
     values['taxMode'] === 'sundry' ? 'billWise' : values['pricesIncludeTax'] === true ? 'itemInclusive' : 'itemExclusive'
 
-  const asked = String(values['roundOff'] ?? 'nearest')
+  // THE DEFAULT COMES FROM THE ONE PLACE THAT DECLARES IT. `ROUND_OFF_DEFAULT` has existed in
+  // lib/roundOff.ts since it was written and was imported by nothing but its own test, while the
+  // same two values were typed out here and in two other files. Four copies of one default is
+  // four chances for them to disagree, and the copy nothing reads is the one that drifts unseen.
+  const asked = String(values['roundOff'] ?? ROUND_OFF_DEFAULT.method)
   return {
     taxMode,
     roundOff: {
-      stepPaise: 100,
+      stepPaise: ROUND_OFF_DEFAULT.stepPaise,
       // `manual` and `ask` are answers the invoice cannot honour yet: one needs a figure to be
       // typed and the other needs a moment during save that is not built. They round to the
       // nearest rupee meanwhile, which is the closest true thing — and both are marked parked
       // in the catalogue so the drawer says so rather than implying otherwise.
-      method: ROUND_METHODS[asked] ?? 'nearest',
+      method: ROUND_METHODS[asked] ?? ROUND_OFF_DEFAULT.method,
       on: asked !== 'off',
     },
     columns: {

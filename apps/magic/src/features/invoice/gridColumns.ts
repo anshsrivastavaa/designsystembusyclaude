@@ -6,6 +6,7 @@
 // than a new idea.
 
 import type { ColumnId } from '../../lib/keyboard'
+import { alignmentOf } from './cellContent'
 
 // v2'S OWN WORDS. Ours were shortened past the point of being the same word — "Disc" loses that
 // it is a percentage, "HSN" drops the half of the code services use. The gutter is "#", which is
@@ -79,3 +80,55 @@ export const WIDTHS: Record<ColumnId, string> = {
   taxAmount: 'basis-36 grow-36',
   amount: 'basis-44 grow-44',
 }
+
+/** The five the company can switch on, and the only five the setup list may toggle. They live
+ * in the shell's settings store, so the grid is handed the answer and hands back the change —
+ * see `onSetColumn` on CreateInvoice. Everything else on the grid is either always there or
+ * decided by the tax mode, and both wear a padlock rather than vanishing from the list. */
+export type OptionalColumn = 'discount' | 'alias' | 'hsn' | 'mrp' | 'freeQuantity'
+
+const OPTIONAL_COLUMNS: readonly OptionalColumn[] = ['alias', 'hsn', 'freeQuantity', 'mrp', 'discount']
+
+export function isOptional(column: ColumnId): column is OptionalColumn {
+  return (OPTIONAL_COLUMNS as readonly string[]).includes(column)
+}
+
+/** THE LIST IS NOT GROUPED, AND THAT IS v2's ANSWER read off its source on 25-08.
+ *
+ * v2's item-grid column menu is a single flat list under one heading — "Column selection" — with
+ * every column as one row: a tick that shows only when the column is on, the label, and the
+ * mandatory ones drawn as padlocked rows that cannot be pressed. No sections.
+ *
+ * IT WAS GROUPED HERE INTO THREE — "The line", "How much", "Money" — reasoning from the LISTING's
+ * list, which is grouped because it is eighteen long once the document's full set is in it. This
+ * one is thirteen and, more to the point, it is already in an order everybody knows: the order the
+ * columns sit in on the screen. Grouping re-sorts it into an order that matches nothing the eye
+ * has just been looking at, which is a worse list arrived at by a good rule applied to the wrong
+ * table.
+ *
+ * ONE GROUP, so the shared `ColumnList` draws one heading and one run of rows. */
+export const COLUMN_GROUPS = ['Column selection'] as const
+export type ColumnGroup = (typeof COLUMN_GROUPS)[number]
+
+/** WHICH EDGE A COLUMN FREEZES AGAINST, decided by what the column IS rather than by asking.
+ *
+ * Aj, 25-08: pin a left-aligned column and everything from the left edge up to and including it
+ * freezes on the LEFT; pin a right-aligned one — the money and quantity columns — and it and
+ * everything to its right freezes on the RIGHT. Nobody chooses a side, because the column's
+ * alignment has already answered it, and offering the choice would be asking a question the screen
+ * has settled. On a wide invoice that gives v2's shape: the row number and Item Name held on the
+ * left, Amount held on the right, and the middle scrolling between them.
+ *
+ * THE ROW NUMBER IS THE ONE EXCEPTION AND IT IS NOT ARBITRARY. Its figures are set right like every
+ * other number, but the column is not a number — it is where you are in the invoice, and it is the
+ * left block's anchor in v2 and in every spreadsheet anybody has used. Alignment answers "how is
+ * this read"; for this one column that is not the same as "which end does it belong to". */
+export function freezeSideOf(column: ColumnId): 'start' | 'end' {
+  if (column === 'serial') return 'start'
+  return alignmentOf(column) === 'start' ? 'start' : 'end'
+}
+
+/** THE FLOOR A COLUMN MAY BE DRAGGED TO, where it is not the engine's own 56. v2 uses 28 for
+ * the row number and 56 for everything else; 56 under a two-digit number is half a column of
+ * empty space that nobody can reclaim. */
+export const MIN_WIDTHS: Partial<Record<ColumnId, number>> = { serial: 28 }

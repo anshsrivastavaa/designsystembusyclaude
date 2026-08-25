@@ -27,12 +27,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 
 import { useHandle, type HandleProps } from './columnHandle'
-import { isBoundary, type ColumnPins, type ColumnWidths } from './columnState'
+import { edgeFor, isBoundary, type ColumnPins, type ColumnWidths } from './columnState'
 
 export type { ColumnPins, ColumnWidths } from './columnState'
 
 export type ColumnSpec = {
   id: string
+  /** How the column's contents are aligned — and therefore WHICH EDGE it freezes against. Every
+   * money and quantity column is `end`, and those are exactly the ones that should hold against
+   * the right edge. Nobody is asked which side: the question has already been answered by what
+   * kind of number the column holds. Left out, it freezes to the left. */
+  align?: 'start' | 'end'
   /** Below this a column stops being readable. The clamp lives in the hook so both callers get
    * the same floor rather than each remembering to apply one. */
   minWidth?: number
@@ -211,7 +216,10 @@ export function useColumns({ columns, widths, onResize, pins, onPin }: ColumnOpt
     (id: string): PinProps | null => {
       if (onPin === undefined) return null
       const holding = isBoundary(pins, id)
-      const side = holding ?? 'start'
+      // THE ALIGNMENT CHOOSES THE EDGE. This read `holding ?? 'start'`, so every first press
+      // froze to the LEFT and nothing could ever be held against the right — which is the entry
+      // DECISIONS.md records as what was given up when this engine was built.
+      const side = holding ?? edgeFor(columns.find((one) => one.id === id)?.align)
       return {
         // The verb changes with the state rather than a tick beside one that no longer applies.
         'aria-label': holding === null ? 'Freeze up to this column' : 'Unfreeze',
@@ -219,7 +227,7 @@ export function useColumns({ columns, widths, onResize, pins, onPin }: ColumnOpt
         onClick: () => onPin(id, side),
       }
     },
-    [onPin, pins],
+    [onPin, pins, columns],
   )
 
   return { sizeOf, pinOf, isPinned, handleFor, pinFor, measure, resizing }

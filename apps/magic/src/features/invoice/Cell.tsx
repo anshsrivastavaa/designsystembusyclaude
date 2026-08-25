@@ -3,6 +3,7 @@
 // That is not a shortcut, it is the reason two thousand rows are cheap: three inputs a row
 // would be six thousand form controls in the page before anyone has typed anything.
 
+import * as React from 'react'
 import { useLayoutEffect, useRef } from 'react'
 
 import type { ColumnId } from '../../lib/keyboard'
@@ -27,12 +28,26 @@ type CellProps = {
   index: number
   cursor: ColumnId | null
   invalid: ColumnId | null
+  /** What sizes this cell: the column's grow weight while the grid shares its width, and
+   * nothing at all once a person has dragged, when the style below carries pixels instead. */
   width: string
+  /** Width and freeze for this column. Inline, and that is load-bearing: a frozen cell has to
+   * be forced back to `position: sticky` because cells carrying `position: relative` for their
+   * own children have those rules land later in the cascade and win — the freeze then stops
+   * pinning and the cell slides sideways with the scroll, which reads as a wrong offset and is
+   * the position itself being replaced. v2 paid a round for this one. */
+  style?: React.CSSProperties
+  /** Inside the frozen block. */
+  frozen: boolean
+  /** This column is the last of a LEFT frozen block, so it draws the line on its right. */
+  startEdge: boolean
+  /** This column is the first of a RIGHT frozen block, so it draws the line on its left. */
+  endEdge: boolean
   /** Picked for deleting: the tick takes the gutter, so the number steps aside for it. */
   selected: boolean
 }
 
-export function Cell({ column, row, index, cursor, invalid, width, onCursorRow, hands, facts, gridEngaged, cursorClaim, selected }: CellProps) {
+export function Cell({ column, row, index, cursor, invalid, width, style, frozen, startEdge, endEdge, onCursorRow, hands, facts, gridEngaged, cursorClaim, selected }: CellProps) {
   const { moveTo, readOnlyColumns, setCell } = hands
   const isCursor = cursor === column
   const isInvalid = invalid === column
@@ -118,14 +133,24 @@ export function Cell({ column, row, index, cursor, invalid, width, onCursorRow, 
   // SQUARE, AND INSET. A rounded ring inside a square cell leaves four slivers of cell showing
   // at the corners, which reads as a control dropped into a table rather than a table you can
   // type in. v2's cells are square and the ring is drawn inside the cell's own edge.
-  const shell = `flex h-full items-center overflow-hidden border-r border-stroke last:border-r-0 ${width} ${
+  // A FROZEN CELL NEEDS ITS OWN BACKGROUND AND ITS OWN CURSOR TINT, or the row visibly breaks
+  // in half as it scrolls: the row carries the tint and the cells are transparent, so a pinned
+  // cell held still over travelling content shows whatever is passing underneath it. The third
+  // of v2's three freeze lessons, and the one you see immediately.
+  const held = !frozen
+    ? ''
+    : `${onCursorRow ? 'bg-surface-hover' : 'bg-surface'} ${startEdge ? 'border-r-stroke-strong' : ''} ${
+        endEdge ? 'border-l border-l-stroke-strong' : ''
+      }`
+
+  const shell = `flex h-full items-center overflow-hidden border-r border-stroke last:border-r-0 ${width} ${held} ${
     // The cell that is wrong, in v2's own shape: a red ring on a pink fill, with the mark.
     isInvalid ? 'bg-danger-soft ring-1 ring-inset ring-danger' : ''
   } focus-ring-within-inset`
 
   if (isCursor && column === 'item' && !readOnly) {
     return (
-      <div role="gridcell" aria-colindex={2} className={shell}>
+      <div role="gridcell" aria-colindex={2} style={style} className={shell}>
         <ItemCell row={row} index={index} invalid={isInvalid} inputRef={ref} />
       </div>
     )
@@ -133,7 +158,7 @@ export function Cell({ column, row, index, cursor, invalid, width, onCursorRow, 
 
   if (isCursor && editable) {
     return (
-      <div role="gridcell" className={shell}>
+      <div role="gridcell" style={style} className={shell}>
         {isInvalid ? <InvalidMark /> : null}
         <EditableCell
           ref={ref}
@@ -163,6 +188,7 @@ export function Cell({ column, row, index, cursor, invalid, width, onCursorRow, 
     <div
       ref={plainRef}
       role="gridcell"
+      style={style}
       tabIndex={isCursor ? 0 : -1}
       onMouseDown={(event) => {
         // Without this the browser hands focus to whatever it thinks was clicked — a div it

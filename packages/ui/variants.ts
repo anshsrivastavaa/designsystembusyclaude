@@ -45,6 +45,25 @@
  * corner. Comparing markup would have called that a difference and passed it. Style and geometry
  * are what a person sees; an attribute is not.*/
 
+/* A WIDE ANCHOR AND A NARROW PANEL, SIZED AGAINST THE WINDOW RATHER THAN IN PIXELS.
+    //
+ * The first version put a wide panel against a narrow anchor and both alignments came back at
+ * the same left, because the panel did not fit and the popover's viewport clamp placed it
+ * identically either way — the gate read a working variant as dead. The second version fixed
+ * that with pixel geometry that happened to fit THIS machine's window, passed here, and failed
+ * on the CI runner, whose window is a different size. A check that depends on the box it runs
+ * on is worse than one that is merely wrong, because it is only wrong somewhere else.
+    //
+ * Percentages of the window cannot collide: the anchor is most of the width, the panel is a
+ * small fixed box, so `start` and `end` are always most of a window apart wherever this runs.*/
+
+/* WAIT FOR FONTS BEFORE MEASURING ANYTHING. A webfont loads asynchronously, so the first render
+ * of a case is measured on the fallback and the second on the real face. The same Button came back
+ * a pixel wider on the second render, and the gate called a DEFAULT value a variant. Nothing in this gate
+ * is about type and every width in it depends on type. Found on 25-08, the day Inter was loaded
+ * for the first time — before that the fallback was all there ever was, so the race could not
+ * happen and the omission could not show. */
+
 export type Variant = { component: string; name: string; values: string[] }
 
 /** Values expected to draw the same as the base, with the reason. A default value IS the base,
@@ -64,6 +83,8 @@ export const SAME_AS_BASE: Record<string, string> = {
   'TableHeading.align.start': 'the default — it is what the base renders',
   'TextField.align.start': 'the default — it is what the base renders',
   'Select.size.default': 'the default — it is what the base renders',
+  'Toggle.look.track': 'the default — it is what the base renders',
+  'Popover.height.default': 'the default — it is what the base renders',
   // ROLE IS WHAT THE SURFACE IS, NOT HOW IT LOOKS. A dialog and a listbox are drawn identically
   // and behave completely differently — one takes the keyboard, the other is pointed at from the
   // field. Nothing about that belongs in a pixel. It is held instead by the roles gate, which

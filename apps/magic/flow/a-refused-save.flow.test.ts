@@ -21,7 +21,7 @@ test('a refusal that names a field puts the message AND the cursor on it', async
   await expect(page.getByRole('combobox', { name: 'Item' })).toBeFocused()
   await takeFromTheList(page, 'Steel rod', 'Steel rod', 'Item')
 
-  await page.getByRole('button', { name: /^Save/ }).first().click()
+  await page.getByRole('button', { name: /^Save/ }).click()
 
   // The message is the backend's words, shown as they are.
   const alert = page.getByRole('alert').filter({ hasText: 'credit limit' })

@@ -12,14 +12,17 @@ import { isRefusal } from '../../data/schema/refusal'
 import type { InvoiceSettings } from '../../data/schema/settings'
 import { useInvoice } from './store'
 import { ItemGrid } from './ItemGrid'
+import type { OptionalColumn } from './gridColumns'
 import { InvoiceHeader } from './InvoiceHeader'
 import type { VoucherType } from './voucherTypes'
 import { PartyHeader } from './PartyHeader'
 import { Breakdown } from './Breakdown'
 import { Narration } from './Narration'
 import { ItemStrip } from './ItemStrip'
-import { actionFor } from '../../lib/shortcuts'
-import { nextSection, sectionOf } from './nextSection'
+import { useSectionWalk } from './sectionWalk'
+import { requestedRows, useOpenRequested } from './openRequested'
+import { LeavingDirty } from './LeavingDirty'
+import { useLeaving } from './leaving'
 import { SelectedRows } from './SelectedRows'
 import { SundryGrid } from './SundryGrid'
 import { TransportDrawer } from './TransportDrawer'
@@ -27,17 +30,10 @@ import { TaxSummary } from './TaxSummary'
 import { SaveInvoice } from './SaveInvoice'
 import { useKeyboardStaysInside } from './focusHome'
 
-/** How many rows to open with. `?rows=2000` opens a saved invoice of that size, cold. */
-function requestedRows(): number | null {
-  const asked = new URLSearchParams(window.location.search).get('rows')
-  if (asked === null) return null
-  const count = Number.parseInt(asked, 10)
-  return Number.isFinite(count) && count > 0 ? count : null
-}
-
 export function CreateInvoice({
   settings,
   onOpenSettings,
+  onSetColumn,
   onBack,
 }: {
   settings?: InvoiceSettings
@@ -48,15 +44,14 @@ export function CreateInvoice({
    * up. A second copy of this state inside the invoice store is the round-off fault again: two
    * places that can disagree about one thing.
    *
-   * DECLARED HERE AND NOT YET DESTRUCTURED. The shell half is wired — App.tsx passes it — and the
-   * grid's column setup is the other session's to build. Taking it off the parameter list keeps
-   * the build green in the meantime without pretending the prop does not exist. */
-  onSetColumn?: (id: 'discount' | 'alias' | 'hsn' | 'mrp' | 'freeQuantity', on: boolean) => void
+   * IT GOES STRAIGHT THROUGH TO THE GRID and is not read here. The screen has no opinion about
+   * columns; it is the wire between the shell that owns the answer and the setup list that
+   * changes it. */
+  onSetColumn?: (id: OptionalColumn, on: boolean) => void
   /** Where the back control goes. The shell decides, because only the shell knows what is
    * behind this screen. */
   onBack?: () => void
 }) {
-  const load = useInvoice((state) => state.load)
   const reset = useInvoice((state) => state.reset)
   const loadSettings = useInvoice((state) => state.loadSettings)
   const invoice = useRef<HTMLElement>(null)
@@ -72,6 +67,12 @@ export function CreateInvoice({
   // renders differently because of it, and it is read from an event listener that outlives a
   // render.
   const saveNow = useRef<(() => void) | null>(null)
+  // Hold's own doing, handed up the same way Save's is, so the "before you go" prompt can offer
+  // it without reaching into the bar.
+  const holdNow = useRef<(() => void) | null>(null)
+  // What happens when somebody tries to leave with something on the invoice. Its own file: the
+  // screen is an arrangement of regions, and that is a conversation about all of them at once.
+  const leaving = useLeaving(saveNow, holdNow, onBack)
 
   // How this company bills. It arrives one of two ways and both come in through the same door:
   // from the adapter when the screen opens, and from the settings drawer whenever somebody
@@ -94,60 +95,15 @@ export function CreateInvoice({
     if (requestedRows() === null) reset()
   }, [reset])
 
-  useEffect(() => {
-    const count = requestedRows()
-    if (count === null) return
-    void data.getInvoice(String(count)).then((answer) => {
-      setLoading(false)
-      if (isRefusal(answer)) {
-        setRefused(answer.message)
-        return
-      }
-      load(answer.rows, answer.paidPaise)
-    })
-  }, [load])
+  // `?rows=N` opens a saved invoice of that size, cold. Its own file, because opening one is a
+  // different subject from drawing one — and it is the only place that has to go and ask what the
+  // item strip needs. See openRequested.ts.
+  useOpenRequested(setLoading, setRefused)
 
-  // F2 WALKS THE INVOICE: party → items → charges → save, and the last press SAVES rather than
-  // landing on the button. That condition is what keeps the F2 badge on Save honest.
-  //
-  // IT LISTENS ON THE WHOLE SCREEN, in the capture phase, because F2 has to mean the same thing
-  // wherever the keyboard is — including inside the item grid, which binds F2 for its own
-  // purposes, and including on a control that is not in any section at all.
-  //
-  // NOT INSIDE A DRAWER. A drawer is a job you are in the middle of, and F2 creates the record
-  // there — that binding is untouched, and this steps aside for it rather than fighting it.
-  useEffect(() => {
-    const jump = (event: KeyboardEvent) => {
-      // Which key this is comes from the one table, like every other shortcut on the product.
-      if (actionFor(event, 'global') !== 'next-section') return
-      const active = document.activeElement
-      if (active?.closest('[role="dialog"]') != null) return
-      event.preventDefault()
-      event.stopPropagation()
-
-      const here = sectionOf(active)
-      // Not in any section — the header, the top bar, nowhere. The invoice starts at the party,
-      // so that is where "done with this" means to go.
-      const going = here === null ? 'party' : nextSection(here)
-      if (here === 'save' || going === 'save') {
-        saveNow.current?.()
-        return
-      }
-      // THE GRID IS ASKED THROUGH THE STORE, NOT THE DOM. A cell is a div until the cursor is
-      // on it, so there is nothing to focus until the cursor has moved — placing the cursor is
-      // what makes the field exist, and the cell then takes the keyboard itself.
-      if (going === 'items') {
-        useInvoice.getState().moveTo({ row: 0, column: 'item' })
-        return
-      }
-      const landing = document.querySelector<HTMLElement>(
-        going === 'party' ? '[aria-label="Party"] input' : '[aria-label="Bill sundry"] input',
-      )
-      landing?.focus()
-    }
-    document.addEventListener('keydown', jump, true)
-    return () => document.removeEventListener('keydown', jump, true)
-  }, [])
+  // F2 walks the invoice: party → items → charges → save, and the last press SAVES rather
+  // than landing on the button. Its own file, because the screen is an arrangement of regions
+  // and that is a keyboard walk across them.
+  useSectionWalk(saveNow)
 
   return (
     // ONE SCROLLING COLUMN, AND THE ACTION BAR IS THE ONLY PINNED THING ON IT. The header, the
@@ -171,25 +127,33 @@ export function CreateInvoice({
       {/* ONE WHITE PLANE, running down from the top bar and carrying both the title row and the
           party row. That is what makes the chrome read as one object instead of three stacked
           strips — v2's arrangement, and the thing Aj has asked for three times. */}
-      <div className="shrink-0 rounded-b-card bg-surface px-4 pt-2 pb-3">
+      {/* THE PLANE LINES UP WITH EVERYTHING UNDER IT (Aj, 25-08). Measured at 1440 before the
+          change: the header plane ran 84 to 1412 while the item grid, the footer cards and the
+          action bar all ran 100 to 1396 — sixteen pixels proud on each side, which is three cards
+          with three right edges on one screen.
+          IT CAME FROM TWO LAYOUT MODELS ON ONE COLUMN. The plane is a card with its own padding,
+          hung directly off `main`; everything below is a card inside a padded container. Same
+          inset now, so there is one column with one set of edges — and the plane still hangs from
+          the top bar as one object, which is what it is for. */}
+      <div className="mx-4 shrink-0 rounded-b-card bg-surface px-4 pt-2 pb-3">
         <InvoiceHeader
           type={voucherType}
           onSwitch={setVoucherType}
           favourite={favourite}
           onFavourite={() => setFavourite((was) => !was)}
-          onBack={onBack ?? (() => undefined)}
+          onBack={leaving.tryToLeave}
           onSettings={onOpenSettings ?? (() => undefined)}
         />
         <PartyHeader onOpenTransport={() => setTransport(true)} onOpenSettings={onOpenSettings ?? (() => undefined)} />
       </div>
 
-      {/* BOTTOM CLEARANCE EQUAL TO THE ACTION BAR. The bar is sticky INSIDE this scroller, so
-          it floats over whatever the content ends with — and today the Grand Total clears it
-          only because of where the cards happen to end. One more line in the breakdown, and an
-          advance settled or a split payment are both coming, and the total goes under the bar.
-          A journey asserts the last line is not covered, because this shape comes back every
-          time anything is pinned. */}
-      <div className="flex flex-col gap-3 px-4 pt-3 pb-16">
+      {/* NO BOTTOM CLEARANCE, AND THAT IS THE FIX RATHER THAN AN OVERSIGHT. The bar is sticky
+          INSIDE this scroller and it is also `mt-auto`, so it already occupies its own height at
+          the foot of the column — reserving that height again as padding counted it twice and the
+          page scrolled by 134 pixels with nothing to scroll to. What the rows must not do is grow
+          into the bar's room, and that is measured where the rows are counted: see rowsThatFit.ts,
+          which now takes the pinned children's height off the room it offers. */}
+      <div className="flex flex-col gap-3 px-4 pt-3" >
 
       {/* The grid is as tall as its rows. Nothing competes for height any more, so it has no
           minimum, no maximum and no scroller of its own. */}
@@ -202,7 +166,7 @@ export function CreateInvoice({
             <p className="max-w-md text-body text-ink">{refused}</p>
           </div>
         ) : (
-          <ItemGrid />
+          <ItemGrid {...(onSetColumn ? { onSetColumn } : {})} />
         )}
       </div>
 
@@ -229,14 +193,38 @@ export function CreateInvoice({
           </div>
           <Narration />
         </div>
-        <Breakdown />
+        <Breakdown onOpenSettings={onOpenSettings ?? (() => undefined)} />
       </footer>
       </div>
 
       <TransportDrawer open={transport} onClose={() => setTransport(false)} />
 
+      {/* THREE ANSWERS, NOT TWO. "I am not finished and do not want to lose this" is the
+          commonest reason somebody backs out of an invoice, and a Save/Discard pair has no answer
+          to it — so people pick Save, and the books fill up with half-finished invoices nobody
+          meant to raise. */}
+      <LeavingDirty
+        open={leaving.asking}
+        onStay={leaving.stay}
+        onSave={leaving.saveAndGo}
+        onHold={leaving.holdAndGo}
+        onDiscard={leaving.discardAndGo}
+      />
+
       <div className="sticky bottom-0 z-20 mt-auto shrink-0 bg-surface-page px-4 pb-3">
-        <SaveInvoice onReady={(run) => { saveNow.current = run }} />
+        <SaveInvoice
+          onReady={(run) => { saveNow.current = run }}
+          onHoldReady={(run) => { holdNow.current = run }}
+          onOpenTransport={() => setTransport(true)}
+          // WHERE THE TAIL LANDS. "A new invoice" is this screen's own doing — reset and start
+          // again — and "the listing" is the shell's, because a feature may not import from
+          // `app/` and only the shell knows what is behind this screen. So the second tier goes
+          // out through the same door the back control uses.
+          onLand={(landing) => {
+            if (landing === 'listing') onBack?.()
+            else useInvoice.getState().reset()
+          }}
+        />
       </div>
     </main>
   )

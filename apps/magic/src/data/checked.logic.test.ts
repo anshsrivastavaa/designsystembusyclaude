@@ -1,44 +1,51 @@
 import { describe, expect, it } from 'vitest'
 
-import type { DataAdapter } from './adapter'
 import { checked } from './checked'
-import { mockAdapter } from './mock/adapter'
+import type { DataAdapter } from './adapter'
 import { isRefusal } from './schema/refusal'
 
-// The schemas were written on the first day and never ran until 21-08: the only .parse() in
-// the repository was the mock validating itself, which proves the mock is well-formed and says
-// nothing at all about a backend.
+// NOTHING ABOVE THE SEAM EVER SEES A REJECTED PROMISE.
+//
+// There was not one `.catch` in the whole application, so an unreachable backend left the listing
+// on "Loading invoices…" for ever with the real error in a console nobody has open. A catch per
+// call site is a branch somebody forgets on the fourteenth screen; the seam catches once.
 
-const brokenBy = (over: Partial<DataAdapter>): DataAdapter => checked({ ...mockAdapter, ...over })
+/** An adapter where every call falls over, which is what a dead backend looks like from here. */
+function dead(): DataAdapter {
+  const fall = () => Promise.reject(new Error('ECONNREFUSED'))
+  return new Proxy({} as DataAdapter, { get: () => fall })
+}
 
-describe('checking what the adapter answers', () => {
-  it('passes a good answer through untouched', async () => {
-    const answer = await checked(mockAdapter).listItems('Steel')
-    expect(isRefusal(answer)).toBe(false)
-    expect(Array.isArray(answer) && answer.length > 0).toBe(true)
-  })
+describe('a backend that cannot be reached', () => {
+  it('arrives as a refusal rather than a rejection', async () => {
+    const answer = await checked(dead()).listInvoices({ search: '' })
 
-  it('refuses an answer of the wrong shape rather than letting it into a screen', async () => {
-    const adapter = brokenBy({
-      listItems: async () => [{ id: 'item-1', name: 'Steel rod' } as never],
-    })
-    const answer = await adapter.listItems('Steel')
     expect(isRefusal(answer)).toBe(true)
+    expect(isRefusal(answer) && answer.code).toBe('unreachable')
   })
 
-  it('names what was wrong, and says the operator did not cause it', async () => {
-    const adapter = brokenBy({
-      getInvoice: async () => ({ ...(await mockAdapter.getInvoice('1')), totalPaise: 'lots' } as never),
-    })
-    const answer = await adapter.getInvoice('1')
-    if (!isRefusal(answer)) throw new Error('expected a refusal')
-    expect(answer.message).toContain('totalPaise')
-    expect(answer.message).toContain('Nothing is wrong with what you typed')
+  it('says try again, because very often you can', async () => {
+    const answer = await checked(dead()).getInvoice('any')
+
+    // The opposite of what a malformed answer says: a wrong shape will come back wrong, and
+    // telling somebody to report a network blip wastes their time and ours.
+    expect(isRefusal(answer) && answer.message).toContain('try again')
   })
 
-  it('leaves a refusal the adapter made alone, rather than checking it against a schema', async () => {
-    const adapter = brokenBy({ listParties: async () => mockAdapter.listParties('nobody') })
-    const answer = await adapter.listParties('nobody')
-    expect(isRefusal(answer)).toBe(false)
+  it('covers every method, including the ones nobody thought to wrap', async () => {
+    const adapter = checked(dead())
+    const every = [
+      adapter.listItems(''),
+      adapter.listParties(''),
+      adapter.invoiceSettings(),
+      adapter.listSundries(''),
+      adapter.partyInsights('p1'),
+      adapter.saveInvoice({} as never),
+      adapter.attachFile('a.pdf', 0),
+    ]
+
+    for (const answer of await Promise.all(every)) {
+      expect(isRefusal(answer)).toBe(true)
+    }
   })
 })

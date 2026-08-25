@@ -5,20 +5,23 @@
 // The roles are hand-written and therefore have to be right, so they are tested as roles and
 // as behaviour, never as markup.
 
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { columnsFor, enterNeedsNewRow, lastFilledRow, onArrow, onEnter, onTab, type ColumnId } from '../../lib/keyboard'
-import { actionFor } from '../../lib/shortcuts'
+import { Icon } from '@busy/ui/Icon'
+import { columnsFor, lastFilledRow, type ColumnId } from '../../lib/keyboard'
 import { useInvoice } from './store'
 import { ItemRow } from './ItemRow'
-import { TableHeading } from '@busy/ui/TableHeading'
-import { caretIsAt } from './caretAt'
-import { AMOUNT_HEADING, HEADINGS, WIDTHS } from './gridColumns'
+import { HEADINGS, type OptionalColumn } from './gridColumns'
+import { GridHeadings } from './GridHeadings'
+import { GridColumnSetup } from './GridColumnSetup'
 import { GridSummary } from './GridSummary'
 import { useGridHands } from './useGridHands'
+import { useGridKeys } from './gridKeys'
 import { useRowsThatFit } from './rowsThatFit'
 import { columnTotals } from './columnTotals'
-
+import { isFitted, useGridLayout } from './gridLayout'
+import { useGridStyles } from './gridStyles'
+import { orderedColumns } from './gridOrder'
 
 /** A row is invalid on the cell that is wrong, never on the whole row. */
 function invalidColumnOf(quantity: number, pricePaise: number): ColumnId | null {
@@ -27,11 +30,9 @@ function invalidColumnOf(quantity: number, pricePaise: number): ColumnId | null 
   return null
 }
 
-export function ItemGrid() {
+export function ItemGrid({ onSetColumn }: { onSetColumn?: (id: OptionalColumn, on: boolean) => void }) {
   const rows = useInvoice((state) => state.rows)
   const cursor = useInvoice((state) => state.cursor)
-  const moveTo = useInvoice((state) => state.moveTo)
-  const appendRow = useInvoice((state) => state.appendRow)
   const keepRoomFor = useInvoice((state) => state.keepRoomFor)
   const settings = useInvoice((state) => state.settings)
   const { hands, gridEngaged, cursorClaim, itemFacts } = useGridHands()
@@ -48,14 +49,30 @@ export function ItemGrid() {
   // at 2000 rows still costs about 108ms, and it was never layout — there is barely a
   // millisecond of it in the profile. That is why virtualisation was the wrong remedy and there
   // is no virtualiser here.
-  const columns = useMemo(() => columnsFor(settings.taxMode, settings.columns), [settings.taxMode, settings.columns])
+  const natural = useMemo(() => columnsFor(settings.taxMode, settings.columns), [settings.taxMode, settings.columns])
+  const order = useGridLayout((state) => state.order)
+  const widths = useGridLayout((state) => state.widths)
+  const moveColumn = useGridLayout((state) => state.moveColumn)
+  const resetColumns = useGridLayout((state) => state.resetColumns)
+  const columns = useMemo(() => orderedColumns(natural, order), [natural, order])
+  const fitted = isFitted(widths)
+
   const engageGrid = useInvoice((state) => state.engageGrid)
   const card = useRef<HTMLDivElement>(null)
-  const heading = useRef<HTMLDivElement>(null)
+  const headings = useRef<HTMLDivElement>(null)
+  const sideways = useRef<HTMLDivElement>(null)
+  const setupButton = useRef<HTMLButtonElement>(null)
   const scroller = useRef<HTMLDivElement>(null)
+  const [setupAt, setSetupAt] = useState<{ x: number; y: number } | null>(null)
+  const [setupOpen, setSetupOpen] = useState(false)
   const visibleRows = useRowsThatFit(card, scroller)
+  const handleKeyDown = useGridKeys(columns)
 
   const { lines, totalOf } = columnTotals(rows)
+
+  // Everything about how the columns are laid out — what each one measures, what a drag does,
+  // what is frozen and what style that puts on a cell — in one place. See gridStyles.ts.
+  const { layout, styleOf, edges, frozen } = useGridStyles(columns, headings)
 
   // Fill the visible height, and keep one row beyond the last line that has something in it.
   //
@@ -67,83 +84,6 @@ export function ItemGrid() {
     keepRoomFor(Math.max(visibleRows, lastFilled + 2))
   }, [visibleRows, lastFilled, keepRoomFor])
 
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
-      // Which action a key means is decided in one table, in lib/shortcuts.ts, and nowhere
-      // else. What the action does is this screen's business.
-      const action = actionFor(event)
-      if (action === null) return
-
-      // Read the cursor from the store, not from this render. Keys arriving faster than React
-      // redraws — a held arrow, a fast typist — would otherwise all act on the same stale
-      // position, and most of them would do nothing at all.
-      const { cursor: at, rows: walking } = useInvoice.getState()
-
-      // SHIFT AND SPACE PICKS THE LINE. Only a line that HAS something on it: a blank row is
-      // padding waiting to be typed into, and picking three of those to delete would take away
-      // rows the grid puts straight back.
-      if (action === 'select-record') {
-        event.preventDefault()
-        const standing = walking[at.row]
-        if (standing !== undefined && standing.itemId !== null) useInvoice.getState().toggleSelected(standing.id)
-        return
-      }
-
-      if (action === 'complete-row') {
-        event.preventDefault()
-        if (enterNeedsNewRow(at, walking.length)) appendRow()
-        moveTo(onEnter(at, walking.length + 1))
-        return
-      }
-
-      const directions = { 'move-left': 'left', 'move-right': 'right', 'move-up': 'up', 'move-down': 'down' } as const
-      if (action in directions) {
-        event.preventDefault()
-        moveTo(onArrow(at, directions[action as keyof typeof directions], walking.length, columns))
-        return
-      }
-
-      if (action === 'last-filled-row') {
-        event.preventDefault()
-        moveTo({ row: lastFilledRow(walking.map((row) => row.itemId !== null)), column: at.column })
-        return
-      }
-
-      if (action === 'first-row') {
-        event.preventDefault()
-        moveTo({ row: 0, column: at.column })
-        return
-      }
-
-      // BARE Home AND End: THE ENDS OF THIS ROW, ON THE SECOND PRESS.
-      //
-      // The first press belongs to the field. A cell under the cursor is a real input, so Home
-      // already means "the front of what I am typing" — and a grid that takes the key outright
-      // leaves no way back to the front of a price being retyped. So the caret is asked where it
-      // is, and only a caret ALREADY at the end it is being sent to hands the key on.
-      //
-      // A cell with nothing in it is at both ends at once, which is right: there is no text to
-      // walk, so the first press is the one that moves.
-      if (action === 'row-start' || action === 'row-end') {
-        const toStart = action === 'row-start'
-        if (!caretIsAt(document.activeElement, toStart ? 'start' : 'end')) return
-        const edge = toStart ? columns[0] : columns[columns.length - 1]
-        if (edge === undefined) return
-        event.preventDefault()
-        moveTo({ row: at.row, column: edge })
-        return
-      }
-
-      const row = walking[at.row]
-      const unitSettled = row !== undefined && row.itemId !== null && row.unit !== ''
-      const next = onTab(at, action === 'previous-field', unitSettled, columns)
-      if (next === 'leave') return
-      event.preventDefault()
-      moveTo(next)
-    },
-    [moveTo, appendRow, columns],
-  )
-
   return (
     <div
       ref={card}
@@ -153,55 +93,56 @@ export function ItemGrid() {
       aria-colcount={columns.length}
       onKeyDown={handleKeyDown}
       onFocusCapture={engageGrid}
-      // NO INNER SCROLLER, AND NO HEIGHT OF ITS OWN. The screen is one scrolling column: the
-      // party header, the grid and the footer travel together and the page scrolls. A table
-      // that scrolls inside a page that also scrolls gives the user two scrollbars and a
-      // guess about which one they are on — v2 calls its own inner scroll a regression, in
-      // those words, and this is that ruling arriving here.
+      // NO INNER VERTICAL SCROLLER, AND NO HEIGHT OF ITS OWN. The screen is one scrolling
+      // column: the party header, the grid and the footer travel together and the page scrolls.
       // NO `overflow-hidden` HERE: any overflow value but `visible` makes this a scroll
-      // container, and the headings stick to it instead of to the page. The corners are
-      // rounded where they actually are — on the heading row and on the summary row that now
-      // closes the table — rather than clipped off a square child by its parent.
-      className="flex flex-col rounded-card border border-stroke bg-surface"
+      // container, and the headings stick to it instead of to the page.
+      className="relative flex flex-col rounded-card border border-stroke bg-surface"
     >
-      {/* The headings stay put against the PAGE scroll, so a column is still named when the
-          rows have travelled. Sticky, not pinned: they leave with the grid. */}
-      <div
-        ref={heading}
-        role="row"
-        aria-rowindex={1}
-        className="sticky top-0 z-10 flex shrink-0 items-stretch rounded-t-card border-b border-stroke bg-surface-sunken"
+      {/* THE COLUMN-SETUP DOOR FLOATS OVER THE CARD AND TAKES NO WIDTH FROM ANY ROW, which is
+          what v2 does with its own.
+          ON THE CARD AND NOT IN THE HEADING BOX, and that is the second place it has been. Inside
+          the box it took twenty-six pixels out of the heading row that the body rows never gave up
+          — every column's rule drifted, exactly to the button's width by the last one. Moved out
+          of the row and into the box it stopped doing that and started drifting itself: `right-0`
+          inside a scroll container resolves against the CONTENT, so once the grid was scrolled
+          sideways the button sat wherever the scroll had left it. The card is the nearest thing
+          that never scrolls.
+          It is also outside `role="row"`, where a bare button among the columnheaders is an
+          element a grid's roles have no place for. */}
+      <button
+        ref={setupButton}
+        type="button"
+        aria-label="Column setup"
+        onClick={() => { setSetupAt(null); setSetupOpen(true) }}
+        className="absolute top-0 right-0 z-30 flex size-control-sm items-center justify-center rounded-tr-card rounded-bl-card bg-surface-sunken text-ink-secondary hover:text-ink focus-ring"
       >
-        {columns.map((column, at) => (
-          // `TableHeading` as a div, because this grid is hand-written markup wearing grid roles
-          // and a <th> outside a <tr> is invalid. The species of heading — small, upper case,
-          // letterspaced — was written out here and again in the listing, and the two had already
-          // parted: the listing moved off muted ink to secondary for a measured reason and this
-          // never went with it. Nothing was wrong with either; there were simply two places
-          // saying what a column heading looks like and only one of them was told.
-          //
-          // `sticky={false}` because the ROW sticks, not the cell. What stays behind is what this
-          // grid owns and the listing has no opinion about: the width, the rule between columns,
-          // the row height and which columns read right.
-          <TableHeading
-            key={column}
-            as="div"
-            sticky={false}
-            aria-colindex={at + 1}
-            className={`flex h-control-sm items-center border-r border-stroke px-2 last:border-r-0 ${WIDTHS[column]} ${
-              column === 'quantity' || column === 'price' || column === 'amount' ? 'justify-end' : ''
-            }`}
-          >
-            {readOnlyColumns.includes(column) ? (
-              // A padlock in the heading, and nothing on the cells. The column is read-only
-              // all day for this user, so the fact belongs to the column and not to each row.
-              <span aria-label="read-only" title="Read-only for your user" className="mr-1">
-                🔒
-              </span>
-            ) : null}
-            {column === 'amount' ? AMOUNT_HEADING[settings.taxMode] : HEADINGS[column]}
-          </TableHeading>
-        ))}
+        <Icon name="settings" className="size-icon-sm" />
+      </button>
+
+      {/* THE HEADINGS IN THEIR OWN BOX, AND THE BOX IS WHAT STICKS. It has to be two boxes: the
+          heading has to hold its place against the PAGE scrolling down and against the GRID
+          scrolling sideways, and an element can only be sticky inside one scroller. Measured —
+          a heading inside the sideways scroller sat a whole screen above the top of the page after
+          scrolling, because `overflow-x: auto` makes the browser compute `overflow-y: auto` too
+          and the heading then sticks to a box that never travels. So this box sticks to the
+          page, clips instead of scrolling, and is driven sideways from the rows below. */}
+      <div
+        ref={headings}
+        className="sticky top-0 z-10 shrink-0 overflow-x-hidden rounded-t-card"
+      >
+        <GridHeadings
+          columns={columns}
+          taxMode={settings.taxMode}
+          readOnlyColumns={readOnlyColumns}
+          layout={layout}
+          styleOf={styleOf}
+          fitted={fitted}
+          edges={edges}
+          onOpenSetup={(at) => { setSetupAt(at ?? null); setSetupOpen(true) }}
+          onMoveColumn={(id, toIndex) => moveColumn(id, toIndex, columns)}
+          onResetColumns={resetColumns}
+        />
       </div>
 
       {readOnlyColumns.includes(cursor.column) ? (
@@ -211,30 +152,74 @@ export function ItemGrid() {
         </p>
       ) : null}
 
-      <div ref={scroller}>
-        {rows.map((row, index) => (
-          <ItemRow
-            key={row.id}
-            row={row}
-            index={index}
-            cursorColumn={cursor.row === index ? cursor.column : null}
-            invalidColumn={invalidColumnOf(row.quantity, row.pricePaise)}
-            selected={selectedRowIds.includes(row.id)}
-            columns={columns}
-            widths={WIDTHS}
-            hands={hands}
-            facts={row.itemId === null ? undefined : itemFacts[row.itemId]}
-            gridEngaged={gridEngaged}
-            // ONLY THE CURSOR ROW IS TOLD. The claim goes up on every move, so handing it to
-            // every row made every row's props change on every arrow key — memo could never
-            // return true and all two thousand re-rendered. The rows that are not under the
-            // cursor do not need to know that somebody claimed it somewhere else.
-            cursorClaim={cursor.row === index ? cursorClaim : 0}
-          />
-        ))}
+      {/* THE GRID TAKES ITS OWN SIDEWAYS SCROLL, AND THAT IS NOT A BREACH OF THE ONE-COLUMN
+          RULING. That ruling's stated reason is two scrollbars and a guess about which one the
+          wheel is on, which is an argument about the VERTICAL axis and only that — a page and a
+          table cannot both own the wheel. Nothing competes sideways: the page has no horizontal
+          scroll at all. v2's own comment records the other half, that taking a grid's scroll
+          away made lines unreachable, and it took its scroll back for that reason.
+          Left with no sideways scroll, a column dragged wider simply cannot be reached.
+          `data-sideways-only` is how the row counter knows this box is not the screen. */}
+      <div
+        ref={sideways}
+        data-sideways-only="true"
+        onScroll={(event) => {
+          if (headings.current !== null) headings.current.scrollLeft = event.currentTarget.scrollLeft
+        }}
+        className="overflow-x-auto"
+      >
+        <div ref={scroller} className={fitted ? 'w-max min-w-full' : ''}>
+          {rows.map((row, index) => (
+            <ItemRow
+              key={row.id}
+              row={row}
+              index={index}
+              cursorColumn={cursor.row === index ? cursor.column : null}
+              invalidColumn={invalidColumnOf(row.quantity, row.pricePaise)}
+              selected={selectedRowIds.includes(row.id)}
+              columns={columns}
+              styleOf={styleOf}
+              frozen={frozen}
+              edges={edges}
+              fitted={fitted}
+              hands={hands}
+              facts={row.itemId === null ? undefined : itemFacts[row.itemId]}
+              gridEngaged={gridEngaged}
+              // ONLY THE CURSOR ROW IS TOLD. The claim goes up on every move, so handing it to
+              // every row made every row's props change on every arrow key — memo could never
+              // return true and all two thousand re-rendered.
+              cursorClaim={cursor.row === index ? cursorClaim : 0}
+            />
+          ))}
+        </div>
+
+        <GridSummary
+          columns={columns}
+          styleOf={styleOf}
+          frozen={frozen}
+          edges={edges}
+          fitted={fitted}
+          lines={lines}
+          totalOf={totalOf}
+        />
       </div>
 
-      <GridSummary columns={columns} widths={WIDTHS} lines={lines} totalOf={totalOf} />
+      <GridColumnSetup
+        open={setupOpen}
+        onClose={() => setSetupOpen(false)}
+        anchorRef={setupButton}
+        {...(setupAt ? { at: setupAt } : {})}
+        columns={allColumnsFor(settings.taxMode)}
+        shown={settings.columns}
+        {...(onSetColumn ? { onSetColumn } : {})}
+      />
     </div>
   )
+}
+
+/** Every column this tax mode CAN show, on or off — which is what the setup list needs and is
+ * not what the grid draws. Asked of the same function the grid uses, with every switch on, so
+ * the list can never name a column the grid does not know how to draw. */
+function allColumnsFor(taxMode: 'itemExclusive' | 'itemInclusive' | 'billWise'): readonly ColumnId[] {
+  return columnsFor(taxMode, { discount: true, alias: true, hsn: true, mrp: true, freeQuantity: true })
 }

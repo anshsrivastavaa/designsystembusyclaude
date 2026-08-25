@@ -75,7 +75,8 @@ export function MagicButton({ narrowed }: { narrowed: Invoice[] }) {
                     setTab(insight.showsTab!)
                     setOpen(false)
                   }}
-                  className="shrink-0 text-body font-label text-ink-accent hover:underline focus-visible:underline focus-visible:outline-none"
+                  // Hover underlines; focus draws a ring. The same mark for both said nothing.
+                  className="shrink-0 text-body font-label text-ink-accent hover:underline focus-ring"
                 >
                   Show them
                 </button>

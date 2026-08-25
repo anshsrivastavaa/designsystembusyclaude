@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { isBoundary, pinThrough, reorder } from './columnState'
+import { edgeFor, isBoundary, pinThrough, reorder } from './columnState'
 
 describe('dragging a column into a new place', () => {
   const order = ['date', 'number', 'party', 'total']
@@ -42,10 +42,33 @@ describe('pinning, which is a boundary rather than a switch', () => {
     expect(pinThrough(order, 'price', 'end')).toEqual({ start: [], end: ['price', 'tax'] })
   })
 
-  it('takes one boundary at a time from each edge, so the middle is what scrolls', () => {
+  it('holds BOTH edges at once, so the middle is what scrolls', () => {
+    // Aj's shape, and v2's: Sr. and Item Name held left, Amount held right, the rest travelling
+    // between them. This is what the old signature could not do — it cleared the opposite edge on
+    // every press, so a right pin threw a left one away.
     const left = pinThrough(order, 'item', 'start')
-    expect(left.start).toEqual(['no', 'item'])
-    expect(left.end).toEqual([])
+    const both = pinThrough(order, 'price', 'end', left)
+
+    expect(both.start).toEqual(['no', 'item'])
+    expect(both.end).toEqual(['price', 'tax'])
+  })
+
+  it('releases only the edge pressed, and leaves the other standing', () => {
+    const both = pinThrough(order, 'price', 'end', pinThrough(order, 'item', 'start'))
+    const released = pinThrough(order, 'price', 'end', both)
+
+    expect(released.end).toEqual([])
+    expect(released.start).toEqual(['no', 'item'])
+  })
+
+  it('will not freeze one column to both edges — the newer press wins', () => {
+    const wideLeft = pinThrough(order, 'price', 'start')
+    expect(wideLeft.start).toEqual(['no', 'item', 'qty', 'price'])
+
+    // Now pin `qty` to the right. It is inside the left block, so the left block gives way.
+    const clashed = pinThrough(order, 'qty', 'end', wideLeft)
+    expect(clashed.end).toEqual(['qty', 'price', 'tax'])
+    expect(clashed.start).toEqual(['no', 'item'])
   })
 
   it('knows which column is holding a boundary open, so one control can also release it', () => {
@@ -54,6 +77,15 @@ describe('pinning, which is a boundary rather than a switch', () => {
     // The ones behind the boundary are frozen but are not the thing a second press releases.
     expect(isBoundary(left, 'no')).toBeNull()
     expect(isBoundary(pinThrough(order, 'price', 'end'), 'price')).toBe('end')
+  })
+
+  it('the alignment chooses the edge, so nobody is asked which side', () => {
+    // Every money and quantity column is right-aligned, and those are exactly the ones that
+    // should hold against the right edge. The question has already been answered by what kind of
+    // number the column holds.
+    expect(edgeFor('end')).toBe('end')
+    expect(edgeFor('start')).toBe('start')
+    expect(edgeFor(undefined)).toBe('start')
   })
 
   it('says nothing is a boundary when nothing is pinned', () => {

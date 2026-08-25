@@ -11,7 +11,10 @@
 // THE COUNT LIVES HERE AND NOWHERE ELSE. "1 line" beside Save is gone: a count belongs to the
 // table it counts, not to the button that saves the invoice.
 
+import type * as React from 'react'
+
 import type { ColumnId } from '../../lib/keyboard'
+import { WIDTHS } from './gridColumns'
 
 const alignsRight = (column: ColumnId) => column !== 'item' && column !== 'unit' && column !== 'serial'
 
@@ -23,19 +26,39 @@ function summaryOf(column: ColumnId, lines: number, totalOf: (column: ColumnId) 
 
 export type GridSummaryProps = {
   columns: readonly ColumnId[]
-  widths: Record<ColumnId, string>
+  /** Width and freeze for each column, worked out once by the grid. */
+  styleOf: Record<string, React.CSSProperties>
+  /** The columns inside the frozen block. */
+  frozen: readonly string[]
+  /** The one column in each block that draws the edge line. */
+  edges: { start: ColumnId | null; end: ColumnId | null }
+  /** Somebody has dragged an edge, so the columns are pixels and the grow weights come off. */
+  fitted: boolean
   lines: number
   totalOf: (column: ColumnId) => string
 }
 
-export function GridSummary({ columns, widths, lines, totalOf }: GridSummaryProps) {
+export function GridSummary({ columns, styleOf, frozen, edges, fitted, lines, totalOf }: GridSummaryProps) {
   return (
-    <div role="row" className="flex h-row shrink-0 items-stretch rounded-b-card border-t border-stroke bg-surface-sunken">
+    <div
+      role="row"
+      className={`flex h-row shrink-0 items-stretch rounded-b-card border-t border-stroke bg-surface-sunken ${
+        fitted ? 'w-max min-w-full' : ''
+      }`}
+    >
       {columns.map((column) => (
         <div
           key={column}
           role="gridcell"
-          className={`flex h-full items-center border-r border-stroke px-2 text-sm text-ink-secondary last:border-r-0 ${widths[column]} ${
+          style={styleOf[column] ?? {}}
+          // A frozen cell in this row needs the row's own fill as well, or the totals break in
+          // half as the grid travels sideways — the same reason a frozen body cell carries the
+          // cursor tint.
+          className={`flex h-full items-center border-r px-2 text-sm text-ink-secondary last:border-r-0 ${
+            column === edges.start ? 'border-stroke-strong' : 'border-stroke'
+          } ${column === edges.end ? 'border-l border-l-stroke-strong' : ''} ${
+            frozen.includes(column) ? 'bg-surface-sunken' : ''
+          } ${fitted ? '' : WIDTHS[column]} ${
             alignsRight(column) ? 'justify-end' : ''
           }`}
         >

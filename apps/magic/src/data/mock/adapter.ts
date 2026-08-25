@@ -5,6 +5,8 @@ import { refuse } from '../schema/refusal'
 import { items } from './items'
 import { invoiceOf } from './lines'
 import { insightsOf } from './insights'
+import { creditsFor } from './credits'
+import { heldCalls } from './held'
 import { kindOf } from '../../lib/attachments'
 import { today as todayIs } from '../../lib/day'
 import { invoices } from './invoices'
@@ -62,6 +64,10 @@ const answers: DataAdapter = {
       // due immediately. Whoever opens the master sets them.
       creditDays: 0,
       overduePaise: 0,
+      // A party created at the counter is still a BILLED party until somebody says otherwise.
+      // Defaulting the other way would take the due date off every invoice raised to a customer
+      // added mid-sale, which is the commonest way a real customer gets on file.
+      paysAtCounter: false,
       gstinStatus: 'unchecked',
     }
   },
@@ -71,6 +77,21 @@ const answers: DataAdapter = {
     if (party === undefined) return refuse('missing', 'That party is not on file any more.')
     return insightsOf(party, todayIs())
   },
+
+  async itemsByIds(ids: readonly string[]) {
+    // Missing ids are simply absent from the answer. An item deleted from the master after an
+    // invoice was raised is ordinary, and the invoice still has to open.
+    const wanted = new Set(ids)
+    return items.filter((one) => wanted.has(one.id))
+  },
+
+  async partyCredits(partyId: string) {
+    const party = parties.find((candidate) => candidate.id === partyId)
+    if (party === undefined) return refuse('missing', 'That party is not on file any more.')
+    return creditsFor(partyId)
+  },
+
+  ...heldCalls,
 
   async invoiceSettings() {
     return {

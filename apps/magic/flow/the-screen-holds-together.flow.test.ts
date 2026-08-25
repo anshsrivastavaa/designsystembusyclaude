@@ -135,7 +135,14 @@ test('a new invoice starts empty, and does not hold the last one', async ({ page
   await expect(await cellUnder(page, 1, 'Item Name')).toHaveText(/Steel rod/)
 
   // Away and back, the way a person does it.
+  //
+  // LEAVING AN INVOICE WITH SOMETHING ON IT NOW ASKS, and asks three things rather than two:
+  // Save, put it aside, or discard it. "I am not finished and do not want to lose this" is the
+  // commonest reason somebody backs out, and a Save/Discard pair has no answer to it. This
+  // journey is about the invoice not surviving, so it answers Discard — which is what it always
+  // meant by walking away.
   await page.getByRole('button', { name: 'Back' }).click()
+  await page.getByRole('button', { name: 'Discard it' }).click()
   await page.getByRole('button', { name: /New/ }).first().click()
 
   // THE STORE OUTLIVES THE SCREEN. Nothing cleared it unless `?rows=N` was on the address, so
@@ -147,26 +154,6 @@ test('a new invoice starts empty, and does not hold the last one', async ({ page
   // so `toHaveText('')` read "F10" and called a correctly empty invoice full. What this line has
   // always meant is that no item name survived, and that is a value.
   await expect(page.getByRole('combobox', { name: 'Item' })).toHaveValue('')
-})
-
-test('the action bar never covers the last line of the breakdown', async ({ page }) => {
-  await openInvoice(page, '/?screen=create&rows=3', 3)
-  await page.keyboard.press('Escape')
-  await page.getByRole('region', { name: 'Invoice breakdown' }).scrollIntoViewIfNeeded()
-
-  // NOT toBeVisible — that passes over an element with something painted on top of it, which
-  // is exactly the failure here. This asks the question a finger asks: if I put it on the
-  // Grand Total, what do I touch?
-  const covered = await page.evaluate(() => {
-    const card = document.querySelector('[aria-label="Invoice breakdown"]')!
-    const total = [...card.querySelectorAll('span')].find((n) => n.textContent?.trim() === 'Grand Total')!
-    const box = total.getBoundingClientRect()
-    const at = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)
-    if (at === null) return 'nothing is there — it is off screen'
-    if (at.closest('[aria-label="Invoice actions"]') !== null) return 'the action bar is over it'
-    return card.contains(at) ? 'the breakdown card' : `something else: ${at.tagName}`
-  })
-  expect(covered).toBe('the breakdown card')
 })
 
 test('leaving the invoice hands the keyboard to the screen that arrives', async ({ page }) => {

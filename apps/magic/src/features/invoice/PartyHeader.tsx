@@ -7,15 +7,28 @@ import { data } from '../../data/source'
 import { isRefusal } from '../../data/schema/refusal'
 import type { Party } from '../../data/schema/party'
 import { PartyDetails } from './PartyDetails'
+import { FieldSettings } from './FieldSettings'
 import { PartyDrawer } from './PartyDrawer'
 import { FieldBox } from './FieldBox'
-import { FieldLabel } from './FieldLabel'
 import { PartyBadge } from './PartyBadge'
 import { HeaderFields } from './HeaderFields'
 import { PartyPicker } from './PartyPicker'
 import { useInvoice } from './store'
 
+/** WHAT THE PARTY FIELD DOES THE MOMENT SOMEBODY IS PICKED, which is the one thing about this
+ * field a person sets. It is the settings drawer's own "on party select, confirm GSTIN and
+ * address", offered where the decision is made rather than only four screens away — the same
+ * relationship every other label on this row has to its own setting. */
+const PARTY_ON_PICK = [
+  { id: 'straight', label: 'Go straight to the items' },
+  { id: 'confirm', label: 'Confirm GSTIN and address first' },
+] as const
+
 export function PartyHeader({ onOpenTransport, onOpenSettings }: { onOpenTransport: () => void; onOpenSettings: () => void }) {
+  // Local until the shell offers it: the settings drawer carries the same switch, and wiring a
+  // second writer to one setting is the fault this codebase keeps catching. What this popover
+  // proves today is the DOOR — that the fourth label opens like the other three.
+  const [confirmOnPick, setConfirmOnPick] = useState(false)
   const party = useInvoice((state) => state.party)
   const chooseParty = useInvoice((state) => state.chooseParty)
   const moveTo = useInvoice((state) => state.moveTo)
@@ -45,6 +58,27 @@ export function PartyHeader({ onOpenTransport, onOpenSettings }: { onOpenTranspo
     [],
   )
   const [search, setSearch] = useState('')
+
+  // THE FIELD FOLLOWS THE STORE WHEN THE PARTY GOES AWAY, and this is the fault that made a
+  // working Hold look broken. The text in this field is the search box's own — it has to be,
+  // because somebody halfway through typing a name has no party yet — and nothing ever put it
+  // back when the invoice was cleared UNDERNEATH it. Holding an invoice reported "Put aside for
+  // Shah Enterprises", emptied the grid and zeroed the total, and left the name sitting in the
+  // field: a control saying the invoice still had a party when the store said it had none.
+  //
+  // It never showed on the paths anybody tested because those REMOUNT the screen — Back, then
+  // New — and a remount starts this state empty. Hold, Save & new and Discard all clear the
+  // invoice in place, and there are three of them now.
+  //
+  // ON THE TRANSITION, NOT ON THE VALUE. An effect watching `party === null` would wipe the name
+  // out from under anybody typing one, because there is no party until they pick.
+  useEffect(
+    () =>
+      useInvoice.subscribe((state, before) => {
+        if (before.party !== null && state.party === null) setSearch('')
+      }),
+    [],
+  )
   const [options, setOptions] = useState<readonly Party[]>([])
   const [recentIds, setRecentIds] = useState<readonly string[]>([])
   const [showing, setShowing] = useState(false)
@@ -110,9 +144,21 @@ export function PartyHeader({ onOpenTransport, onOpenSettings }: { onOpenTranspo
             the other three: measured at 97 against 101 with everything else identical. A label whose
             job is to break a stroke has to be anchored to the box that draws the stroke. */}
         <FieldBox className="group/party mt-1">
-          {/* THE SAME NOTCH THE OTHER THREE WEAR, and now literally the same file. It was
-              written out here as its own set of classes, which is one rule authored twice. */}
-          <FieldLabel>Party</FieldLabel>
+          {/* THE SAME NOTCH THE OTHER THREE WEAR, AND NOW THE SAME DOOR BEHIND IT (Aj, 25-08).
+              It was a bare `FieldLabel` while Inv No, Date and Due were all `FieldSettings` — so
+              three labels on one row opened something and the fourth did nothing, which reads as
+              the fourth being broken rather than as it having nothing to offer.
+              THE CHOICES ARE WHAT THE PARTY FIELD DOES WHEN SOMEBODY IS PICKED, which is the only
+              thing about this field a person sets. Both are switches in the settings drawer's
+              Party zone, so the foot of this popover leads to the same place they live. */}
+          <FieldSettings
+            choices={PARTY_ON_PICK}
+            chosen={confirmOnPick ? 'confirm' : 'straight'}
+            onChoose={(id) => setConfirmOnPick(id === 'confirm')}
+            onOpenSettings={onOpenSettings}
+          >
+            Party
+          </FieldSettings>
           <PartyPicker
             listId="party-list"
             value={search}

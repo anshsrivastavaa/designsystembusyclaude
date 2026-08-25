@@ -10,9 +10,17 @@ import { useEffect, useState, type RefObject } from 'react'
  *
  * Asked for by BEHAVIOUR rather than by tag. Looking for a `<main>` was tried first and made
  * the grid refuse to fill itself anywhere that tag was absent — which included its own
- * component test, where it silently padded nothing and the test read as a real failure. */
+ * component test, where it silently padded nothing and the test read as a real failure.
+ *
+ * A BOX THAT ONLY SCROLLS SIDEWAYS IS NOT THE SCREEN, AND CSS CANNOT SAY SO BY ITSELF. Setting
+ * `overflow-x: auto` makes the browser compute `overflow-y: auto` as well — measured, not
+ * assumed — so the grid's own horizontal scroller answers this question exactly as `main` does
+ * while having no vertical travel at all. It would be picked as "the screen", and every number
+ * below would then be measured against a box the height of the rows themselves: the grid would
+ * stop filling the page the moment anybody dragged a column. The scroller says what it is. */
 function scrollingAncestorOf(node: HTMLElement): HTMLElement {
   for (let up = node.parentElement; up !== null; up = up.parentElement) {
+    if (up.dataset['sidewaysOnly'] === 'true') continue
     const travels = getComputedStyle(up).overflowY
     if (travels === 'auto' || travels === 'scroll') return up
   }
@@ -49,10 +57,11 @@ export function rowsThatFit(rowsArea: HTMLElement): number {
   // the content reached the floor, the grid padded nothing, and a blank invoice showed three
   // rows. What we are measuring is where the content ENDS, and a thing that does not travel
   // with the content cannot answer that.
-  const children = ([...screen.children] as HTMLElement[]).filter((child) => {
+  const pinned = ([...screen.children] as HTMLElement[]).filter((child) => {
     const travels = getComputedStyle(child).position
-    return travels !== 'sticky' && travels !== 'fixed' && travels !== 'absolute'
+    return travels === 'sticky' || travels === 'fixed' || travels === 'absolute'
   })
+  const children = ([...screen.children] as HTMLElement[]).filter((child) => !pinned.includes(child))
   if (children.length === 0) return 1
   // SCROLL TAKEN OUT. Every one of these rects moves up as the page is scrolled, while the
   // screen's own box does not — so the same page measured after scrolling looked as though it
@@ -64,9 +73,23 @@ export function rowsThatFit(rowsArea: HTMLElement): number {
   // not the bottom of its own box. For the document element those are different numbers:
   // its box is as short as the page's content, so reading the box said "no room" on a page
   // that was mostly empty.
+  // A PINNED CHILD IS NOT CONTENT, BUT A STICKY ONE STILL TAKES ITS OWN ROOM. Those are two
+  // different facts and only the first was written down. A sticky box's rect sits at the bottom of
+  // the window whatever the page is doing, so it cannot say where the content ENDS — that is why
+  // it is left out of the measurement above. But it is still in the flow: it occupies its height
+  // at the foot of the column, and the rows may not have that space.
+  //
+  // WITHOUT THIS THE PAGE SCROLLED BY EXACTLY THE BAR'S HEIGHT, ON EVERY WINDOW SIZE. The grid
+  // grew to fill the room as though the bar were not there, the bar then added its own height, and
+  // the invoice overflowed by 66 pixels at 900 high, 64 at 800 and 68 at 1000 — a permanent
+  // scrollbar on a screen with nothing to scroll to. It was hidden for a while behind a bottom
+  // padding that reserved the bar's height a SECOND time, which doubled it to 134 rather than
+  // fixing it.
+  const pinnedRoom = pinned.reduce((sum, child) => sum + child.getBoundingClientRect().height, 0)
   const floorOfTheScreen =
     screen.getBoundingClientRect().top +
     screen.clientHeight -
+    pinnedRoom -
     Number.parseFloat(getComputedStyle(screen).paddingBottom)
   const slack = floorOfTheScreen - contentBottom
   const spare = rowsArea.clientHeight + slack

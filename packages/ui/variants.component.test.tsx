@@ -20,6 +20,7 @@ import { mounted, unmountAll } from './mounted'
 import { settled } from './settled'
 import { SAME_AS_BASE, variantsIn, type Variant } from './variants'
 import { Tabs } from './Tabs'
+import { Toggle } from './Toggle'
 
 /** Every component source, as text, so the variants are read from the same file the component is
  *  compiled from. Vite resolves this at build time; nothing reads the disk at run time. */
@@ -41,10 +42,7 @@ const RECIPES: Record<string, { render: (props: Record<string, unknown>) => Reac
   },
   MenuRow: { render: (props) => <MenuRow {...props}>Current FY</MenuRow>, at: 'button' },
   Popover: {
-    // A POPOVER NEEDS A REAL ANCHOR OR ITS ALIGNMENT IS UNTESTABLE. With a null anchorRef it sits
-    // unpositioned at the origin, and `start` and `end` render identically — which would have read
-    // as "align changes nothing" and been wrong about a variant that works. The anchor is put on
-    // the page at a known place and the panel measured against it.
+    // A real anchor, or `start` and `end` render identically and a working variant reads as dead.
     render: (props) => <PopoverExample {...props} />,
     at: '[data-slot="popover"]',
   },
@@ -67,15 +65,20 @@ const RECIPES: Record<string, { render: (props: Record<string, unknown>) => Reac
     render: (props) => (
       <table>
         <thead>
-          <tr>
-            <TableHeading {...props}>Date</TableHeading>
-          </tr>
+          <tr>{<TableHeading {...props}>Date</TableHeading>}</tr>
         </thead>
       </table>
     ),
     at: 'th, div',
   },
   TextField: { render: (props) => <TextField value="1,250.00" onChange={() => {}} {...props} /> },
+  Toggle: {
+    render: (props) => (
+      <Toggle checked={false} onCheckedChange={() => {}} icon="printer" {...props}>
+        Print
+      </Toggle>
+    ),
+  },
   Tabs: {
     render: (props) => (
       <Tabs
@@ -98,17 +101,8 @@ function PopoverExample(props: Record<string, unknown>) {
   React.useEffect(() => setReady(true), [])
 
   return (
-    // A WIDE ANCHOR AND A NARROW PANEL, SIZED AGAINST THE WINDOW RATHER THAN IN PIXELS.
-    //
-    // The first version put a wide panel against a narrow anchor and both alignments came back at
-    // the same left, because the panel did not fit and the popover's viewport clamp placed it
-    // identically either way — the gate read a working variant as dead. The second version fixed
-    // that with pixel geometry that happened to fit THIS machine's window, passed here, and failed
-    // on the CI runner, whose window is a different size. A check that depends on the box it runs
-    // on is worse than one that is merely wrong, because it is only wrong somewhere else.
-    //
-    // Percentages of the window cannot collide: the anchor is most of the width, the panel is a
-    // small fixed box, so `start` and `end` are always most of a window apart wherever this runs.
+    // Geometry the two alignments cannot collide in — see variants.ts for why that is part of
+    // the recipe rather than an incidental.
     <div style={{ position: 'fixed', left: '5%', top: '20%', width: '70%' }}>
       <button ref={anchor} type="button" style={{ width: '100%', height: 30 }}>
         Period
@@ -159,6 +153,13 @@ async function drawnAs(node: React.ReactNode, at?: string) {
       : (mountPoint.querySelector(at) ?? [...document.querySelectorAll(at)].pop() ?? null)
 
   await settled(() => find() !== null)
+
+  // FONTS AFTER MOUNTING, NOT BEFORE. `document.fonts.ready` resolves against what is PENDING, so
+  // awaiting it before anything is on the page resolves instantly having waited for nothing — the
+  // first case then measured the fallback and the second the real face. It has to come after the
+  // element exists to ask for glyphs. See variants.ts for the day this was found.
+  await document.fonts.ready
+
   const root = find()
   if (root === null) throw new Error(`nothing matched ${at ?? 'the root'}`)
 

@@ -13,6 +13,7 @@
    carries its own @theme block, which is what turns those names into classes you can
    type. The palette sits outside any @theme block on purpose, so no class exists for a
    palette step and a component cannot reach past the semantic layer to a raw value. */
+@import '../tokens/type.css';
 @import '../tokens/palette.css';
 @import '../tokens/semantic.css';
 @import '../tokens/scaled.css';

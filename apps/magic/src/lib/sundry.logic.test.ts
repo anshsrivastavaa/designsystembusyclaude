@@ -41,8 +41,20 @@ describe('what a bill sundry comes to', () => {
 
   it('takes a tax percentage of the goods PLUS the taxable charges, which is the whole point', () => {
     const rows = [row({ id: 'freight', kind: 'flat', value: 20000, taxable: true }), tax('cgst', 9, 'cgst')]
-    applySundries(GOODS, rows)
+    const { rows: settled, chargesPaise, taxableChargesPaise } = applySundries(GOODS, rows)
+    const cgst = settled.find((each) => each.taxComponent === 'cgst')
+
     // 9% of 1,200.00 and not of 1,000.00. Freight billed by the supplier is taxable value.
+    //
+    // THIS ASSERTED NOTHING UNTIL 25-08. It called `applySundries`, threw the answer away, and
+    // wrote the expected number in this comment — so the whole point of the case was a sentence
+    // no runner could read, and it would have stayed green through any arithmetic at all. A check
+    // that cannot fail is the shape this repository has a rule against, and it was in the file
+    // whose name says "which is the whole point".
+    expect(chargesPaise).toBe(20000)
+    expect(taxableChargesPaise).toBe(20000)
+    // 9% of 120000, not of 100000. If the base ever drops the charges this reads 9000.
+    expect(cgst?.amountPaise).toBe(10800)
   })
 
   it('leaves a charge marked not taxable out of the tax base', () => {

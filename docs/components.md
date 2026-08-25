@@ -165,19 +165,21 @@ Each names the hand-rolled thing it replaces. None is a new component.
 | `Chip shape="pill"` | The "Partly paid · balance X" pill hand-drawn at `ActionBar.tsx:82-84` |
 | `Button variant="on-dark"` | The whole local `DarkButton` component at `BulkBar.tsx:61-79` |
 | `Button size="xs"` | The strip's menu trigger, one authored step below body, `TopMenu.tsx:54-64` |
-| `TableRowActions as="td" \| "div"` | Row insert, copy and move on the item grid, which is divs — the same polymorphism `TableHeading` already takes |
 | `SearchBox collapsible={false}` | The icon-plus-field row rebuilt at `Settings.tsx:136-144` |
 
-### The two components that genuinely do not exist
+### The two components that did not exist — BOTH ARE BUILT AND ADOPTED, 25-08
 
-- **`MenuRow`.** There are **four** implementations of one idea — `listing/MenuItem.tsx`,
-  `app/MenuLine.tsx`, `FieldSettings.tsx:72-105`, and `VoucherSwitch.tsx:92-103` where a `Button` is
-  overridden into a menu row. They have already drifted: `MenuItem` marks the chosen row with a
-  rotated chevron, `FieldSettings` marks it with a tick. One component with `kind`, `mark`, `chosen`,
-  `detail`, `disabled` + `reason` and `notBuilt`. `MenuItem` already carries six of the seven props,
-  so this is mostly a move.
-- **`Select`.** Four hand-styled native selects with four different class runs — `Pager.tsx:32`,
-  `Settings.tsx:89`, `DrawerField.tsx:71`, `PartyDrawer.tsx:156`. Nothing in the library covers it.
+Kept as the record of why they exist, because this file ships to the dev team and a section headed
+"do not exist" about two components they can see is worse than no section at all.
+
+- **`MenuRow`** — built, six importers. It replaced **four** implementations of one idea:
+  `listing/MenuItem.tsx`, `app/MenuLine.tsx`, `FieldSettings.tsx` and `VoucherSwitch.tsx`, where a
+  `Button` was overridden into a menu row. They had already drifted — one marked the chosen row with
+  a rotated chevron, another with a tick. **The chevron won the adoption and that is still wrong:**
+  a tick means chosen, a chevron means there is more behind this. Owed to `MenuRow`, and when it
+  changes all six sites follow, which is the point.
+- **`Select`** — built, four importers. It replaced four hand-styled native selects with four
+  different class runs, one of which had no focus ring of the product's own at all.
 
 Conditional, and **not** to be built before Aj rules: a centred **`Dialog`**, needed only if the
 "reason before cancel or delete" is not a `Drawer` — `Drawer` already owns the scrim, Escape, focus

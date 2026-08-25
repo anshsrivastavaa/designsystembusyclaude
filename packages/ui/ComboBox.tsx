@@ -8,6 +8,7 @@
 import * as React from 'react'
 
 import { ComboBoxList } from './ComboBoxList'
+import { fieldFrameOf } from './fieldFrame'
 import { useListOpening } from './listOpening'
 import { nextStop, NOTHING, stopsOf } from './comboBoxStops'
 import { TextField } from './TextField'
@@ -37,10 +38,6 @@ export type ComboBoxProps<Option> = {
   stickyLead?: { label: string; onChoose: () => void }
   /** A line pinned below the list that says something and does nothing — never a stop. */
   note?: string
-  /** What the list hangs off, when the field sits inside a box. The party field sits in a box narrower than itself
-   * and its input is wider, so a list anchored to the input did not line up with the thing a
-   * person sees as the field. Left out, the input is the anchor. */
-  anchorTo?: React.RefObject<HTMLElement | null>
   /** Focus has left the field. The caller decides whether that means anything. */
   onLeave?: () => void
 }
@@ -54,7 +51,6 @@ function ComboBox<Option>({
   onSelect,
   onDismiss,
   placeholder,
-  anchorTo,
   label,
   invalid,
   inputRef,
@@ -71,6 +67,10 @@ function ComboBox<Option>({
   // row. All three are kept; opening BY ITSELF highlights nothing.
   const [highlight, setHighlight] = React.useState(NOTHING)
   const input = React.useRef<HTMLInputElement>(null)
+
+  // The list hangs off the box a person SEES, not the input. See fieldFrame.ts.
+  const frame = React.useRef<HTMLElement | null>(null)
+  React.useLayoutEffect(() => void (frame.current = fieldFrameOf(input.current)))
 
   /** Has the user asked this list anything — typed, or arrowed inside it. */
   const asked = React.useRef(false)
@@ -224,7 +224,7 @@ function ComboBox<Option>({
       <ComboBoxList
         listId={listId}
         label={label}
-        anchorRef={anchorTo ?? input}
+        anchorRef={frame}
         open={visible}
         onClose={dismiss}
         options={options}

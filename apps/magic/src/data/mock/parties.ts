@@ -71,6 +71,8 @@ export const parties: Party[] = NAMES.map(([name, city], index) => ({
   // the due-date picker has to show that they differ party to party.
   creditDays: name === 'Cash' ? 0 : [0, 30, 15, 45, 30, 60, 30, 15, 30, 45, 30, 60][index]!,
   overduePaise: index % 4 === 2 ? index * 120000 + 30000 : 0,
+  // Cash is the counter account. Everybody else is billed, whether or not they have agreed terms.
+  paysAtCounter: name === 'Cash',
   gstinStatus: gstinFor(name, index),
 }))
 

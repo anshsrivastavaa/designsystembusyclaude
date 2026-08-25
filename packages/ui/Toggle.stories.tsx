@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import * as React from 'react'
 import { DemoRow } from '../../.storybook/demo'
 
 import { Toggle } from './Toggle'
@@ -67,6 +68,25 @@ function Density({ density, label }: { density: string; label: string }) {
         <DemoRow align="top" label="Doing its real job" note="It takes effect as it moves. If it needed an OK button after it, it was a checkbox.">
           <LineItems />
         </DemoRow>
+
+        <DemoRow
+          align="top"
+          label="Icon, on and off"
+          note="Filled is on, outline is off, and the ink steps down as well — both survive the colour being taken away. The role, the aria-checked and the keyboard are identical to the track version, which is why this is a variant."
+        >
+          <IconRow />
+        </DemoRow>
+
+        <DemoRow align="top" label="Icon, disabled" note="Off, and it says why on hover.">
+          <div className="flex gap-1">
+            <Toggle look="icon" icon="whatsapp" checked onCheckedChange={() => {}} disabled title="Not built yet">
+              WhatsApp
+            </Toggle>
+            <Toggle look="icon" icon="printer" checked={false} onCheckedChange={() => {}} disabled title="Not built yet">
+              Print
+            </Toggle>
+          </div>
+        </DemoRow>
       </div>
     </section>
   )
@@ -105,5 +125,26 @@ function TogglePage() {
 const meta = { title: 'Toggle', render: () => <TogglePage /> } satisfies Meta
 
 export default meta
+
+/** The save tail's three: send it, print it, email it. Each is a THING rather than a setting,
+ *  which is why they are glyphs with names rather than a column of labelled switches. */
+function IconRow() {
+  const [on, setOn] = React.useState<Record<string, boolean>>({ whatsapp: true, printer: false, email: false })
+  const set = (key: string) => (next: boolean) => setOn((was) => ({ ...was, [key]: next }))
+
+  return (
+    <div className="flex gap-1 rounded-card border border-stroke bg-surface p-2">
+      <Toggle look="icon" icon="whatsapp" checked={on.whatsapp ?? false} onCheckedChange={set('whatsapp')}>
+        WhatsApp
+      </Toggle>
+      <Toggle look="icon" icon="printer" checked={on.printer ?? false} onCheckedChange={set('printer')}>
+        Print
+      </Toggle>
+      <Toggle look="icon" icon="email" checked={on.email ?? false} onCheckedChange={set('email')}>
+        Email
+      </Toggle>
+    </div>
+  )
+}
 
 export const Toggle_: StoryObj<typeof meta> = { name: 'Toggle' }

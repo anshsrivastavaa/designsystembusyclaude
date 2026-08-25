@@ -106,7 +106,13 @@ export function ItemStrip() {
 
       <span className="flex-1" />
 
-      {!showsProfit ? null : (
+      {/* NOTHING TO SHOW WHEN THERE IS NOTHING SOLD, which is v2's rule: its chip returns null on
+          a sale of zero rather than printing a figure. Ours read "This bill 0.00" on every empty
+          invoice — a number with no percentage beside it, which says nothing and reads as the
+          strip being broken. `percent` is already null for exactly this case — a percentage of
+          nothing — so the answer was in the arithmetic and the strip was not asking. A profit of
+          zero on a real invoice is different and still shows. */}
+      {!showsProfit || shown.percent === null ? null : (
         <span className="flex shrink-0 items-baseline gap-2">
           <span className="text-ink-muted">{onItemRow ? 'This line' : 'This bill'}</span>
           <span className="font-label text-ink">{formatPaise(shown.profitPaise)}</span>

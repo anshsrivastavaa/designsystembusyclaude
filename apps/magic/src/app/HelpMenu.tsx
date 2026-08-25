@@ -34,6 +34,11 @@ const SAYS: Record<Action, string> = {
   'row-start': 'Go to the start of this row (a second press, once the caret is already there)',
   'row-end': 'Go to the end of this row (a second press, once the caret is already there)',
   'last-row': 'Go to the last row',
+  // ADDED BY SESSION A, IN SESSION B'S FILE, AND FLAGGED RATHER THAN SLIPPED IN — the third
+  // time, for the same reason: `Record<Action, string>` is exhaustive, so binding a key in
+  // lib/shortcuts.ts turns the build red until the action has words. B owns the wording.
+  'move-column-left': 'Move this column left',
+  'move-column-right': 'Move this column right',
   'create-record': 'Create the record you are looking at',
   // ADDED BY SESSION A, IN SESSION B'S FILE, AND FLAGGED RATHER THAN SLIPPED IN. `Record<Action,
   // string>` makes this map exhaustive, so binding F10 in lib/shortcuts.ts turned the build red
@@ -47,12 +52,16 @@ const SAYS: Record<Action, string> = {
   clear: 'Clear the search, or close what is open',
   'show-help': 'Show these shortcuts',
   'next-section': 'Done with this part — go to the next one, and finish on the last',
+  // ADDED BY SESSION A, IN SESSION B'S FILE, AND FLAGGED RATHER THAN SLIPPED IN — the fourth time,
+  // for the same reason: `Record<Action, string>` is exhaustive. B owns the wording.
+  'resume-held': 'Bring back an invoice you put aside',
 }
 
 const GROUPS: { where: Where; title: string }[] = [
   { where: 'global', title: 'Anywhere' },
   { where: 'list', title: 'In a listing' },
   { where: 'grid', title: 'In the item grid' },
+  { where: 'headings', title: 'On the item grid\u2019s column headings' },
 ]
 
 const PRINTED: Record<string, string> = {

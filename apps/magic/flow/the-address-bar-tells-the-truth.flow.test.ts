@@ -13,8 +13,11 @@ import { expect, test } from '@playwright/test'
 const onTheListing = (page: import('@playwright/test').Page) =>
   expect(page.getByRole('heading', { name: 'Invoices' })).toBeVisible()
 
+// SAVE IS A SPLIT BUTTON. Its face carries the F2 badge inside it, so the accessible name is not
+// the bare word — matched on the start of it rather than exactly, which also keeps the caret's own
+// name ("What happens when you save") out of the way.
 const onTheInvoice = (page: import('@playwright/test').Page) =>
-  expect(page.getByRole('button', { name: 'Save' })).toBeVisible()
+  expect(page.getByRole('button', { name: /^Save/ })).toBeVisible()
 
 test('the address follows the screen, and back brings you home', async ({ page }) => {
   await page.goto('/')

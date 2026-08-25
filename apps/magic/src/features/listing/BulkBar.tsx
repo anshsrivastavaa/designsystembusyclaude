@@ -22,6 +22,7 @@
 import * as React from 'react'
 
 import { cn } from '@busy/ui/cn'
+import { walkWithArrows } from '@busy/ui/rovingKeys'
 import { Button } from '@busy/ui/Button'
 import { Icon, type IconName } from '@busy/ui/Icon'
 import { Popover } from '@busy/ui/Popover'
@@ -65,18 +66,41 @@ function DarkButton({ children, onClick, reason, buttonRef, expanded }: {
   buttonRef?: React.Ref<HTMLButtonElement>
   expanded?: boolean
 }) {
-  return (
+  // `aria-disabled`, NOT `disabled`, AND THAT IS WHAT MAKES THE REASON READABLE AT ALL.
+  //
+  // The reason was on a `title` on a `disabled` button. A disabled control takes no pointer events,
+  // so the browser never showed the tooltip — and it cannot take focus either, so a keyboard user
+  // could not reach it to hear the reason read out. Six of the eight buttons here are off until the
+  // backend lands, and every one of them exists to say why.
+  //
+  // The ARIA toolbar pattern is explicit about this: a disabled item stays focusable so somebody
+  // can arrive at it and find out. So the button is aria-disabled, stays in the arrow walk, carries
+  // the reason in its accessible name, and refuses the click itself.
+  const off = reason !== undefined
+  const button = (
     <button
       ref={buttonRef}
       type="button"
-      onClick={onClick}
-      disabled={reason !== undefined}
-      title={reason}
+      onClick={off ? undefined : onClick}
+      aria-disabled={off || undefined}
+      {...(reason === undefined ? {} : { 'aria-label': `${String(children)} — ${reason}` })}
       {...(expanded === undefined ? {} : { 'aria-expanded': expanded, 'aria-haspopup': 'dialog' as const })}
-      className="flex h-control-sm items-center gap-2 rounded-control px-3 text-body whitespace-nowrap text-surface hover:bg-ink-secondary focus-ring disabled:cursor-not-allowed disabled:opacity-40"
+      className={cn(
+        'flex h-control-sm items-center gap-2 rounded-control px-3 text-body whitespace-nowrap text-surface focus-ring',
+        off ? 'cursor-not-allowed opacity-40' : 'hover:bg-ink-secondary',
+      )}
     >
       {children}
     </button>
+  )
+
+  // The title is still there for a pointer, which now reaches it because the button is no longer
+  // `disabled`. The accessible name above is what a screen reader gets.
+  if (reason === undefined) return button
+  return (
+    <span title={reason} className="inline-flex">
+      {button}
+    </span>
   )
 }
 
@@ -92,6 +116,15 @@ function generateReason(picked: Invoice[], which: ComplianceId): string {
 }
 
 export function BulkBar({ atFoot = false }: { atFoot?: boolean }) {
+  const strip = React.useRef<HTMLDivElement>(null)
+
+  // The arrows walk the strip, which is what `role="toolbar"` promises and what this did not do.
+  // The walk itself is in packages/ui/rovingKeys.ts: a screen deciding what ArrowRight means is a
+  // key meaning in a second place, and the shape gate says so.
+  const onArrowKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (walkWithArrows(strip.current, event)) event.preventDefault()
+  }
+
   const selected = useListing((state) => state.selected)
   const invoices = useListing((state) => state.invoices)
   const clearSelection = useListing((state) => state.clearSelection)
@@ -107,6 +140,13 @@ export function BulkBar({ atFoot = false }: { atFoot?: boolean }) {
     <div
       role="toolbar"
       aria-label={`Actions for ${selected.length} selected invoices`}
+      // A ROLE IS A PROMISE ABOUT BEHAVIOUR. `toolbar` says the arrow keys move between the
+      // controls and Tab passes the whole strip in one press — and none of that was here, so a
+      // screen reader announced a toolbar and the keys did nothing. A control that reports a
+      // state it is not in is worse than no control, and a ROLE that does is the same fault one
+      // layer up. The keys are below; the roving tab stop is what makes Tab skip the strip.
+      ref={strip}
+      onKeyDown={onArrowKey}
       // THE CARD'S OWN BOTTOM CORNERS, BUT ONLY WHEN IT IS AT THE CARD'S BOTTOM. The bar is a
       // dark strip bled out to the edges of the totals cell, and when the list is short it IS
       // the foot of the card — with square corners its ink filled in the card's rounded ones and

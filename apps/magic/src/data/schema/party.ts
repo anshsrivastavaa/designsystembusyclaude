@@ -46,6 +46,16 @@ export const partySchema = z.object({
   creditDays: z.number().int(),
   /** Of the outstanding, how much is past its due date. */
   overduePaise: z.number().int(),
+  /** SETTLED AT THE COUNTER, so the invoice has no due date at all — not an empty one, not a
+   * disabled one: the field is absent.
+   *
+   * IT IS A FLAG ON THE PARTY AND NOT A NAME MATCH. "Cash" is the commonest such party and it is
+   * tempting to read the word, but a shop has more than one counter account and none of them has
+   * to be spelled that way — a front end deciding a customer pays on the spot because its name
+   * looks right is inventing a term of trade. It is also NOT `creditDays === 0`, which is a
+   * different answer: zero days means no terms have been AGREED and the company default decides,
+   * where this means the question does not arise. */
+  paysAtCounter: z.boolean(),
   /** The GST registration's standing. `none` is an unregistered buyer — ordinary, not a
    * problem. `suspended`, `cancelled` and `inactive` are, because you cannot claim input tax
    * against a registration that is not currently standing. */

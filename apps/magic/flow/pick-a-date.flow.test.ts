@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 import { dismissThePartyList } from './enterTheGrid'
+import { takeFromTheList } from './takeFromTheList'
 
 // THE DATE FIELDS, WHICH DID NOT WORK AT ALL BEFORE THIS.
 //
@@ -17,6 +18,26 @@ async function openInvoiceScreen(page: import('@playwright/test').Page) {
   await dismissThePartyList(page)
 }
 
+/** The same screen with a BILLED PARTY on it, which is the only state that has a Due field.
+ *
+ * THE DUE FIELD IS NOT A FIELD UNTIL IT HAS A REASON TO BE (Aj, 25-08): no party, no field at all,
+ * and a party who settles at the counter has none either. Every test below that touches Due used
+ * to open a blank invoice and find one — which was the fault, not the test. Sharma Traders carries
+ * thirty days in the master, so the field arrives already filled and the picks have something to
+ * count from. */
+async function openWithAParty(page: import('@playwright/test').Page) {
+  await page.goto('/?screen=create')
+  // CLICKED, NOT ASSUMED FOCUSED. An invoice does open with the keyboard in the party field, and
+  // waiting on that alone was flaky here — a real click on the field is what a person does and it
+  // is true whether the autofocus has landed yet or not.
+  await page.getByRole('combobox', { name: 'Party' }).click()
+  await takeFromTheList(page, 'Sharma T', 'Sharma Traders')
+  // NOT `dismissThePartyList` AFTERWARDS. Picking a party closes its list and puts the cursor in
+  // the first item cell — a ruled behaviour — so that helper's first assertion, that the party
+  // field still holds the keyboard, is false by then and by design.
+  await expect(page.getByRole('listbox', { name: 'Party' })).toBeHidden()
+}
+
 test('the field opens the calendar, and there is no icon doing it instead', async ({ page }) => {
   await openInvoiceScreen(page)
 
@@ -28,7 +49,7 @@ test('the field opens the calendar, and there is no icon doing it instead', asyn
 })
 
 test('it opens at the date the field is already holding, not at today', async ({ page }) => {
-  await openInvoiceScreen(page)
+  await openWithAParty(page)
 
   const field = page.getByRole('textbox', { name: 'Invoice date' })
   await field.click()
@@ -44,7 +65,7 @@ test('it opens at the date the field is already holding, not at today', async ({
 })
 
 test('typing short is read the way the document specifies', async ({ page }) => {
-  await openInvoiceScreen(page)
+  await openWithAParty(page)
   const field = page.getByRole('textbox', { name: 'Invoice date' })
 
   for (const [typed, shown] of [
@@ -70,7 +91,7 @@ test('a quick pick sets the date and closes the panel', async ({ page }) => {
 })
 
 test('the due date refuses a day before the invoice date, and says so ONLY then', async ({ page }) => {
-  await openInvoiceScreen(page)
+  await openWithAParty(page)
 
   const due = page.getByRole('textbox', { name: 'Due date' })
   await due.click()
@@ -91,7 +112,7 @@ test('the due date refuses a day before the invoice date, and says so ONLY then'
 })
 
 test('the due picks are the seven the document names, counted from the invoice date', async ({ page }) => {
-  await openInvoiceScreen(page)
+  await openWithAParty(page)
   await page.getByRole('textbox', { name: 'Due date' }).click()
 
   const picks = page.getByRole('dialog', { name: 'Due date' }).getByRole('group', { name: 'Quick picks' })

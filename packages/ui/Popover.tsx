@@ -34,6 +34,7 @@ import * as React from 'react'
 import { createPortal } from 'react-dom'
 
 import { cn } from './cn'
+import { placeAt, roomFor } from './popoverPlacement'
 
 export type PopoverProps = {
   open: boolean
@@ -60,6 +61,10 @@ export type PopoverProps = {
   /** `anchor` makes the panel at least as wide as the control it hangs off, so a list under a
    * field lines up with the field rather than with whatever its own content wanted. */
   minWidth?: 'anchor'
+  /** How much room the panel may take before it starts scrolling. `tall` is for a surface with
+   * sections rather than a list of rows — the settlement panel, which reads as a keyhole at the
+   * height a dropdown wants. It still never exceeds the window: the clamp below wins. */
+  height?: 'default' | 'tall'
   /** The panel element, for a caller that has to scroll it or measure it. */
   panelRef?: React.RefObject<HTMLDivElement | null>
   children: React.ReactNode
@@ -67,8 +72,7 @@ export type PopoverProps = {
 
 // Geometry, not design values: the hair of space between a control and its surface, and how
 // close to the window edge a panel may sit before it is pulled back.
-const GAP = 4
-const EDGE = 8
+
 
 export function Popover({
   open,
@@ -81,12 +85,12 @@ export function Popover({
   id,
   takesFocus = true,
   minWidth,
+  height = 'default',
   panelRef,
   children,
 }: PopoverProps) {
   const own = React.useRef<HTMLDivElement>(null)
   const panel = panelRef ?? own
-  const [least, setLeast] = React.useState<number | null>(null)
   const returnTo = React.useRef<HTMLElement | null>(null)
   const [at, setAt] = React.useState<{ left: number; top: number } | null>(null)
 
@@ -109,25 +113,31 @@ export function Popover({
         point === undefined
           ? trigger.getBoundingClientRect()
           : ({ top: point.y, bottom: point.y, left: point.x, right: point.x } as DOMRect)
+
+      // THE MINIMUM WIDTH IS WRITTEN BEFORE THE PANEL IS MEASURED, ON THE NODE, IN THIS PASS.
+      //
+      // It was React state, which meant the panel's size depended on the effect that measures the
+      // panel — a feedback loop one render long. Measured on the running build: open the party
+      // list at 1440 wide, then shrink the window to 560. The clamp ran with the panel's STALE
+      // 490px width against the new 560px window, so `furthest` came out 62, the panel was pinned
+      // at 62 while its field was at 109, and there it stayed — 47 pixels off its field and over
+      // the rail. With a wider field, or a browser zoomed in, `furthest` goes negative and it
+      // lands hard against EDGE, which is where Aj's screenshot has it.
+      //
+      // Writing it here costs nothing and removes the lag entirely: whatever the panel is about
+      // to be, that is what gets measured.
+      if (minWidth === 'anchor') surface.style.minWidth = `${anchor.width}px`
+
+      // The ceiling, and then the window's own limit on top of it — a panel may ask for more room
+      // than the screen has, and the screen wins.
+      const seen = { width: window.innerWidth, height: window.innerHeight }
+      surface.style.maxHeight = `${roomFor(height, seen)}px`
       const size = surface.getBoundingClientRect()
 
-      // Below unless it will not fit and there is more room above. Not "flip whenever it is
-      // past halfway": a panel that fits below should stay below, because that is where the
-      // eye already is.
-      const roomBelow = window.innerHeight - anchor.bottom - EDGE
-      const above = size.height > roomBelow && anchor.top - EDGE > roomBelow
-      const wantedTop = above ? anchor.top - size.height - GAP : anchor.bottom + GAP
-      // Clamped vertically as well as horizontally. On a short window neither side has room,
-      // and flipping only helps when one of them does — without this the panel simply hung off
-      // the bottom, which is the same failure the flip was written to prevent.
-      const lowest = window.innerHeight - size.height - EDGE
-      const top = Math.min(Math.max(EDGE, wantedTop), Math.max(EDGE, lowest))
-
-      if (minWidth === 'anchor') setLeast(anchor.width)
-
-      const wantedLeft = align === 'end' ? anchor.right - size.width : anchor.left
-      const furthest = window.innerWidth - size.width - EDGE
-      setAt({ left: Math.min(Math.max(EDGE, wantedLeft), Math.max(EDGE, furthest)), top })
+      // The flip, both clamps and the alignment are arithmetic and live in popoverPlacement.ts,
+      // where they can be asked questions without a browser. Every fault this placement has had
+      // was one of those four numbers.
+      setAt(placeAt(anchor, size, seen, align))
     }
 
     place()
@@ -137,7 +147,7 @@ export function Popover({
       window.removeEventListener('resize', place)
       window.removeEventListener('scroll', place, true)
     }
-  }, [open, align, anchorRef, point, minWidth])
+  }, [open, align, anchorRef, point, minWidth, height])
 
   // THE KEYBOARD, IN ITS OWN EFFECT, KEYED ONLY ON `open`. It was together with the listeners
   // below, whose dependencies include the caller's onClose — a new function on every render.
@@ -222,10 +232,9 @@ export function Popover({
       // the element focusable, which is the whole difference.
       style={{
         ...(at === null ? { left: 0, top: 0, opacity: 0, pointerEvents: 'none' as const } : { left: at.left, top: at.top }),
-        ...(least === null ? {} : { minWidth: least }),
       }}
       className={cn(
-        'fixed z-50 flex max-h-96 flex-col overflow-hidden outline-none',
+        'fixed z-50 flex flex-col overflow-hidden outline-none',
         'rounded-control border border-stroke bg-surface-raised shadow-popover',
       )}
     >

@@ -35,16 +35,52 @@ export function reorder(order: string[], id: string, toIndex: number): string[] 
  * rather than two: pinning Item Name pins what is left of it, because that is what freezing the
  * row's identity means.
  *
- * Two boundaries, one from each edge, and the middle scrolls between them.
+ * THE COLUMN'S ALIGNMENT CHOOSES THE EDGE, AND NOBODY IS ASKED. A left-aligned column freezes to
+ * the left: everything from the left edge through it. A RIGHT-aligned column — which is every
+ * money and every quantity column — freezes to the right: it and everything to its right. The
+ * question "which side?" has already been answered by what kind of number the column holds, so
+ * putting it to a person is asking them to repeat themselves.
  *
- * Pinning the column that is ALREADY the boundary lets that edge go, which is what makes the
- * one control both pin and unpin without a second verb. */
-export function pinThrough(order: readonly string[], id: string, side: 'start' | 'end'): ColumnPins {
+ * BOTH EDGES AT ONCE, which is the half this did not have. It took a `side` argument and cleared
+ * the opposite edge every time, so a right pin threw away a left one. The shape Aj ruled is v2's
+ * and needs both standing together: Sr. and Item Name held on the left, Amount held on the right,
+ * and the middle scrolling between them. `DECISIONS.md` records "nothing can be frozen against
+ * the right edge" as what was given up when this engine was built — this is the entry that closes.
+ *
+ * PINNING THE COLUMN THAT IS ALREADY A BOUNDARY RELEASES THAT EDGE, and only that edge, which is
+ * what makes one control both pin and unpin without a second verb.
+ *
+ * THE TWO BLOCKS MAY NOT OVERLAP. Pinning right through a column that the left block already
+ * holds would freeze the same column to both edges, which is not a thing a column can do — so the
+ * older block gives way to the one just asked for. */
+/** `pins` is LAST AND OPTIONAL on purpose, so the three-argument form the other session's grid
+ *  still uses keeps compiling and keeps its old behaviour — a pin with nothing to carry forward
+ *  clears the opposite edge, which is exactly what the old signature did. Two sessions cannot
+ *  land one signature change in the same instant, and a red main between them helps nobody. */
+export function pinThrough(
+  order: readonly string[],
+  id: string,
+  align: 'start' | 'end',
+  pins: ColumnPins = { start: [], end: [] },
+): ColumnPins {
   const at = order.indexOf(id)
-  if (at === -1) return { start: [], end: [] }
-  return side === 'start'
-    ? { start: order.slice(0, at + 1), end: [] }
-    : { start: [], end: order.slice(at) }
+  if (at === -1) return pins
+
+  // A second press on the boundary itself lets that edge go. The other edge is untouched.
+  if (isBoundary(pins, id) === align) {
+    return align === 'start' ? { start: [], end: pins.end } : { start: pins.start, end: [] }
+  }
+
+  const index = (one: string) => order.indexOf(one)
+  return align === 'start'
+    ? { start: order.slice(0, at + 1), end: pins.end.filter((one) => index(one) > at) }
+    : { start: pins.start.filter((one) => index(one) < at), end: order.slice(at) }
+}
+
+/** Which edge a column freezes against, given how it is aligned. The whole of the rule, written
+ *  once, so no caller decides it a second time and differently. */
+export function edgeFor(align: 'start' | 'end' | undefined): 'start' | 'end' {
+  return align === 'end' ? 'end' : 'start'
 }
 
 /** Whether this column is the one holding a boundary open — the one a second press releases. */

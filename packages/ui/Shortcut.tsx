@@ -18,10 +18,15 @@
 // by hand anywhere is fixed too.
 
 import { cn } from './cn'
+import { capFor } from './keyCaps'
 
 export type ShortcutProps = {
   /** The key as a person says it: `F2`, `Esc`, `Ctrl`, `↵`. One cap per key — two keys pressed
-   * together are two of these with a thin `+` between, which the caller writes. */
+   * together are two of these with a thin `+` between, which the caller writes.
+   *
+   * WRITE THE KEY YOU BOUND, NOT THE WORD YOU WANT PRINTED. `Alt` comes out as Option on an Apple
+   * keyboard, where that is what the key is marked and there is no Alt on it anywhere. See
+   * keyCaps.ts for which names are translated and why Ctrl is not one of them. */
   keyName: string
   /** Quiet by default. `strong` is for a cap on a filled control, where the muted step
    * disappears into the fill. */
@@ -30,6 +35,8 @@ export type ShortcutProps = {
 }
 
 export function Shortcut({ keyName, tone = 'quiet', className }: ShortcutProps) {
+  const printed = capFor(keyName)
+
   return (
     <kbd
       className={cn(
@@ -49,7 +56,7 @@ export function Shortcut({ keyName, tone = 'quiet', className }: ShortcutProps) 
         className,
       )}
     >
-      {keyName}
+      {printed}
     </kbd>
   )
 }

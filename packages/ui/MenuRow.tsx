@@ -43,14 +43,20 @@ export type MenuRowProps = {
 }
 
 export function MenuRow({ kind = 'choice', chosen = false, detail, onClick, disabled = false, notBuilt = false, reason, children }: MenuRowProps) {
-  return (
+  // THE REASON GOES ON A WRAPPER, BECAUSE A DISABLED CONTROL TAKES NO POINTER. It was a `title`
+  // on the button itself, so the browser never showed it and the reason was written for nobody —
+  // on six menus, with four disabled rows in the bulk bar alone. `MenuLine` had already found
+  // this and wrapped its button in a span for exactly this reason; that knowledge did not travel
+  // when this component became the shared one. The accessible name carries it too, so it is not
+  // only a hover away.
+  const row = (
     <button
       type="button"
       role={kind === 'choice' ? 'menuitemradio' : 'menuitem'}
       {...(kind === 'choice' ? { 'aria-checked': chosen } : {})}
+      {...(disabled && reason !== undefined ? { 'aria-label': `${String(children)} — ${reason}` } : {})}
       onClick={onClick}
       disabled={disabled}
-      title={disabled ? reason : undefined}
       className={cn(
         'flex w-full items-center gap-2 px-3 py-1.5 text-left text-body',
         'focus-visible:bg-surface-hover focus-visible:outline-none pressable',
@@ -62,8 +68,13 @@ export function MenuRow({ kind = 'choice', chosen = false, detail, onClick, disa
       {/* Space held on a choice whether or not it is the chosen one, and not held at all on a
           command — a command has nothing to tick, so an empty column beside it is a column of
           nothing. */}
+      {/* A TICK, NOT A ROTATED CHEVRON. A tick means "this is the one you chose"; a chevron means
+          "there is more behind this", which is what it means everywhere else on the screen — on
+          the footer action that opens something bigger, and on the disclosure that unfolds. The
+          chevron won the first adoption only because it was already here, and six sites were
+          about to inherit a mark that says the wrong thing. */}
       {kind === 'choice' ? (
-        <Icon name="chevronRight" className={cn('size-icon-md', chosen ? 'rotate-90' : 'invisible')} />
+        <Icon name="tick" className={cn('size-icon-md', chosen ? '' : 'invisible')} />
       ) : null}
       {/* The one mark that says "a gap in the product" rather than "a fact about this record".
           It sits before the words, where the eye already is on the way into the row. */}
@@ -71,6 +82,13 @@ export function MenuRow({ kind = 'choice', chosen = false, detail, onClick, disa
       <span className="min-w-0 flex-1 truncate">{children}</span>
       {detail === undefined ? null : <span className="shrink-0 text-sm text-ink-muted">{detail}</span>}
     </button>
+  )
+
+  if (!disabled || reason === undefined) return row
+  return (
+    <span title={reason} className="block">
+      {row}
+    </span>
   )
 }
 

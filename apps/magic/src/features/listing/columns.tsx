@@ -83,7 +83,12 @@ function numberCell(row: Invoice, onOpen?: (id: string) => void) {
       // alongside it passed with the guard removed, which is how it was caught: a check that
       // cannot fail proves nothing, and neither does the code it was defending.
       onClick={() => onOpen(row.id)}
-      className="rounded-control text-ink-accent hover:underline focus-ring"
+      // UNDERLINED ALWAYS, NOT ON HOVER. It was accent ink with the underline arriving only when
+      // pointed at, which makes the most-clicked control on the screen a link identified by
+      // COLOUR ALONE — invisible to roughly one man in twelve, and to anybody who never happens
+      // to hover. WCAG 1.4.1 is the floor and the industry answer is the same one: a permanent
+      // underline. Hover still has somewhere to go, because it thickens rather than appearing.
+      className="rounded-control text-ink-accent underline decoration-1 underline-offset-2 hover:decoration-2 focus-ring"
     >
       {row.number}
     </button>

@@ -168,9 +168,13 @@ export function TableHead<Row>({
             className={cn(
               'absolute top-0 right-0 z-10 h-full w-2 cursor-col-resize',
               'after:absolute after:inset-y-1 after:right-1 after:w-px after:bg-stroke-strong',
+              // The line appears for both, and only focus draws a ring. Hover and focus were the
+              // same opacity change and nothing else, so a handle with the keyboard on it looked
+              // exactly like one under a pointer — on the one control whose whole job is to be
+              // dragged to a place you chose.
               'after:opacity-0 hover:after:opacity-100 focus-visible:after:opacity-100',
               'after:duration-swift after:transition-opacity after:ease-settle',
-              'outline-none',
+              'focus-ring-inset',
             )}
           />
         ) : null}

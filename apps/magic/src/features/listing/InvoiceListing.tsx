@@ -15,6 +15,7 @@ import * as React from 'react'
 import { Table } from '@busy/ui/Table'
 import type { Invoice } from '../../data/schema/invoice'
 import { data } from '../../data/source'
+import { Button } from '@busy/ui/Button'
 import { isRefusal } from '../../data/schema/refusal'
 import { actionFor } from '../../lib/shortcuts'
 import { isTyping } from '../../lib/typing'
@@ -50,16 +51,23 @@ export function InvoiceListing({
   // has never thought to try it.
   const [columnsAt, setColumnsAt] = React.useState<{ x: number; y: number } | null>(null)
 
+  // A REFUSAL IS AN ANSWER, AND IT USED TO BE DROPPED. This read `if (isRefusal(answer)) return`,
+  // so the one case that most needed saying left the screen on "Loading invoices…" for ever —
+  // and since nothing in the application caught a rejected promise either, an unreachable backend
+  // did the same. The seam converts rejections to refusals now, so there is exactly one shape to
+  // handle here and it is handled.
   React.useEffect(() => {
+    if (!state.loading) return
     let live = true
     void data.listInvoices({ search: '' }).then((answer) => {
-      if (!live || isRefusal(answer)) return
-      load(answer)
+      if (!live) return
+      if (isRefusal(answer)) state.loadFailed(answer.message)
+      else load(answer)
     })
     return () => {
       live = false
     }
-  }, [load])
+  }, [load, state.loading])
 
   // What the table is showing, worked out once and only when it could have changed.
   const { narrowed, shown, rows, columns, totals, layout } = usePipeline(state, onOpen)
@@ -129,7 +137,17 @@ export function InvoiceListing({
           the table's own footer: the totals row ended up floating in the middle of a stretched
           card with nothing under it. A short list is a short card. */}
       <div ref={table} className="rounded-card border border-stroke bg-surface">
-        {state.loading ? (
+        {state.failed !== null ? (
+          // WHAT WENT WRONG, AND THE ONE THING TO DO ABOUT IT. A failure with no way forward is a
+          // dead end somebody reloads the whole page to escape — and reloading is what the button
+          // does, without losing the filters and the sort they had set.
+          <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
+            <p className="max-w-prose text-body text-ink">{state.failed}</p>
+            <Button variant="outline" size="sm" onClick={() => state.retry()}>
+              Try again
+            </Button>
+          </div>
+        ) : state.loading ? (
           <p className="px-4 py-12 text-center text-body text-ink-secondary">Loading invoices…</p>
         ) : (
           <Table

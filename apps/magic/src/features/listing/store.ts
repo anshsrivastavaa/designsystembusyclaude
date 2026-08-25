@@ -9,7 +9,7 @@
 
 import { create } from 'zustand'
 
-import { isBoundary, pinThrough, reorder, type ColumnPins } from '@busy/ui/columnState'
+import { pinThrough, reorder, type ColumnPins } from '@busy/ui/columnState'
 import type { Invoice } from '../../data/schema/invoice'
 import { today } from '../../lib/day'
 import { rangeFor, type RangeId } from './dateRanges'
@@ -30,6 +30,9 @@ export const GROUP_LABEL: Record<GroupBy, string> = {
 export type ListingState = {
   invoices: Invoice[]
   loading: boolean
+  /** Why the list is not here, in the words shown to the person. Null when there is no fault —
+   * never a boolean, because a failure nobody can read is a blank screen with a spinner off. */
+  failed: string | null
   /** The day the screen is being read on. Held rather than read from the clock at every call,
    * so a journey can stand still and every derived date agrees with every other. */
   today: string
@@ -70,6 +73,8 @@ export type ListingState = {
   cursor: number
 
   load: (invoices: Invoice[]) => void
+  loadFailed: (why: string) => void
+  retry: () => void
   setTab: (tab: Tab) => void
   setRange: (id: RangeId) => void
   setCustom: (from: string | null, to: string | null) => void
@@ -123,6 +128,7 @@ const START = {
 export const useListing = create<ListingState>((set) => ({
   invoices: [],
   loading: true,
+  failed: null,
   // The local calendar day, not the UTC one. See `today` in lib/day.ts for why those
   // are not the same thing anywhere east of Greenwich.
   today: today(),
@@ -136,7 +142,14 @@ export const useListing = create<ListingState>((set) => ({
   pageSize: 25,
   ...START,
 
-  load: (invoices) => set({ invoices, loading: false }),
+  load: (invoices) => set({ invoices, loading: false, failed: null }),
+
+  // A REFUSAL ENDS THE LOAD. It used to be dropped on the floor — `if (isRefusal(answer)) return`
+  // in the screen's effect — so the one case that most needed saying left the listing on
+  // "Loading invoices…" for ever. Loading is not a third state beside got-it and could-not: it is
+  // the state before either, and every path out of it has to land somewhere.
+  loadFailed: (why) => set({ loading: false, failed: why }),
+  retry: () => set({ loading: true, failed: null }),
 
   // Every narrowing sends the reader back to page one. Staying on page four of a list that is
   // now two pages long shows an empty table and reads as "your filter found nothing".
@@ -172,12 +185,16 @@ export const useListing = create<ListingState>((set) => ({
   moveColumn: (id, toIndex) =>
     set((state) => ({ columnOrder: reorder(state.columnOrder, id, toIndex) })),
 
-  // The array juggling lives in packages/ui/columns.ts so both stores fold pins the same way,
+  // The array juggling lives in packages/ui/columnState.ts so both stores fold pins the same way,
   // rather than each writing its own and drifting.
+  //
+  // THE SIDE IS NOT A CHOICE ANY MORE. It used to arrive as an argument, which meant the caller
+  // decided — and the two callers could decide differently. A column's ALIGNMENT answers it: a
+  // right-aligned column, which is every money and quantity column, freezes against the right
+  // edge. `pinThrough` also folds the release now, so the branch that used to sit here is gone;
+  // keeping it would have been a second opinion about what a second press means.
   pinColumn: (id, side, order) =>
-    set((state) => ({
-      columnPins: isBoundary(state.columnPins, id) === side ? { start: [], end: [] } : pinThrough(order, id, side),
-    })),
+    set((state) => ({ columnPins: pinThrough(order, id, side, state.columnPins) })),
   unpinEveryColumn: () => set({ columnPins: { start: [], end: [] } }),
 
   resizeColumn: (id, width) =>

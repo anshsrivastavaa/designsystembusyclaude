@@ -48,6 +48,13 @@ test('something inside the invoice always holds the keyboard', async ({ page }) 
         // the product: the fuzz tabbed onto one and this reported the keyboard as parked.
         active.tagName === 'SELECT' ||
         active.tagName === 'BUTTON' ||
+        // A COLUMN'S RESIZE HANDLE IS A CONTROL, and it is a `span` wearing `role="separator"`
+        // with an `aria-valuenow` — the standard shape for a splitter, and focusable on purpose:
+        // a resize only a mouse can perform fails WCAG 2.1.1 and this product is keyboard-first.
+        // Missing from this list rather than from the product, the same way `select` was. The
+        // fuzz only reached it once the column-setup control moved out of the heading row and the
+        // tab order shifted under it.
+        active.getAttribute('role') === 'separator' ||
         active.getAttribute('role') === 'gridcell' ||
         active.getAttribute('role') === 'dialog'
       return usable ? 'inside' : `parked on a ${active.tagName} that is not a control`
@@ -168,7 +175,7 @@ test('Tab at the end of the invoice is handed to the browser rather than swallow
     })
   })
 
-  const save = page.getByRole('button', { name: /^Save/ }).first()
+  const save = page.getByRole('button', { name: /^Save/ })
   await save.focus()
   await expect(save).toBeFocused()
 

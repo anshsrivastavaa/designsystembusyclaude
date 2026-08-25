@@ -10,6 +10,8 @@ import type { Invoice, InvoiceDraft } from './schema/invoice'
 import type { InvoiceSettings } from './schema/settings'
 import type { Item } from './schema/item'
 import type { PartyInsights } from './schema/insights'
+import type { Credit } from './schema/credit'
+import type { HeldInvoice } from './schema/held'
 import type { Party } from './schema/party'
 import type { Refusal } from './schema/refusal'
 import type { SundryMaster } from './schema/sundry'
@@ -48,6 +50,42 @@ export interface DataAdapter {
    * out works it out differently. The facts arrive as COUNTS and never as sentences: a backend
    * does not send display text, so every word on the panel is written from these. */
   partyInsights(partyId: string): Promise<Answer<PartyInsights>>
+  /** The items on an invoice that was OPENED rather than typed, by id.
+   *
+   * WHAT IT IS FOR, because the shape looks redundant next to `listItems`: the strip under the
+   * grid shows the stock, the HSN, the rate and what this customer paid last time. Those are facts
+   * about the ITEM MASTER, not about the line, so a row carries none of them — and an invoice that
+   * arrives from the backend therefore has a blank strip on every line until somebody re-picks the
+   * item, which nobody does. One call for the whole invoice rather than one per line: a fifty-line
+   * invoice must not be fifty requests, and a search that happens to match is not an answer to
+   * "give me exactly these".
+   *
+   * Ids that do not exist come back missing rather than as an error. An item deleted from the
+   * master after an invoice was raised is ordinary, and the invoice still has to open. */
+  itemsByIds(ids: readonly string[]): Promise<Answer<Item[]>>
+  /** What this party already has sitting against them — advances, receipts, credit notes and
+   * money on account — with what is UNUSED of each.
+   *
+   * WHAT IS LEFT OF A CREDIT, NEVER WHAT IT WAS WORTH. A receipt half spent against an earlier
+   * invoice has half left, and half is the only figure this screen can do anything with. Working
+   * it out here would mean the front end reading every invoice the credit has ever touched, which
+   * is a ledger's worth of work to answer one number, and a second place the answer is decided.
+   *
+   * Sorted by date is the ADAPTER's job for the same reason: the settlement panel, the listing
+   * and the party master all show this list, and the second one to sort it sorts it differently. */
+  partyCredits(partyId: string): Promise<Answer<Credit[]>>
+  /** Put the invoice on the screen aside. A DRAFT goes in and a draft comes back out — holding
+   * one must not consume a number from the series, or a counter operator who holds four in an
+   * afternoon has burned four numbers on documents that may never exist. */
+  holdInvoice(draft: InvoiceDraft): Promise<Answer<HeldInvoice>>
+  /** Everything put aside, newest first. The order is the adapter's, like every other list. */
+  listHeld(): Promise<Answer<HeldInvoice[]>>
+  /** Bring one back, and take it out of the held list on the way — a held invoice you have
+   * resumed is the invoice on the screen, and a copy left behind is an invoice somebody saves
+   * twice. */
+  resumeHeld(id: string): Promise<Answer<HeldInvoice>>
+  /** Throw one away without opening it. */
+  discardHeld(id: string): Promise<Answer<null>>
   /** How this company bills — tax mode, rounding, its own state code. Read once when the
    * screen opens. Not a per-invoice choice, which is why nothing writes it back. */
   invoiceSettings(): Promise<Answer<InvoiceSettings>>

@@ -16,8 +16,31 @@ import { isRefusal } from '../../data/schema/refusal'
 import { invoiceBreakdown } from '../../lib/totals'
 import { placeOfSupply } from '../../lib/tax'
 import { useInvoice } from './store'
+import { eWayIsFilled } from './transport'
+import { runTail, tailFor, type Landing, type TailSwitches } from './afterSave'
+import { HeldInvoices } from './HeldInvoices'
+import { useHolding } from './holding'
+import { today } from '../../lib/day'
 
-export function SaveInvoice({ onReady }: { onReady?: (save: () => void) => void }) {
+export function SaveInvoice({
+  onReady,
+  onHoldReady,
+  onOpenTransport,
+  onLand,
+}: {
+  onReady?: (save: () => void) => void
+  /** Hold's own doing, handed up so the "before you go" prompt can offer it. The same shape as
+   * `onReady`, and for the same reason: the prompt is on the screen above and has no business
+   * reaching into this bar. */
+  onHoldReady?: (hold: () => void) => void
+  /** Where to go once the save and its tail are done. The SCREEN owns that, because only the
+   * shell above it knows what "the listing" is — this feature may not import from `app/`. */
+  onLand?: (landing: Landing) => void
+  /** Where "E-Way needs the transport details" sends somebody. The DRAWER belongs to the screen
+   * above, which is the only thing that knows what else is open, so this asks rather than
+   * reaching for it. */
+  onOpenTransport?: () => void
+}) {
   const party = useInvoice((state) => state.party)
   const rows = useInvoice((state) => state.rows)
   const sundries = useInvoice((state) => state.sundries)
@@ -30,8 +53,19 @@ export function SaveInvoice({ onReady }: { onReady?: (save: () => void) => void 
   const askFor = useInvoice((state) => state.askFor)
   const [saving, setSaving] = useState(false)
   const [paid, setPaid] = useState(false)
-  const [eWayBill, setEWayBill] = useState(false)
-  const [eInvoice, setEInvoice] = useState(false)
+  // WHAT RUNS AFTER THE SAVE, as switches rather than as a menu of rows. Local, because unlike the
+  // compliance pair these are drawn in exactly one place and nothing else asks about them.
+  const [tail, setTail] = useState({ print: false, email: false, whatsapp: false })
+  // WHERE THE SAVE LANDS is a setting behind the caret now, not a second button on the bar. Two
+  // primary actions on one bar was the thing the split button takes away.
+  const [landing, setLanding] = useState<Landing>('new')
+  // THE TWO SWITCHES COME FROM THE STORE, not from here and not through the bar. They are drawn
+  // in the action bar and again in the transport drawer — the same two switches seen from two
+  // rooms — and a second copy is how one of them ends up lying about the other. What this file
+  // needs them for is the SAVE, which is a different question from who draws them.
+  const eWayBill = useInvoice((state) => state.eWayBill)
+  const eInvoice = useInvoice((state) => state.eInvoice)
+  const transport = useInvoice((state) => state.transport)
   // WHAT IS LEFT TO COLLECT, worked out rather than hard-coded to zero — which made the
   // "partly paid" chip unreachable for every invoice ever opened. A loaded invoice brings what
   // has been received; the breakdown says what it comes to.
@@ -44,6 +78,9 @@ export function SaveInvoice({ onReady }: { onReady?: (save: () => void) => void 
   })
   const balancePaise = Math.max(0, breakdown.grandTotalPaise - paidPaise)
   const [saved, setSaved] = useState<string | null>(null)
+  // HOLD LIVES BESIDE SAVE because they are the two ways an invoice leaves the screen, and both
+  // report through the same line of text on the bar.
+  const holding = useHolding((message) => { setRefused(null); setSaved(message) })
   const inFlight = useRef(false)
   const [refused, setRefused] = useState<string | null>(null)
 
@@ -64,6 +101,16 @@ export function SaveInvoice({ onReady }: { onReady?: (save: () => void) => void 
       return
     }
 
+    // E-WAY ON WITH THE TRANSPORT EMPTY OPENS THE DRAWER RATHER THAN REFUSING. The bill cannot be
+    // raised without who is carrying it, in what, and how far — so the answer to "you cannot do
+    // that" is the place the answers go, with the invoice untouched behind it. Which fields those
+    // are is `E_WAY_NEEDS`, named once in transport.ts, and it is a guess until somebody rules.
+    if (eWayBill && !eWayIsFilled(transport)) {
+      setRefused('An E-Way Bill needs the transporter, the vehicle and the distance. Fill them in and save again.')
+      onOpenTransport?.()
+      return
+    }
+
     // A REF, NOT STATE. `saving` in this closure is whatever it was when the handler was made,
     // so two clicks in one tick both read false and both saved — two invoices from one press.
     if (inFlight.current) return
@@ -77,10 +124,15 @@ export function SaveInvoice({ onReady }: { onReady?: (save: () => void) => void 
       .saveInvoice({
         partyId: party.id,
         partyName: party.name,
-        // A draft has been near no portal. What it needs, and whether it got it, is the
-        // backend's answer once the invoice exists.
-        eInvoiceStatus: 'notRequired',
-        eWayBillStatus: 'notRequired',
+        // ON AT SAVE MEANS GENERATED AT SAVE, and `pending` is the only honest word for it here.
+        // Whether a document NEEDS one of these is the portal's answer, told to the backend — the
+        // schema's own comment says so — and no front end can work it out. So what these carry is
+        // an INTENTION: on means "raise it", off means the backend was never asked to.
+        // Both were hard-coded to `notRequired` until 25-08, which meant the two switches in the
+        // action bar changed nothing at all: they moved, and the saved invoice said the same
+        // thing either way.
+        eInvoiceStatus: eInvoice ? 'pending' : 'notRequired',
+        eWayBillStatus: eWayBill ? 'pending' : 'notRequired',
         rows: lines,
         // EVERYTHING ELSE ON THE SCREEN. The charges, the note and the rounding were all typed
         // by the operator and all dropped on the floor at the moment of saving.
@@ -113,6 +165,16 @@ export function SaveInvoice({ onReady }: { onReady?: (save: () => void) => void 
         // which it then threw away. The number and the dates are the backend's, and the
         // operator has to be shown the one their invoice actually has.
         setSaved(`Saved as ${answer.number}`)
+
+        // THE TAIL RUNS AFTER, AND A FAILURE IN IT NEVER SENDS THE INVOICE AGAIN. The save has
+        // already happened by the time any of this starts, so a step that fails stops the chain,
+        // names itself, and says the invoice is safe — otherwise an operator reads "could not
+        // print" as "not saved" and presses Save a second time.
+        const switches: TailSwitches = { eInvoice, eWay: eWayBill, ...tail }
+        void runTail(tailFor(switches), attemptStep).then((result) => {
+          if (result.message !== null) setRefused(result.message)
+          else onLand?.(landing)
+        })
       })
       .finally(() => {
         inFlight.current = false
@@ -120,27 +182,50 @@ export function SaveInvoice({ onReady }: { onReady?: (save: () => void) => void 
       })
   }
 
+  // NONE OF THE THREE HAS AN ADAPTER METHOD, AND SAYING SO IS THE POINT. Printing, emailing and
+  // sending on WhatsApp all need something behind the seam that does not exist — there is no
+  // `data.printInvoice`. They report success and do nothing, which is a no-op named out loud
+  // rather than a screen pretending. The two portal postings are different: the backend is told
+  // by the SAVE, through the `pending` status, so there is nothing left for the tail to do and
+  // reporting success is the truth.
+  const attemptStep = async () => true
+
   // F2's LAST JUMP RUNS THIS, and that is the condition on the badge staying on the button. The
   // screen above holds the handle; this owns what saving means, including the guard that stops
   // two presses becoming two invoices.
   useEffect(() => {
-    onReady?.(save)
+    // F2 RUNS THE FACE, which is the whole of what makes the badge on it honest.
+    onReady?.(() => save())
+    onHoldReady?.(() => { void holding.hold() })
   })
 
   return (
-    <ActionBar
-      paid={paid}
-      onPaid={setPaid}
-      balancePaise={balancePaise}
-      eWayBill={eWayBill}
-      onEWayBill={setEWayBill}
-      eInvoice={eInvoice}
-      onEInvoice={setEInvoice}
-      onHold={() => undefined}
-      onSave={save}
-      saving={saving}
-      message={saved ?? refused}
-      refused={refused !== null}
-    />
+    <>
+      <ActionBar
+        paid={paid}
+        onPaid={setPaid}
+        balancePaise={balancePaise}
+        onHold={() => { void holding.hold() }}
+        onSave={save}
+        tail={tail}
+        onTailSwitch={(key, on) => setTail((was) => ({ ...was, [key]: on }))}
+        landing={landing}
+        onLanding={setLanding}
+        saving={saving}
+        message={saved ?? refused}
+        refused={refused !== null}
+      />
+      {/* THE CHOOSER ONLY OPENS WHEN THERE IS A CHOICE. Ctrl+H with one held invoice brings it
+          straight back; with several this opens, because "the most recent" is a guess about which
+          one they meant. */}
+      <HeldInvoices
+        open={holding.choosing}
+        onClose={() => holding.setChoosing(false)}
+        held={holding.held}
+        today={today()}
+        onResume={(id) => { void holding.resume(id, null) }}
+        onDiscard={(id) => { void holding.discard(id) }}
+      />
+    </>
   )
 }

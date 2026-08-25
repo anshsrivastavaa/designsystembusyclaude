@@ -10,14 +10,17 @@
 // contentEditable, not "just for adjustments". Round off is how the payable is adjusted, and
 // a typed-over total is a total that disagrees with the lines that make it.
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { Checkbox } from '@busy/ui/Checkbox'
 import { Icon } from '@busy/ui/Icon'
 import { formatPaise } from '../../lib/money'
+import { today } from '../../lib/day'
 import { invoiceBreakdown } from '../../lib/totals'
 import { placeOfSupply } from '../../lib/tax'
 import { useInvoice } from './store'
+import { Settlement } from './Settlement'
+import { SplitDrawer } from './SplitDrawer'
 
 function Line({ label, value, muted = false }: { label: React.ReactNode; value: string; muted?: boolean }) {
   return (
@@ -28,7 +31,7 @@ function Line({ label, value, muted = false }: { label: React.ReactNode; value: 
   )
 }
 
-export function Breakdown() {
+export function Breakdown({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const rows = useInvoice((state) => state.rows)
   const sundries = useInvoice((state) => state.sundries)
   const settings = useInvoice((state) => state.settings)
@@ -39,6 +42,20 @@ export function Breakdown() {
   // with one scrolling column there is nothing to hand back and nothing to compete for. The
   // fold stays as a control the user works; it is no longer a response to the window.
   const [open, setOpen] = useState(true)
+  const settleButton = useRef<HTMLButtonElement>(null)
+  const [settling, setSettling] = useState(false)
+  const [splitting, setSplitting] = useState(false)
+  const splitParts = useInvoice((state) => state.splitParts)
+  const planSplit = useInvoice((state) => state.planSplit)
+  const splitAsked = useInvoice((state) => state.splitAsked)
+
+  // THE DUE-DATE FIELD ASKS FROM THE OTHER END OF THE SCREEN. It is the split's read-back — it
+  // reads "Multiple" — and opening it has to show the schedule, which lives here beside the total.
+  // A counter rather than a boolean, so asking twice in a row opens it twice; the same shape the
+  // cursor's own claim uses, and for the same reason.
+  useEffect(() => {
+    if (splitAsked > 0) setSplitting(true)
+  }, [splitAsked])
 
   const breakdown = useMemo(() => {
     // A party with no GSTIN and no address is a walk-in at the counter, and a walk-in is
@@ -112,12 +129,60 @@ export function Breakdown() {
         </div>
       )}
 
-      <div className="mt-3 flex items-baseline justify-between gap-8 border-t border-stroke pt-3">
+      {/* SETTLE SITS ON THE TOTAL'S OWN ROW, which is what the ruling says — "beside the invoice
+          total, on the same row as Settle" — and it is not where this was first built.
+          IT WAS A ROW OF ITS OWN UNDERNEATH, and that put it hard against the bottom edge of the
+          card, inside the band the sticky action bar floats over. Measured at 1440x700: at the
+          page's resting position `elementFromPoint` on the button's centre returned the ACTION
+          BAR, so a press landed on the bar and settlement "did not open". It was reachable by
+          scrolling, which is not the same as being reachable.
+          This is the row the SPLIT door joins when Split is built — the two are the pair the
+          specification calls "actions on what is left", and they belong on one line. */}
+      <div className="mt-3 flex items-center justify-between gap-4 border-t border-stroke pt-3">
         <span className="font-label text-ink">Grand Total</span>
-        {/* The rupee symbol appears here and nowhere else on the invoice. One symbol is what
-            makes this figure read as the answer rather than as another number in a column. */}
-        <span className="text-lg font-total text-ink">₹{formatPaise(breakdown.grandTotalPaise)}</span>
+        <span className="flex items-baseline gap-3">
+          {/* The rupee symbol appears here and nowhere else on the invoice. One symbol is what
+              makes this figure read as the answer rather than as another number in a column. */}
+          <span className="text-lg font-total text-ink">₹{formatPaise(breakdown.grandTotalPaise)}</span>
+          {/* SPLIT AND SETTLE ARE THE PAIR the specification calls "actions on what is left", and
+              they belong on one line — the first place on the screen where the final figure is
+              true. Not on the due-date field: splitting is decided after the items and the charges
+              are in, and a control up in the header invites it too early. */}
+          <button
+            type="button"
+            aria-expanded={splitting}
+            onClick={() => {
+              // OPENING IT IS WHAT MAKES THE FIRST SCHEDULE. An empty drawer would open on a table
+              // with nothing in it and a refusal for its only answer, which is v2's own reason for
+              // seeding its first part with the whole amount.
+              if (splitParts.length === 0) planSplit({ startDate: today() }, breakdown.grandTotalPaise)
+              setSplitting(true)
+            }}
+            className="h-control-sm shrink-0 rounded-control border border-stroke px-3 text-body text-ink hover:bg-surface-hover focus-ring"
+          >
+            {splitParts.length > 1 ? `Split · ${splitParts.length}` : 'Split'}
+          </button>
+          <button
+            ref={settleButton}
+            type="button"
+            aria-expanded={settling}
+            onClick={() => setSettling((was) => !was)}
+            className="h-control-sm shrink-0 rounded-control border border-stroke px-3 text-body text-ink hover:bg-surface-hover focus-ring"
+          >
+            Settle
+          </button>
+        </span>
       </div>
+
+      <SplitDrawer open={splitting} onClose={() => setSplitting(false)} totalPaise={breakdown.grandTotalPaise} />
+
+      <Settlement
+        open={settling}
+        onClose={() => setSettling(false)}
+        anchorRef={settleButton}
+        owedPaise={breakdown.grandTotalPaise}
+        onOpenSettings={onOpenSettings ?? (() => undefined)}
+      />
     </section>
   )
 }

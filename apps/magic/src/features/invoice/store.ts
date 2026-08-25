@@ -3,18 +3,19 @@
 
 import { create } from 'zustand'
 
-import { lineAmount, toPaise } from '../../lib/money'
-import { expandShorthand } from './moneyShorthand'
 import type { ColumnId, Cursor } from '../../lib/keyboard'
-import { emptyRow, type InvoiceRow } from '../../data/schema/invoice'
+import { emptyRow, type InvoiceDraft, type InvoiceRow } from '../../data/schema/invoice'
 import type { InvoiceSettings } from '../../data/schema/settings'
 import { sundryActions, type SundryActions } from './sundryActions'
 import { noteAndRights, type NoteAndRights } from './noteAndRights'
 import type { ItemFacts } from './cellHands'
 import { particulars, type Particulars } from './particulars'
-import { TYPED_INTO } from './typedInto'
 import { selection, type Selection } from './selection'
 import { attaching, type Attaching } from './attaching'
+import { settling, type Settling } from './settling'
+import { transport, type Transport } from './transport'
+import { splitting, type Splitting } from './splitting'
+import { rowWrites, type RowWrites } from './rowWrites'
 import type { Item } from '../../data/schema/item'
 import type { Party } from '../../data/schema/party'
 
@@ -34,7 +35,7 @@ const UNTIL_SETTINGS_ARRIVE: InvoiceSettings = {
   companyStateCode: '23',
 }
 
-type InvoiceState = SundryActions & NoteAndRights & Particulars & Selection & Attaching & {
+type InvoiceState = SundryActions & NoteAndRights & Particulars & Selection & Attaching & Settling & Transport & RowWrites & Splitting & {
   /** Columns this user may look at and not change. It comes from their rights, so it is the same
    * all day — drawn as shape, never a tint: an exception that never ends is not an exception. */
   readOnlyColumns: readonly ColumnId[]
@@ -60,6 +61,17 @@ type InvoiceState = SundryActions & NoteAndRights & Particulars & Selection & At
   askFor: (field: Asking['field'], message: string) => void
   answered: () => void
   load: (rows: InvoiceRow[], paidPaise?: number) => void
+  /** Put a held invoice back on the screen, whole.
+   *
+   * IT GOES THROUGH `reset` FIRST, on purpose. Restoring by writing the held fields over whatever
+   * is there leaves anything the held invoice does NOT carry behind — a charge on the invoice you
+   * were halfway through would survive into the one you brought back, and the operator would have
+   * no way of knowing where it came from. What is restored is the whole invoice or none of it. */
+  restore: (draft: InvoiceDraft, party: Party) => void
+  /** What the item strip knows, for an invoice that was OPENED rather than typed. The rows carry
+   * no stock, no HSN and no history — those are the item master's — so they are fetched once for
+   * the whole invoice and dropped in here. See `itemsByIds` on the adapter. */
+  fillItemFacts: (items: readonly Item[]) => void
   /** Start a new invoice. Everything the last one held goes.
    *
    * The store outlives the screen, so a second mount found the first invoice still in it —
@@ -88,31 +100,35 @@ type InvoiceState = SundryActions & NoteAndRights & Particulars & Selection & At
    * height and always keeps one row beyond the cursor — the spreadsheet behaviour these
    * users already know, and what closes the empty space under a short invoice. */
   keepRoomFor: (rows: number) => void
-  /** Picking an item fills unit, tax and price, and quantity defaults to 1 — or to 0 for an
-   * item sold loose, which has no unit at all. */
-  applyItem: (rowIndex: number, item: Item) => void
-  /** Typing into any editable column. ONE ACTION, because six with identical signatures were
-   * six callbacks threaded through seven files to reach an if/else that already knew the
-   * column. What each column changes is the table below. */
-  setCell: (column: ColumnId, rowIndex: number, typed: string) => void
-  /** Type the amount, and the PRICE moves to match. */
-  setItemText: (rowIndex: number, text: string) => void
 }
 
 
-function replace(rows: InvoiceRow[], index: number, change: Partial<InvoiceRow>): InvoiceRow[] {
-  const row = rows[index]
-  if (!row) return rows
-  const next = { ...row, ...change }
-  next.amountPaise = lineAmount(next.quantity, next.pricePaise, next.discountPercent)
-  // A new array for the list, the same object for every row that did not change, so a
-  // memoised row does not re-render because its neighbour did.
-  const copy = rows.slice()
-  copy[index] = next
-  return copy
-}
+export const useInvoice = create<InvoiceState>((set) => {
+  /** A fresh invoice, as a set of changes. Shared by `reset` and by `restore`, because "start
+   * again" and "start again holding this" differ only in what gets written on top. */
+  const blank = (state: InvoiceState): Partial<InvoiceState> => ({
+    party: null,
+    asking: null,
+    gridEngaged: false,
+    rows: [emptyRow('row-0')],
+    cursor: { row: 0, column: 'item' },
+    cursorClaim: state.cursorClaim + 1,
+    itemFacts: {},
+    roundOffTouched: false,
+    roundOffOn: state.settings.roundOff.on,
+    // The charges, the note and the header go back to what a fresh invoice opens with —
+    // including the date, which is today rather than the day the tab was opened.
+    ...sundryActions(set),
+    ...noteAndRights(set),
+    ...particulars(set),
+    ...selection(set),
+    ...attaching(set),
+    ...settling(set),
+    ...transport(set),
+    ...splitting(set),
+  })
 
-export const useInvoice = create<InvoiceState>((set) => ({
+  return {
   // `?readonly=price` for looking at it. It arrives with the user's rights from the backend
   // — see docs/backend-assumptions.md.
   readOnlyColumns: (typeof window === 'undefined'
@@ -136,24 +152,50 @@ export const useInvoice = create<InvoiceState>((set) => ({
   chooseParty: (party) => set({ party, asking: null }),
   askFor: (field, message) => set({ asking: { field, message } }),
   answered: () => set({ asking: null }),
-  reset: () =>
+  reset: () => set(blank),
+
+  // THE WHOLE INVOICE OR NONE OF IT. Restoring by writing the held fields over whatever is on the
+  // screen leaves behind anything the held one does not carry — a charge from the invoice you were
+  // halfway through would survive into the one you brought back, and nothing would say where it
+  // came from. So it goes through blank first, every time.
+  restore: (draft, party) =>
     set((state) => ({
-      party: null,
-      asking: null,
-      gridEngaged: false,
-      rows: [emptyRow('row-0')],
-      cursor: { row: 0, column: 'item' },
+      ...blank(state),
+      party,
+      rows: draft.rows.length > 0 ? draft.rows : [emptyRow('row-0')],
+      narration: draft.narration,
+      narrationPrinted: draft.narrationPrinted,
+      roundOffOn: draft.roundOffOn,
+      sundries: draft.sundries,
+      attachments: draft.attachments,
+      eInvoice: draft.eInvoiceStatus !== 'notRequired',
+      eWayBill: draft.eWayBillStatus !== 'notRequired',
       cursorClaim: state.cursorClaim + 1,
-      itemFacts: {},
-      roundOffTouched: false,
-      roundOffOn: state.settings.roundOff.on,
-      // The charges, the note and the header go back to what a fresh invoice opens with —
-      // including the date, which is today rather than the day the tab was opened.
-      ...sundryActions(set),
-      ...noteAndRights(set),
-      ...particulars(set),
-      ...selection(set),
-      ...attaching(set),
+    })),
+
+  fillItemFacts: (items) =>
+    set((state) => ({
+      itemFacts: {
+        ...state.itemFacts,
+        // WHAT IS ALREADY THERE WINS. A line whose item was picked in this session has facts that
+        // were true at the moment of picking, and a later fetch must not quietly replace them
+        // with today's stock — a row records what was SOLD, not what the catalogue says now.
+        ...Object.fromEntries(
+          items
+            .filter((item) => state.itemFacts[item.id] === undefined)
+            .map((item) => [
+              item.id,
+              {
+                stock: item.stock,
+                hsn: item.hsn,
+                alias: item.alias,
+                lastRatePaise: item.lastRatePaise,
+                listRatePaise: item.listRatePaise,
+                mrpPaise: item.mrpPaise,
+              },
+            ]),
+        ),
+      },
     })),
 
   load: (rows, paidPaise = 0) =>
@@ -168,6 +210,9 @@ export const useInvoice = create<InvoiceState>((set) => ({
   ...particulars(set),
   ...selection(set),
   ...attaching(set),
+  ...settling(set),
+  ...transport(set),
+  ...splitting(set),
 
   setRoundOff: (roundOffOn) => set({ roundOffOn, roundOffTouched: true }),
   moveTo: (cursor) => set((state) => ({ cursor, gridEngaged: true, cursorClaim: state.cursorClaim + 1 })),
@@ -189,54 +234,6 @@ export const useInvoice = create<InvoiceState>((set) => ({
       return { rows: padded }
     }),
 
-  applyItem: (rowIndex, item) =>
-    set((state) => ({
-      itemFacts: {
-        ...state.itemFacts,
-        [item.id]: {
-          stock: item.stock,
-          hsn: item.hsn,
-          alias: item.alias,
-          lastRatePaise: item.lastRatePaise,
-          listRatePaise: item.listRatePaise,
-          mrpPaise: item.mrpPaise,
-        },
-      },
-      rows: replace(state.rows, rowIndex, {
-        itemId: item.id,
-        itemName: item.name,
-        unit: item.defaultUnit ?? '',
-        pricePaise: item.pricePaise,
-        taxPercent: item.taxPercent,
-        // The treatment and the cess travel with the item onto the row, because a return
-        // groups by them and an invoice records what was sold under which treatment that day.
-        taxTreatment: item.taxTreatment,
-        cessPercent: item.cessPercent,
-        costPaise: item.costPaise,
-        quantity: item.units.length > 0 ? 1 : 0,
-      }),
-    })),
-
-  setItemText: (rowIndex, text) => set((state) => ({ rows: replace(state.rows, rowIndex, { itemName: text }) })),
-  setCell: (column, rowIndex, typed) =>
-    set((state) => {
-      // TYPING THE AMOUNT WORKS THE PRICE BACKWARDS, in the basis the column is in — the same
-      // division either way, precisely because the column and the price always share a basis.
-      //
-      // The PRICE carries the rounding, and the amount is re-derived from it: three at 100.00
-      // gives 33.33 each and an amount of 99.99, because an amount that is not quantity times
-      // price is a line nobody can check. It is the one column that does not write its own
-      // field, which is why it is here and not in the table.
-      if (column === 'amount') {
-        const row = state.rows[rowIndex]
-        if (!row) return {}
-        // Nothing to work backwards from. Leave the price alone rather than dividing by nothing.
-        if (row.quantity === 0) return {}
-        return { rows: replace(state.rows, rowIndex, { pricePaise: Math.round(toPaise(expandShorthand(typed)) / row.quantity) }) }
-      }
-
-      const change = TYPED_INTO[column]
-      if (change === undefined) return {}
-      return { rows: replace(state.rows, rowIndex, change(typed)) }
-    }),
-}))
+  ...rowWrites(set),
+  }
+})

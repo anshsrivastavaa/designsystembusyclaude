@@ -118,7 +118,10 @@ export function ColumnList({
             <button
               type="button"
               onClick={onUnpinAll}
-              className="w-full px-3 py-1.5 text-left text-body text-ink hover:bg-surface-hover focus-visible:bg-surface-hover focus-visible:outline-none"
+              // Hover paints the background; focus draws a ring. Two channels, because a row that
+              // answers a pointer and the keyboard with the SAME tint cannot say which one it is
+              // answering — and a person on the keyboard sees nothing a mouse user does not.
+              className="w-full px-3 py-1.5 text-left text-body text-ink hover:bg-surface-hover focus-ring"
             >
               Unpin all
             </button>

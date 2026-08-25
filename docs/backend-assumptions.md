@@ -87,6 +87,17 @@ here.
 
 ### Refusals
 
+- **THE ADAPTER MUST NEVER REJECT.** Every method returns `Answer<T>` — the value, or a `Refusal`
+  saying why not — and a thrown error or a rejected promise is not one of those. This is the half
+  that matters most, because **you** are the ones who will make it reject: a fetch that times out,
+  a 500, a network that drops. Convert all of it to a `Refusal` before it leaves your
+  implementation.
+  The front end holds up its own end: `data/checked.ts` wraps every method and turns a rejection
+  into `refuse('unreachable', …)`, so nothing above the seam ever sees one. That is a safety net
+  for the case nobody thought of, not a licence to throw — a refusal you construct can say what
+  actually happened and which field it concerns, and the net can only say "we could not reach the
+  server".
+
 - `saveInvoice` can return a refusal instead of an invoice. The mock returns a canned one
   behind `?refuse` so the refusal state could be designed and looked at. **The wording and the
   code in it are placeholders.** The real set of reasons a save can be refused is theirs.
@@ -162,6 +173,67 @@ here.
   NOT `active`, because claiming a registration is good on the strength of somebody typing
   fifteen characters is a claim about tax compliance nobody made.
 
+### Payment terms, and who settles at the counter
+
+- **`creditDays` was already on the party and is what the Due field reads.** Days from the INVOICE
+  date, never from today — a back-dated invoice with thirty-day terms is due thirty days after it
+  was raised. **Zero means no terms have been AGREED**, which the schema has said since it was
+  written; it is not "due today", and reading it as one would put every invoice to a new customer
+  due on the day it was raised.
+- **`paysAtCounter` is new, 25-08.** True for a party whose sales are settled where they stand, so
+  the invoice has no Due field at all — not an empty one, not a disabled one: absent.
+- **It is a FLAG AND NOT A NAME MATCH.** "Cash" is the commonest such party and it is tempting to
+  read the word, but a shop has more than one counter account and none of them has to be spelled
+  that way. A front end deciding a customer pays on the spot because its name looks right is
+  inventing a term of trade.
+- **It is also not `creditDays === 0`.** Those are different answers: zero days means nothing was
+  agreed and the company default decides; this means the question does not arise at all.
+- **A party created at the counter defaults to `false`** — still a billed party until somebody says
+  otherwise. Defaulting the other way would take the due date off every invoice raised to a
+  customer added mid-sale, which is the commonest way a real customer gets on file.
+- **The company's own default term is not built.** There is no setting for it, so the front end
+  passes `null` rather than inventing a house default, and the field is then empty and editable.
+  When the setting arrives it is one line.
+
+### The items on an invoice that was opened
+
+- **`itemsByIds(ids)` answers with the item master's records for a whole invoice at once.** The
+  strip under the grid shows stock, the HSN, the rate and what this customer paid last time. Those
+  are facts about the ITEM, not about the line, so an invoice row carries none of them — and an
+  invoice that arrives from the backend therefore has a blank strip on every line until somebody
+  re-picks the item, which nobody does.
+- **One call for the invoice, not one per line.** A fifty-line invoice must not be fifty requests.
+- **Ids that do not exist come back missing rather than as an error.** An item deleted from the
+  master after an invoice was raised is ordinary, and the invoice still has to open.
+- **What is already on the screen wins.** A line whose item was picked in this session carries the
+  facts that were true at the moment of picking, and a later fetch does not replace them: a row
+  records what was SOLD, not what the catalogue says today.
+
+### Credits against a party — settlement
+
+- **`partyCredits(partyId)` returns what is UNUSED of each credit, never what it was worth.**
+  A receipt half spent against an earlier invoice has half left, and half is the only figure the
+  settlement panel can do anything with. The front end could only work that out by reading every
+  invoice the credit has ever touched, which is a ledger's worth of work to answer one number and
+  a second place the answer is decided.
+- **Four types, one list, sorted by date, oldest first.** `advance`, `receipt`, `creditNote`,
+  `onAccount`. The sort is the ADAPTER's, not the panel's, for the same reason the grade is the
+  backend's: the settlement panel, the listing and the party master all show this list, and the
+  second surface to sort it sorts it differently. Oldest first because the oldest credit is the
+  one that has been sitting there longest.
+- **`reference` may be empty, and empty belongs to `onAccount`.** Money on account is money that
+  arrived without a document naming what it was for; that is the whole of what "on account"
+  means. The panel draws a dash for it — a blank reads as a field nobody filled in.
+- **Nothing about how much of a credit this invoice takes is stored on the credit.** That is
+  arithmetic the screen does while somebody is deciding, and arithmetic the screen does is never
+  written back. What gets sent when settlement is saved is a separate shape and is not built yet.
+- **Tendered and change are never sent.** What a customer handed over is how the change was
+  worked out at the counter; it is not a fact about the invoice, and `saveInvoice` has no field
+  for either.
+- **The figures are invented in `data/mock/credits.ts`.** Two parties have credits — one with all
+  four types, one with a single receipt — and everybody else has none, which is the commonest
+  case and the one the empty state is for.
+
 ### Invoices
 
 - An invoice carries its own **header** — number, date, due date, party, total, amount
@@ -194,8 +266,14 @@ here.
 - `lastUsedSundries(partyId)` returns the sundries this party had last time. It exists on the
   interface because the picker that needs it will need it **from the backend, not from a
   guess** — users add the same sundries for the same party repeatedly.
+- **`createSundry` is on the interface and no screen calls it yet.** It is the charge picker's
+  create row — the same shape as creating a party from the party picker, for a charge somebody
+  invents on the spot rather than picking from the master. **It is named here rather than dropped
+  because the row it belongs to is drawn and the handler is the missing half**; dropping it would
+  mean re-adding it the week that row is wired. If it is still uncalled when the picker's create
+  row is finished, it should go.
 - **Bill sundry is built.** This document said it was not, and that the mock returned nothing;
-  the mock returns eleven sundries, a picker creates new ones, and a whole journey walks the
+  the mock seeds a set of them, a picker creates new ones, and a whole journey walks the
   grid with the keyboard. `listSundries(search)`, `createSundry(draft)` and
   `lastUsedSundries(partyId)` are all called by the running screen, so all three need real
   implementations rather than the one this document implied could wait.

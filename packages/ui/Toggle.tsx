@@ -14,15 +14,37 @@
 import * as React from 'react'
 
 import { cn } from './cn'
+import { Icon, type IconName } from './Icon'
 
 export type ToggleProps = Omit<React.ComponentProps<'button'>, 'onChange' | 'type'> & {
   checked: boolean
   onCheckedChange: (next: boolean) => void
   /** The words beside the switch. They are part of the control, so pressing them works too. */
   children: React.ReactNode
+  /** `track` is the switch with a knob that travels. `icon` is a glyph with its name beneath,
+   *  filled when on and outline when off — for a row of switches where each one is a THING
+   *  rather than a setting: send it on WhatsApp, print it, email it.
+   *
+   *  IT IS A VARIANT AND NOT A SECOND COMPONENT, and the reason is the half that matters: the
+   *  role, the `aria-checked`, the keyboard and the name are identical. What changes is how on
+   *  and off are drawn. A second component would have been a second chance to get the switch
+   *  semantics wrong, which is how a control ends up saying "checked" where it should say "on". */
+  look?: 'track' | 'icon'
+  /** The glyph, for `look="icon"`. Filled is on and outline is off — the same state `filled`
+   *  carries on the favourite star, which is the only other place it means anything. */
+  icon?: IconName
 }
 
-export function Toggle({ checked, onCheckedChange, children, className, disabled, ...props }: ToggleProps) {
+export function Toggle({
+  checked,
+  onCheckedChange,
+  children,
+  className,
+  disabled,
+  look = 'track',
+  icon,
+  ...props
+}: ToggleProps) {
   return (
     <button
       type="button"
@@ -33,13 +55,27 @@ export function Toggle({ checked, onCheckedChange, children, className, disabled
       disabled={disabled ?? false}
       onClick={() => onCheckedChange(!checked)}
       className={cn(
-        'group flex items-center gap-3 rounded-control text-left text-body text-ink',
-        'focus-ring pressable',
+        'group rounded-control focus-ring pressable',
         'disabled:cursor-not-allowed disabled:opacity-50',
+        look === 'icon'
+          ? // A column, so the name sits under the glyph and the whole of it is one target.
+            'flex w-16 flex-col items-center gap-1 px-1 py-1.5 text-center text-sm'
+          : 'flex items-center gap-3 text-left text-body text-ink',
+        // OFF IS QUIETER, NOT HIDDEN. A switch nobody can see the off state of is a switch
+        // nobody can tell the state of — the ink steps down, the glyph goes hollow, and both
+        // survive the colour being taken away.
+        look === 'icon' && (checked ? 'text-ink-accent' : 'text-ink-secondary hover:text-ink'),
         className,
       )}
       {...props}
     >
+      {look === 'icon' ? (
+        <>
+          <Icon name={icon ?? 'star'} filled={checked} className="size-icon-lg" />
+          <span className="w-full truncate">{children}</span>
+        </>
+      ) : (
+      <>
       <span
         aria-hidden="true"
         className={cn(
@@ -58,6 +94,8 @@ export function Toggle({ checked, onCheckedChange, children, className, disabled
         />
       </span>
       {children}
+      </>
+      )}
     </button>
   )
 }
