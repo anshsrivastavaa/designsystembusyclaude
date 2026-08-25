@@ -8,6 +8,7 @@ import { isRefusal } from '../../data/schema/refusal'
 import type { Party } from '../../data/schema/party'
 import { PartyDetails } from './PartyDetails'
 import { PartyDrawer } from './PartyDrawer'
+import { FieldBox } from './FieldBox'
 import { FieldLabel } from './FieldLabel'
 import { PartyBadge } from './PartyBadge'
 import { HeaderFields } from './HeaderFields'
@@ -108,7 +109,7 @@ export function PartyHeader({ onOpenTransport, onOpenSettings }: { onOpenTranspo
             error — which sits ABOVE the field. So the party label rode four pixels higher than
             the other three: measured at 97 against 101 with everything else identical. A label whose
             job is to break a stroke has to be anchored to the box that draws the stroke. */}
-        <div className="group/party relative mt-1 flex h-control items-center rounded-control border border-stroke bg-surface">
+        <FieldBox className="group/party mt-1">
           {/* THE SAME NOTCH THE OTHER THREE WEAR, and now literally the same file. It was
               written out here as its own set of classes, which is one rule authored twice. */}
           <FieldLabel>Party</FieldLabel>
@@ -136,7 +137,7 @@ export function PartyHeader({ onOpenTransport, onOpenSettings }: { onOpenTranspo
             invalid={asking?.field === 'party'}
           />
           <PartyBadge party={party} onOpen={openPanel} />
-        </div>
+        </FieldBox>
 
         {/* NOTHING UNDER THE PARTY FIELD, AND NO INSIGHT INFORMATION OUTSIDE THE DRAWER AT ALL.
             Ruled by Aj on 23-08 and confirmed twice on 24-08, the second time in those words.

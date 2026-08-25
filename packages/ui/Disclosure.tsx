@@ -42,6 +42,23 @@ export type DisclosureProps = {
    *  wanted this; the invoice breakdown puts it AFTER the figure, because there the row reads as
    *  a total first and a way in second. */
   chevron?: 'lead' | 'trail'
+  /** The padding around the body, when `px-3 pb-2` is wrong for what is inside it.
+   *
+   *  BOTH OF THE FIRST FOUR ADOPTERS NEEDED THIS AND FOR OPPOSITE REASONS. The tax summary's body
+   *  is a full-bleed table whose top border runs edge to edge — side padding stops that rule
+   *  meeting the card's sides, so it needs none. The breakdown's body is already aligned to the
+   *  card's own `px-6`, so this padding indents it a second time. The other session tried
+   *  adopting the header alone and leaving the body outside, and reverted it correctly: that
+   *  duplicates the open state and leaves the component doing none of its job while still
+   *  satisfying the gate that asks whether anything imports it.
+   *
+   *  `flush` is the common answer and is why it is a word rather than four negative margins in
+   *  somebody's feature folder — which is the hand-written copy arriving one layer down. */
+  bodyClassName?: string
+  /** No padding at all around the body, for a full-bleed table or a body already aligned to its
+   *  card. The same as `bodyClassName=""` and worth a name, because it is the case two of the
+   *  four adopters have. */
+  flush?: boolean
   /** Ink for the header. `accent` is the drawer's "more fields" link, which reads as a way in
    *  rather than as a heading; `heading` is the other three. */
   tone?: 'heading' | 'accent'
@@ -58,6 +75,8 @@ export function Disclosure({
   onOpenChange,
   tone = 'heading',
   chevron = 'lead',
+  bodyClassName,
+  flush = false,
   children,
   className,
 }: DisclosureProps) {
@@ -105,7 +124,7 @@ export function Disclosure({
           after had seven fields that were never hidden while every test asked whether the hiding
           CLASS was present — so a closed section here has nothing in the markup to be wrong
           about, and a test that asks for its contents gets an honest nothing. */}
-      {open ? <div className="px-3 pb-2">{children}</div> : null}
+      {open ? <div className={bodyClassName ?? (flush ? undefined : 'px-3 pb-2')}>{children}</div> : null}
     </div>
   )
 }

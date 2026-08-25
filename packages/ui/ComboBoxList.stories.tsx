@@ -1,7 +1,7 @@
 // The panel a ComboBox drops, on its own — so the parts that only appear in particular states
 // can be looked at without arranging those states on a screen first.
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { ComboBoxList } from './ComboBoxList'
@@ -24,15 +24,24 @@ const PARTIES: Party[] = [
 function Panel({ withLead, withSticky }: { withLead: boolean; withSticky: boolean }) {
   const [highlight, setHighlight] = useState(withLead ? 0 : 1)
   const listRef = useRef<HTMLDivElement>(null)
+  const anchor = useRef<HTMLDivElement>(null)
+  const [ready, setReady] = useState(false)
+  useEffect(() => setReady(true), [])
 
   return (
     <div className="relative h-96">
+      {/* A real anchor, because the list hangs off one now rather than placing itself. It takes
+          the anchor's width as its minimum, which is what makes a list line up with its field. */}
+      <div ref={anchor} className="h-control w-56 rounded-control border border-stroke bg-surface px-2 py-1 text-body text-ink-muted">
+        Name, mobile or GSTIN…
+      </div>
+      {ready ? (
       <ComboBoxList<Party>
         listId={`story-${withLead}-${withSticky}`}
         label="Party"
-        // Anchored where a real one would be. It is drawn against the window, so a story has to
-        // give it a place rather than let a parent lay it out.
-        anchor={{ left: 0, top: 0, width: 320 }}
+        anchorRef={anchor}
+        open
+        onClose={() => undefined}
         options={PARTIES}
         getKey={(party) => party.id}
         groupOf={(party) => party.group}
@@ -53,6 +62,7 @@ function Panel({ withLead, withSticky }: { withLead: boolean; withSticky: boolea
           </div>
         )}
       />
+      ) : null}
     </div>
   )
 }

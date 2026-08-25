@@ -8,7 +8,7 @@
 //
 //   · Closing on SCROLL was safe until the screen became one scrolling column — after which
 //     clicking a field low on the page scrolled it into view and closed the list a frame after
-//     it opened. It follows the field now; that lives in anchoredTo.ts.
+//     it opened. It follows the field now, because Popover places it and keeps up.
 //   · Closing on BLUR alone left the list open over half the screen, because clicking a card or
 //     a heading never blurs anything. A pointer landing outside closes it.
 //   · Reopening on FOCUS undid that immediately: a click on something unfocusable drops the

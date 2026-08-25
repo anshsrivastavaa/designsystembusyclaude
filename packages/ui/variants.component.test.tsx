@@ -46,7 +46,7 @@ const RECIPES: Record<string, { render: (props: Record<string, unknown>) => Reac
     // as "align changes nothing" and been wrong about a variant that works. The anchor is put on
     // the page at a known place and the panel measured against it.
     render: (props) => <PopoverExample {...props} />,
-    at: '[role="dialog"]',
+    at: '[data-slot="popover"]',
   },
   Select: {
     render: (props) => (

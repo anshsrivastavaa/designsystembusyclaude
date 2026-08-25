@@ -4,6 +4,7 @@
 import { create } from 'zustand'
 
 import { lineAmount, toPaise } from '../../lib/money'
+import { expandShorthand } from './moneyShorthand'
 import type { ColumnId, Cursor } from '../../lib/keyboard'
 import { emptyRow, type InvoiceRow } from '../../data/schema/invoice'
 import type { InvoiceSettings } from '../../data/schema/settings'
@@ -231,7 +232,7 @@ export const useInvoice = create<InvoiceState>((set) => ({
         if (!row) return {}
         // Nothing to work backwards from. Leave the price alone rather than dividing by nothing.
         if (row.quantity === 0) return {}
-        return { rows: replace(state.rows, rowIndex, { pricePaise: Math.round(toPaise(typed) / row.quantity) }) }
+        return { rows: replace(state.rows, rowIndex, { pricePaise: Math.round(toPaise(expandShorthand(typed)) / row.quantity) }) }
       }
 
       const change = TYPED_INTO[column]

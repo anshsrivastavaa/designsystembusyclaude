@@ -13,7 +13,7 @@ test('the charges this party had last time arrive on one keypress', async ({ pag
 
   await expect(page.getByRole('combobox', { name: 'Party' })).toBeFocused()
 
-  const charges = page.getByRole('grid', { name: 'Bill sundry' })
+  const charges = page.getByRole('table', { name: 'Bill sundry' })
   await expect(charges).toBeVisible()
 
   // Two blank rows on a fresh invoice. The header is a row too, so three in all.

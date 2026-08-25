@@ -17,6 +17,7 @@
 import type * as React from 'react'
 
 import { Field } from '@busy/ui/Field'
+import { Select } from '@busy/ui/Select'
 import { TextField } from '@busy/ui/TextField'
 import { Icon } from '@busy/ui/Icon'
 import { cn } from '@busy/ui/cn'
@@ -68,18 +69,13 @@ export function DrawerField({
             />
           </span>
         ) : (
-          <select
+          <Select
             value={value}
-            onChange={(event) => onChange(event.target.value)}
-            aria-label={label}
-            className="h-control min-w-0 flex-1 rounded-control border border-stroke bg-surface px-2 text-body text-ink focus-ring"
-          >
-            {options.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            onChange={onChange}
+            label={label}
+            fill
+            options={options.map((option) => ({ value: option, label: option }))}
+          />
         )}
         {children}
       </span>

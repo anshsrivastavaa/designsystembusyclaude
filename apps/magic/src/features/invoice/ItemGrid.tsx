@@ -11,6 +11,8 @@ import { columnsFor, enterNeedsNewRow, lastFilledRow, onArrow, onEnter, onTab, t
 import { actionFor } from '../../lib/shortcuts'
 import { useInvoice } from './store'
 import { ItemRow } from './ItemRow'
+import { TableHeading } from '@busy/ui/TableHeading'
+import { caretIsAt } from './caretAt'
 import { AMOUNT_HEADING, HEADINGS, WIDTHS } from './gridColumns'
 import { GridSummary } from './GridSummary'
 import { useGridHands } from './useGridHands'
@@ -113,6 +115,25 @@ export function ItemGrid() {
         return
       }
 
+      // BARE Home AND End: THE ENDS OF THIS ROW, ON THE SECOND PRESS.
+      //
+      // The first press belongs to the field. A cell under the cursor is a real input, so Home
+      // already means "the front of what I am typing" — and a grid that takes the key outright
+      // leaves no way back to the front of a price being retyped. So the caret is asked where it
+      // is, and only a caret ALREADY at the end it is being sent to hands the key on.
+      //
+      // A cell with nothing in it is at both ends at once, which is right: there is no text to
+      // walk, so the first press is the one that moves.
+      if (action === 'row-start' || action === 'row-end') {
+        const toStart = action === 'row-start'
+        if (!caretIsAt(document.activeElement, toStart ? 'start' : 'end')) return
+        const edge = toStart ? columns[0] : columns[columns.length - 1]
+        if (edge === undefined) return
+        event.preventDefault()
+        moveTo({ row: at.row, column: edge })
+        return
+      }
+
       const row = walking[at.row]
       const unitSettled = row !== undefined && row.itemId !== null && row.unit !== ''
       const next = onTab(at, action === 'previous-field', unitSettled, columns)
@@ -152,15 +173,22 @@ export function ItemGrid() {
         className="sticky top-0 z-10 flex shrink-0 items-stretch rounded-t-card border-b border-stroke bg-surface-sunken"
       >
         {columns.map((column, at) => (
-          <div
+          // `TableHeading` as a div, because this grid is hand-written markup wearing grid roles
+          // and a <th> outside a <tr> is invalid. The species of heading — small, upper case,
+          // letterspaced — was written out here and again in the listing, and the two had already
+          // parted: the listing moved off muted ink to secondary for a measured reason and this
+          // never went with it. Nothing was wrong with either; there were simply two places
+          // saying what a column heading looks like and only one of them was told.
+          //
+          // `sticky={false}` because the ROW sticks, not the cell. What stays behind is what this
+          // grid owns and the listing has no opinion about: the width, the rule between columns,
+          // the row height and which columns read right.
+          <TableHeading
             key={column}
-            role="columnheader"
+            as="div"
+            sticky={false}
             aria-colindex={at + 1}
-            // v2's SPECIES of heading, and it is a species rather than a size: small, upper
-            // case, letterspaced and muted. Sentence case at body size reads as another row of
-            // the table — the eye has to decide each time whether it is data. These cannot be
-            // read as data, which is the whole job of a column heading.
-            className={`flex h-control-sm items-center border-r border-stroke px-2 text-caps font-strong uppercase tracking-wide text-ink-muted last:border-r-0 ${WIDTHS[column]} ${
+            className={`flex h-control-sm items-center border-r border-stroke px-2 last:border-r-0 ${WIDTHS[column]} ${
               column === 'quantity' || column === 'price' || column === 'amount' ? 'justify-end' : ''
             }`}
           >
@@ -172,7 +200,7 @@ export function ItemGrid() {
               </span>
             ) : null}
             {column === 'amount' ? AMOUNT_HEADING[settings.taxMode] : HEADINGS[column]}
-          </div>
+          </TableHeading>
         ))}
       </div>
 

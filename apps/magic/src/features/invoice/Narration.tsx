@@ -12,7 +12,15 @@
 import { useState } from 'react'
 
 import { Icon } from '@busy/ui/Icon'
+import { Tabs } from '@busy/ui/Tabs'
 import { useInvoice } from './store'
+
+/** Printed goes on the customer's copy; Internal stays in the office. Declared out here so the
+ * two are one list rather than two branches of a ternary that can disagree. */
+const NOTE_SEEN_BY = [
+  { value: 'printed' as const, label: 'Printed' },
+  { value: 'internal' as const, label: 'Internal' },
+]
 
 export function Narration() {
   const narration = useInvoice((state) => state.narration)
@@ -50,24 +58,19 @@ export function Narration() {
           />
 
           {/* Two words and a switch, in the smallest size, in muted ink. Whether the customer
-              sees this note is worth being able to say and is not worth a heading. */}
-          <div className="mt-1 flex items-center gap-3 text-sm text-ink-muted">
-            {(['Printed', 'Internal'] as const).map((which) => {
-              const chosen = (which === 'Printed') === printed
-              return (
-                <button
-                  key={which}
-                  type="button"
-                  aria-pressed={chosen}
-                  onClick={() => setPrinted(which === 'Printed')}
-                  className={`rounded-control px-2 py-0.5 focus-ring ${
-                    chosen ? 'bg-surface-hover text-ink-secondary' : 'hover:text-ink-secondary'
-                  }`}
-                >
-                  {which}
-                </button>
-              )
-            })}
+              sees this note is worth being able to say and is not worth a heading.
+              `bare` is Tabs with the well taken off — the look this was hand-drawn as, and the
+              arrow keys it never had. Written by hand it was two `aria-pressed` buttons, which
+              says "two things you can push in" rather than "one choice out of two", and put both
+              of them in the tab order on the way past a note most people never open. */}
+          <div className="mt-1">
+            <Tabs
+              look="bare"
+              label="Who sees this note"
+              value={printed ? 'printed' : 'internal'}
+              onChange={(which) => setPrinted(which === 'printed')}
+              options={NOTE_SEEN_BY}
+            />
           </div>
         </div>
       ) : null}

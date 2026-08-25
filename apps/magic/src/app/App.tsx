@@ -11,7 +11,7 @@
 // not: getting back to a listing is navigation, and navigation is the shell's job. Pressing
 // Sales in the rail returns to the listing from anywhere.
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { focusable } from '../lib/focusable'
 import { CreateInvoice } from '../features/invoice/CreateInvoice'
@@ -50,7 +50,17 @@ export function App() {
   // ONLY WHEN IT IS GENUINELY LOST. The invoice puts the cursor in the party field itself, and
   // a screen that places its own keyboard must not be overruled by the shell — which is why
   // this waits for the arriving screen's own effects rather than running before them.
+  // AND NOT ON THE FIRST LOAD. Arriving at the page is not the keyboard being lost — it is the
+  // keyboard exactly where the browser put it, at the top of the document, which is where the
+  // skip link is. Running this on mount moved it past eleven controls into the screen and made
+  // the skip link unreachable: Tab from there goes forwards, never back. A screen CHANGE is the
+  // case this was written for, and it still catches that.
+  const arrivedOnce = useRef(false)
   useEffect(() => {
+    if (!arrivedOnce.current) {
+      arrivedOnce.current = true
+      return
+    }
     if (document.activeElement !== null && document.activeElement !== document.body) return
     const arrived = document.querySelector('main')
     if (arrived instanceof HTMLElement) focusable(arrived)[0]?.focus()
@@ -69,6 +79,9 @@ export function App() {
         <CreateInvoice
           settings={settings}
           onOpenSettings={() => setSettingsOpen(true)}
+          // The grid's column setup writes here. The shell owns the store; the screen owns the
+          // control that changes it, and neither owns a second copy.
+          onSetColumn={(id, on) => useSettings.getState().set(id, on)}
           onBack={() => go('listing')}
         />
       )}

@@ -17,7 +17,7 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 
 /** Every group this command runs, in order. */
-const RUN = ['types', 'lint', 'shape', 'tokens', 'docs', 'dead', 'deps', 'drift', 'tests', 'stories', 'flow', 'visual']
+const RUN = ['types', 'lint', 'shape', 'tokens', 'docs', 'dead', 'deps', 'drift', 'exports', 'tests', 'stories', 'flow', 'visual']
 
 /** Groups that exist and are deliberately not part of this command, and where each one runs.
  *  Named rather than omitted — see the note about silence above. */

@@ -6,9 +6,31 @@
 // The same rule the row gutter follows. Two things taking turns in one slot, never two things
 // sharing one, and never a slot that empties.
 //
-// THE GRADE IS NEVER COLOURED. v2 colours every one — green A and B, amber C, red D and E —
-// which turns a grade into a colour and spends the alarm colour on the most routine fact in the
-// header. Roughly a third of any ledger is a C.
+// EACH GRADE CARRIES A LIGHT FILL. Ruled by Aj on 25-08, overturning what stood here before —
+// that the grade is never coloured. His reason is the right one and it is worth keeping: the
+// badge already carries the LETTER, so the fill reinforces something readable rather than
+// carrying the meaning by itself, which is what the colour rule actually bans. Somebody who
+// cannot tell the three fills apart reads A, B or C exactly as before.
+//
+// THE LADDER IS success · info · warning, AND RED IS NOT ON IT. Two reasons, and the first one
+// this session offered was wrong and is recorded so nobody re-derives it: the dead-GSTIN mark
+// always lands on a C, so painting C red looked like it would bury the mark. Measured on the
+// rendering, it does not — the mark reads 5.32:1 on the amber ground and 5.14:1 on the red one,
+// both well past the 3:1 WCAG asks of a graphic that carries meaning. That argument is dead.
+//
+// What is left is about what each rung MEANS. The document grades A at 80 and up, B at 60 to 79,
+// C below 60, and says only C raises the alert. Amber on a B would say a warning about a customer
+// who pays perfectly well, which is a control reporting a state it is not in. And C is the alert
+// rung, not the alarm one — the alarm on this badge is the dead registration, and a screen with
+// two reds on one control has spent the louder one on the quieter fact.
+//
+// Measured on the rendering: the letter reads 7.23, 6.75 and 7.22 against the three fills, so the
+// grade stays as legible as it was on the plain sunken chip.
+//
+// THE INK IS NOT THE FILL'S FAMILY EITHER. A green letter on a green ground is the same fact
+// twice and it is the quieter of the two; the letter keeps the secondary ink it has always had,
+// which measured against all three fills is the same letter at the same weight in three
+// different rooms.
 //
 // ONE MARK, FOR A DEAD GSTIN AND NOTHING ELSE. Ruled by Aj on 23-08. Cancelled, suspended or
 // inactive, and the badge gains a mark; nothing else touches it.
@@ -47,6 +69,14 @@ import { Button } from '@busy/ui/Button'
 import { Shortcut } from '@busy/ui/Shortcut'
 import { gstinIsDead, type Party } from '../../data/schema/party'
 
+/** The fill each grade wears. Three rungs, three rooms, and no red — see the note above. */
+const FILLS: Record<string, string> = {
+  A: 'bg-success-soft',
+  B: 'bg-info-soft',
+  C: 'bg-warning-soft',
+  none: 'bg-surface-sunken',
+}
+
 export function PartyBadge({ party, onOpen }: { party: Party | null; onOpen: () => void }) {
   if (party === null) {
     return (
@@ -71,6 +101,9 @@ export function PartyBadge({ party, onOpen }: { party: Party | null; onOpen: () 
   // to reach their GSTIN status at all. Filed for stakeholders.
   const letter = party.trustGrade ?? '–'
   const dead = gstinIsDead(party.gstinStatus)
+  // A party with no history has no grade and therefore no fill — the dash keeps the sunken face
+  // the chip wears in the F10 slot, because "not yet known" is not a rung on the ladder.
+  const fill = FILLS[party.trustGrade ?? 'none']
   // The grade arrives capped, so a dead registration is already a C. The mark is what says the C
   // is HELD rather than EARNED — without it a cancelled registration and a slow payer wear the
   // same letter, which is the hole the mark exists to close.
@@ -85,7 +118,7 @@ export function PartyBadge({ party, onOpen }: { party: Party | null; onOpen: () 
       // the same slot. It is not a `Shortcut`: that component is a `<kbd>`, which is the element
       // for a key and would be a lie about a grade — and this one is pressed, where a shortcut
       // hint deliberately is not. Same face, different thing, which is what a variant means.
-      className="relative mr-1 size-auto rounded-control border border-stroke bg-surface-sunken px-1.5 py-1 text-caps font-label tracking-wide uppercase leading-tight text-ink-secondary hover:border-stroke-strong hover:bg-surface-hover hover:text-ink"
+      className={`relative mr-1 size-auto rounded-control border border-stroke px-1.5 py-1 text-caps font-label tracking-wide uppercase leading-tight text-ink-secondary hover:border-stroke-strong hover:text-ink ${fill}`}
       // The reason is the NAME, so it is read out rather than only seen.
       aria-label={says}
       title={says}

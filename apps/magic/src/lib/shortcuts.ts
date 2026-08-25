@@ -19,7 +19,15 @@ export type Action =
   | 'move-down'
   | 'last-filled-row'
   | 'first-row'
+  /** The ends of the ROW you are standing on, not of the grid. Ctrl or Command with the same key
+   * is the grid's ends, which is the spreadsheet convention people already have in their hands. */
+  | 'row-start'
+  | 'row-end'
   | 'create-record'
+  /** Open the full record's drawer on what has been typed, rather than taking the list's answer.
+   * The party field has worn an F10 cap for this since the first round; the item cell had the
+   * same drawer and no key at all. */
+  | 'open-master'
   // The listing's own set. Same table, because two tables is the scattered set wearing a hat.
   | 'open-record'
   | 'select-record'
@@ -60,9 +68,32 @@ const BINDINGS: readonly Binding[] = [
   // grid pads itself with empty rows, and landing on one of those is landing nowhere.
   { key: 'End', withCommand: true, action: 'last-filled-row' },
   { key: 'Home', withCommand: true, action: 'first-row' },
+  // BARE Home AND End ARE THE ENDS OF THE ROW, which is what they mean in every spreadsheet.
+  //
+  // THEY DO NOT SIMPLY TAKE THE KEY, and that is the whole difficulty. This grid puts a real
+  // field under the cursor, so Home and End already mean something there — the ends of the TEXT
+  // — and a grid that swallows them takes away the only way to get to the front of a price you
+  // are halfway through retyping. v2 never bound them in its item grid for exactly this reason;
+  // it uses them in menus, in the date grid and along the listing's headings, and leaves the grid
+  // to the field.
+  //
+  // So the screen decides on the SECOND press: the caret goes to the end of the text, and a
+  // press with the caret already there moves the cell cursor. Nothing is lost, and the key is
+  // discovered the way Home and End are always discovered, by pressing them twice.
+  { key: 'Home', action: 'row-start' },
+  { key: 'End', action: 'row-end' },
   // F2 creates the record you are looking at. The previous build used it this way and the
   // people who will use this one already have it in their hands.
   { key: 'F2', action: 'create-record' },
+  // F10 OPENS THE FULL RECORD FOR WHAT IS BEING TYPED. Aj's ruling is that F10 opens the master;
+  // there is no party master screen yet, which is why the party field's cap still only advertises
+  // the field. There IS an item drawer, so the item half is bound here — and it is bound in this
+  // table rather than in the cell, like every other key in the product.
+  //
+  // IT IS THE ONLY KEYBOARD DOOR THE ITEM DRAWER HAS. Before this the drawer opened from the
+  // list's "+ Create item" row and from nowhere else, which is a mouse-only path to the one place
+  // an item gets a unit, a tax category and an HSN.
+  { key: 'F10', action: 'open-master' },
   // SHIFT AND SPACE PICKS THE LINE THE CURSOR IS ON. Space alone types a space into the cell
   // you are standing in, which is why the grid cannot use the listing's plain Space — the
   // listing has no field under the cursor and this does.

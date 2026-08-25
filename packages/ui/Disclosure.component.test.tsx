@@ -123,6 +123,49 @@ describe('Disclosure', () => {
     expect(at.textContent).not.toContain('Eighteen per cent')
   })
 
+  it('flush takes the padding off the body, so a full-bleed table meets the card', async () => {
+    const padded = await render(
+      <Disclosure summary="Tax summary" defaultOpen>
+        <p>rows</p>
+      </Disclosure>,
+    )
+    const bare = await render(
+      <Disclosure summary="Tax summary" flush defaultOpen>
+        <p>rows</p>
+      </Disclosure>,
+    )
+
+    // MEASURED AS A NUMBER, NOT MATCHED AS A STRING. A pixel literal in a test is a second copy
+    // of a token value — it goes stale the day the token moves, and the raw-pixel gate is right
+    // to refuse it. What this claims is "some padding" against "none", which is a comparison.
+    const padOf = (at: HTMLElement) =>
+      Number.parseFloat(getComputedStyle(at.querySelector('button + div')!).paddingLeft)
+
+    expect(padOf(padded)).toBeGreaterThan(0)
+    expect(padOf(bare)).toBe(0)
+  })
+
+  it('bodyClassName replaces the padding rather than adding to it', async () => {
+    const at = await render(
+      <Disclosure summary="Breakdown" bodyClassName="px-6" defaultOpen>
+        <p>rows</p>
+      </Disclosure>,
+    )
+
+    // The breakdown's body is already aligned to the card's own padding; the component's own
+    // would indent it a second time, which is the fault this prop exists to stop. Compared
+    // against what the component gives by default rather than against a typed number.
+    const byDefault = await render(
+      <Disclosure summary="Breakdown" defaultOpen>
+        <p>rows</p>
+      </Disclosure>,
+    )
+    const padOf = (where: HTMLElement) =>
+      Number.parseFloat(getComputedStyle(where.querySelector('button + div')!).paddingLeft)
+
+    expect(padOf(at)).toBeGreaterThan(padOf(byDefault))
+  })
+
   it('label becomes the accessible name when the summary is not the whole story', async () => {
     const at = await render(
       <Disclosure summary="Breakdown" label="Hide the breakdown" defaultOpen>

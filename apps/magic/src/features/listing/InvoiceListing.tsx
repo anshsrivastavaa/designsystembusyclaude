@@ -113,7 +113,7 @@ export function InvoiceListing({
     // it: two things both sticking to bottom-0 of one scroller would sit on top of each other,
     // and there is no token for "however tall the pager happens to be". Out here the totals
     // land directly above the bar with nothing to work out.
-    <main ref={screen} onKeyDown={onScreenKey} className="flex min-h-0 flex-1 flex-col">
+    <main id="main" ref={screen} onKeyDown={onScreenKey} className="flex min-h-0 flex-1 flex-col">
       {/* THE SCROLLER CARRIES NO PADDING and the content inside it does. With p-4 out here,
           `sticky top-0` on the heading resolved against the PADDING box — so the heading pinned
           sixteen pixels down and rows scrolled through the gap above it, which reads as the

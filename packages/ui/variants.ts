@@ -64,6 +64,12 @@ export const SAME_AS_BASE: Record<string, string> = {
   'TableHeading.align.start': 'the default — it is what the base renders',
   'TextField.align.start': 'the default — it is what the base renders',
   'Select.size.default': 'the default — it is what the base renders',
+  // ROLE IS WHAT THE SURFACE IS, NOT HOW IT LOOKS. A dialog and a listbox are drawn identically
+  // and behave completely differently — one takes the keyboard, the other is pointed at from the
+  // field. Nothing about that belongs in a pixel. It is held instead by the roles gate, which
+  // says who may declare one, and by the tests that read the accessible name.
+  'Popover.role.dialog': 'a role is a promise about behaviour, and is asserted by behaviour',
+  'Popover.role.listbox': 'a role is a promise about behaviour, and is asserted by behaviour',
 }
 
 /** The `variants: { name: { value: … } }` block of a cva call. */

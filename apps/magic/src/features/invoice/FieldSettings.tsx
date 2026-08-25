@@ -6,9 +6,20 @@
 // for the sake of the day somebody changes it. So the optional lives on the label, one press
 // from the field it governs, and the field itself stays a field.
 //
-// A TICK ON THE LIVE ONE, not a row of radios. The popover is a short list of what this field
+// A MARK ON THE LIVE ONE, not a row of radios. The popover is a short list of what this field
 // can be and a mark against what it is, which is a menu — and v2 puts a door at its foot so
 // the full drawer is one step away rather than a thing you have to remember exists.
+//
+// THE ROWS ARE `MenuRow` NOW, AND THE MARK CHANGED WITH THEM. This file drew its own rows with
+// its own tick while the listing's three menus drew theirs with a rotated chevron — one idea,
+// two shapes, and the drift gate saw nothing because it only catches byte-identical class runs.
+// Adopting makes the product show ONE mark in four places instead of two marks in four, which is
+// what turns "which mark" from an argument into a one-line change in one file.
+// **The mark that should win is the tick, and it is filed on packages/ui in `docs/owed.md`.**
+// v2 marks the chosen row of its own view menu with a tick, Apple's menus use a checkmark for the
+// selected item of a group, and a chevron pointing down reads as "this opens" rather than "this
+// is the one". Held here as a comment rather than as a local override, because a fifth shape is
+// the fault arriving again.
 //
 // NO SECOND LINE ON A CHOICE, AND THE FOOT SAYS ONLY "SETTINGS". Ruled by Aj on 24-08, and it
 // overturns what was written here before — that the door should be named for the group it
@@ -27,7 +38,7 @@
 
 import { useRef, useState } from 'react'
 
-import { Icon } from '@busy/ui/Icon'
+import { MenuFooterAction, MenuRow } from '@busy/ui/MenuRow'
 import { Popover } from '@busy/ui/Popover'
 import { FieldLabel } from './FieldLabel'
 
@@ -69,39 +80,27 @@ export function FieldSettings({ children, choices, chosen, onChoose, onOpenSetti
             a third again wider than anything in it. */}
         <div role="menu" aria-label={`${children} settings`} className="min-w-40 p-1">
           {choices.map((choice) => (
-            <button
+            <MenuRow
               key={choice.id}
-              type="button"
-              role="menuitemradio"
-              aria-checked={choice.id === chosen}
+              chosen={choice.id === chosen}
               onClick={() => {
                 onChoose(choice.id)
                 setOpen(false)
               }}
-              className="flex w-full items-center gap-2 rounded-control px-2 py-2 text-left hover:bg-surface-hover focus-ring-inset"
             >
-              {/* The tick's room is always there, so the words do not shift by an icon when the
-                  choice moves — a list that jogs sideways as you press it reads as a mistake. */}
-              <span className="w-4 shrink-0 text-ink-accent">
-                {choice.id === chosen ? <Icon name="tick" className="size-icon-sm" /> : null}
-              </span>
-              <span className="min-w-0 truncate text-body text-ink">{choice.label}</span>
-            </button>
+              {choice.label}
+            </MenuRow>
           ))}
 
           {onOpenSettings === undefined ? null : (
-            <button
-              type="button"
-              role="menuitem"
+            <MenuFooterAction
               onClick={() => {
                 setOpen(false)
                 onOpenSettings()
               }}
-              className="mt-1 flex w-full items-center justify-between gap-2 rounded-control border-t border-stroke px-2 py-2 text-left text-body text-ink-secondary hover:bg-surface-hover hover:text-ink focus-ring-inset"
             >
               Settings
-              <Icon name="chevronRight" className="size-icon-sm" />
-            </button>
+            </MenuFooterAction>
           )}
         </div>
       </Popover>

@@ -76,7 +76,11 @@ test('the party list closes when you click away from it, and comes back when you
 
 test('the F10 hint shows while the party field is wanted and not before', async ({ page }) => {
   await openInvoice(page, '/?screen=create&rows=3', 3)
-  const hint = page.getByText('F10', { exact: true })
+  // SCOPED TO THE PARTY FIELD. The item cell wears an F10 cap too now — it is the item drawer's
+  // only keyboard door — so an unscoped locator matches both and Playwright refuses to guess.
+  // Which is right: a journey that meant one control and measured the other is not a slower
+  // version of the same check.
+  const hint = page.getByRole('region', { name: 'Party' }).locator('kbd')
 
   // On arrival the field holds the keyboard, so the hint is there.
   await expect(hint).toHaveCSS('opacity', '1')

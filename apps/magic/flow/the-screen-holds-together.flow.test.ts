@@ -142,7 +142,11 @@ test('a new invoice starts empty, and does not hold the last one', async ({ page
   // the second invoice of the day opened with the first customer's name and lines on it —
   // which is the first thing anybody clicking around meets.
   await expect(page.getByRole('combobox', { name: 'Party' })).toHaveValue('')
-  await expect(await cellUnder(page, 1, 'Item Name')).toHaveText('')
+  // THE FIELD'S VALUE, NOT THE CELL'S TEXT. The cursor cell now carries an F10 key cap — the item
+  // drawer's only keyboard door — and a cap is a hint about the cell rather than something in it,
+  // so `toHaveText('')` read "F10" and called a correctly empty invoice full. What this line has
+  // always meant is that no item name survived, and that is a value.
+  await expect(page.getByRole('combobox', { name: 'Item' })).toHaveValue('')
 })
 
 test('the action bar never covers the last line of the breakdown', async ({ page }) => {

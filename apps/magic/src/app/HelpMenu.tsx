@@ -28,8 +28,18 @@ const SAYS: Record<Action, string> = {
   'move-down': 'Move down',
   'last-filled-row': 'Go to the last row with something on it',
   'first-row': 'Go to the first row',
+  // ADDED BY SESSION A, IN SESSION B'S FILE, THE SAME WAY `open-master` was and for the same
+  // reason: `Record<Action, string>` is exhaustive, so a new binding turns the build red until
+  // the action has words. Two strings, no design in either, and B owns the wording.
+  'row-start': 'Go to the start of this row (a second press, once the caret is already there)',
+  'row-end': 'Go to the end of this row (a second press, once the caret is already there)',
   'last-row': 'Go to the last row',
   'create-record': 'Create the record you are looking at',
+  // ADDED BY SESSION A, IN SESSION B'S FILE, AND FLAGGED RATHER THAN SLIPPED IN. `Record<Action,
+  // string>` makes this map exhaustive, so binding F10 in lib/shortcuts.ts turned the build red
+  // until the action had words. It is one string in a lookup table with no design in it; B owns
+  // the wording and should change it freely.
+  'open-master': 'Open the full record for what you are typing',
   'open-record': 'Open the invoice you are on',
   'select-record': 'Pick the invoice you are on, without opening it',
   'new-document': 'New invoice',

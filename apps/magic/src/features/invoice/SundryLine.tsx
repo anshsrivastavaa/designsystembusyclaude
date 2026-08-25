@@ -66,7 +66,7 @@ export function SundryLine({ row, index, amountPaise }: { row: SundryRow; index:
 
   return (
     <div role="row" className="group flex h-row items-stretch border-b border-stroke last:rounded-b-card last:border-b-0">
-      <div role="gridcell" className={`flex h-full items-center border-r border-stroke px-1 ${SUNDRY_WIDTHS.name}`}>
+      <div role="cell" className={`flex h-full items-center border-r border-stroke px-1 ${SUNDRY_WIDTHS.name}`}>
         <SundryPicker
           listId={`sundry-list-${row.id}`}
           value={search}
@@ -81,11 +81,11 @@ export function SundryLine({ row, index, amountPaise }: { row: SundryRow; index:
         />
       </div>
 
-      <div role="gridcell" className={`flex h-full items-center border-r border-stroke px-2 text-body text-ink-secondary ${SUNDRY_WIDTHS.type}`}>
+      <div role="cell" className={`flex h-full items-center border-r border-stroke px-2 text-body text-ink-secondary ${SUNDRY_WIDTHS.type}`}>
         {row.sundryId === null ? '' : KIND_WORD[row.kind]}
       </div>
 
-      <div role="gridcell" className={`flex h-full items-center border-r border-stroke px-1 ${SUNDRY_WIDTHS.value}`}>
+      <div role="cell" className={`flex h-full items-center border-r border-stroke px-1 ${SUNDRY_WIDTHS.value}`}>
         {row.sundryId === null ? null : (
           <TextField
             aria-label={`${row.name} value`}
@@ -103,7 +103,7 @@ export function SundryLine({ row, index, amountPaise }: { row: SundryRow; index:
 
       {/* THE DELETE SITS AT THE END OF THE ROW, IN THE AMOUNT CELL — v2's arrangement. It is
           where the row finishes and where the eye already is, and it costs no column. */}
-      <div role="gridcell" className={`flex h-full items-center justify-end gap-1 px-2 text-body text-ink-secondary ${SUNDRY_WIDTHS.amount}`}>
+      <div role="cell" className={`flex h-full items-center justify-end gap-1 px-2 text-body text-ink-secondary ${SUNDRY_WIDTHS.amount}`}>
         {row.sundryId === null ? '' : formatPaise(amountPaise)}
         <DeleteSundry index={index} filled={row.sundryId !== null} />
       </div>

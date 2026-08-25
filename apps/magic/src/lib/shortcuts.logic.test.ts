@@ -19,7 +19,21 @@ describe('the shortcut table', () => {
   })
 
   it('does not fire a plain key when its shortcut wanted a modifier', () => {
-    expect(actionFor({ key: 'End' })).toBeNull()
+    // SHIFT AND SPACE, because bare End stopped being the example on 25-08 — it means the end of
+    // the row now, and the grid's only remaining modifier-only key is this one. The rule is
+    // unchanged; what changed is which key can still demonstrate it. Space alone types a space
+    // into the cell you are standing in, which is exactly why picking a line needs the Shift.
+    expect(actionFor({ key: ' ', shiftKey: true })).toBe('select-record')
+    expect(actionFor({ key: ' ' })).toBeNull()
+  })
+
+  it('tells the ends of a row from the ends of the grid', () => {
+    // Bare and modified are different actions on the same key, which is the spreadsheet
+    // convention: Home is the front of this row, Ctrl and Home is the top of the grid.
+    expect(actionFor({ key: 'Home' })).toBe('row-start')
+    expect(actionFor({ key: 'End' })).toBe('row-end')
+    expect(actionFor({ key: 'Home', ctrlKey: true })).toBe('first-row')
+    expect(actionFor({ key: 'End', metaKey: true })).toBe('last-filled-row')
   })
 
   it('does not fire a modified key when its shortcut wanted a plain one', () => {

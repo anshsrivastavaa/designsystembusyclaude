@@ -38,6 +38,36 @@ to find and delete.
 
 ---
 
+## We invent the VALUES. We never invent the RULES. (Aj, 24-08)
+
+**Every figure this product needs from a backend is invented in `data/mock/`, deliberately, and
+the dev team stitches the real ledger behind the same shapes later.** Nothing waits for a real
+number. If a screen needs what a party holds on account, or four kinds of credit, or a batch
+number, or a pending order to pull lines from — invent it, seed it in `data/mock/`, and write
+the shape down in this file. That is the whole method, and this file is the receipt.
+
+**The line is between a value and a rule, and it is the same line the section above draws.**
+
+- **Invent freely:** what the numbers ARE. Balances, credits, references, dates, statuses,
+  histories, the contents of any list this front end displays.
+- **Never invent:** how a number is WORKED OUT, or whether something is ALLOWED. Whether a party
+  is over its limit, whether a GSTIN is live, whether an invoice number is taken, how a tax is
+  apportioned. Those are the backend's answers, and a second answer computed here is the fault
+  this file exists to prevent — the listing once recomputed tax by reducing over an invoice's
+  rows while the header already carried it, and the fix was to delete the second calculation,
+  not to make it agree.
+
+Put another way: **a made-up number is a placeholder and costs nothing to replace. A made-up rule
+is a second source of truth and costs an integration.**
+
+**What this ruling unblocked.** Four journeys were parked on "linked documents" not existing —
+pending vouchers, batches and serials, converting an order, and pulling several orders in.
+`docs/journeys.md` says that one absence blocks more of that list than anything else. It does not
+block anything now: the linked documents are invented like everything else, and their shapes come
+here.
+
+---
+
 ## Assumptions, as they were made
 
 ### Money

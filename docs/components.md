@@ -195,3 +195,30 @@ expressing the same idea in different words pass it.
 
 **So the rule as written is enforced for one case and documented as general.** Widening the check
 is what stops this recurring; until it is widened, this section is the list.
+
+## Built, and waiting for a screen
+
+Building ahead of the screen is allowed. It costs a line here naming the job and the date, and
+the `exports` gate fails on anything in the library that has neither a screen nor a line. **The
+date is the point** — it makes the length of the wait visible, so "it will be adopted next week"
+cannot quietly become two months.
+
+- **`Disclosure`** — written **24-08** for the four collapsible section headers that had each been
+  hand-written: the invoice breakdown, the tax summary, the narration and the drawer's extra
+  fields. A fifth was about to be written in a folder that could not import any of the first four,
+  which is the dependency rule pointing at where the thing belonged. **Waiting for:** the other
+  session to adopt it in those four places; it holds `closedAside` and `tone="accent"` because
+  those four needed them. Nothing about it is blocked — Aj ruled on 25-08 that every backend
+  figure is invented in `data/mock/`, so a component ahead of its screen is unadopted, not stuck.
+
+**`TableHeading` is not on this list, and the gate will not ask for it**, because `TableHead`
+uses it on every listing row — it is genuinely in the product. What has no screen is its
+`as="div"` mode, built for the item grid's column headings.
+
+**Do not read the `exports` gate's green as "every mode is in use".** It works at the granularity
+of an export and cannot tell a half-used component from a fully used one. The variant gate next
+door only asks whether a value draws differently from the base, never whether a screen asked for
+it. **A variant nobody uses is covered by nothing today**, and `TableHeading as="div"`,
+`Tabs look="bare"`, `TextField locked`, `Field message` and `Label htmlFor` are all in that gap
+right now. The same sentence is in the gate's own header, so it is read by whoever is looking at
+the gate rather than only by whoever is looking here.

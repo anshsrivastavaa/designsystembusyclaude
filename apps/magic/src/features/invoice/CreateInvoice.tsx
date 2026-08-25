@@ -42,6 +42,16 @@ export function CreateInvoice({
 }: {
   settings?: InvoiceSettings
   onOpenSettings?: () => void
+  /** Where the item grid's column setup writes. The columns arrive in `settings` READ-ONLY,
+   * because they live in the shell's settings store and nothing in `features/` may import from
+   * `app/` — so the screen is handed the answer and hands back the change. Props down, callbacks
+   * up. A second copy of this state inside the invoice store is the round-off fault again: two
+   * places that can disagree about one thing.
+   *
+   * DECLARED HERE AND NOT YET DESTRUCTURED. The shell half is wired — App.tsx passes it — and the
+   * grid's column setup is the other session's to build. Taking it off the parameter list keeps
+   * the build green in the meantime without pretending the prop does not exist. */
+  onSetColumn?: (id: 'discount' | 'alias' | 'hsn' | 'mrp' | 'freeQuantity', on: boolean) => void
   /** Where the back control goes. The shell decides, because only the shell knows what is
    * behind this screen. */
   onBack?: () => void

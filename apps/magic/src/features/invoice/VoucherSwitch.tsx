@@ -21,8 +21,8 @@
 
 import * as React from 'react'
 
-import { Button } from '@busy/ui/Button'
 import { Icon } from '@busy/ui/Icon'
+import { MenuRow } from '@busy/ui/MenuRow'
 import { Popover } from '@busy/ui/Popover'
 import { actionFor } from '../../lib/shortcuts'
 import { VOUCHER_TYPES, type VoucherType } from './voucherTypes'
@@ -87,20 +87,20 @@ export function VoucherSwitch({ type, onSwitch }: { type: VoucherType; onSwitch:
       <Popover open={open} onClose={() => setOpen(false)} anchorRef={button} label="Change voucher type" align="start">
         <div ref={menu} role="menu" aria-label="Change voucher type" className="w-64 py-1" onKeyDown={walk}>
           {targets.map((name) => (
-            // Body weight, which is what the listing's menu items are set in. A menu is a list of
-            // things you might do, not a set of headings.
-            <Button
+            // `command`, not `choice`. Switching to Sale Return is something you DO — it is not
+            // one of a set with a current member, and there is nothing here for a mark to sit
+            // against, so MenuRow holds no space for one. The row this replaced was a `Button`
+            // overridden into a menu row with four classes undoing what a button is.
+            <MenuRow
               key={name}
-              role="menuitem"
-              variant="ghost"
-              className="w-full justify-start rounded-none px-3 font-body"
+              kind="command"
               onClick={() => {
                 onSwitch(name)
                 setOpen(false)
               }}
             >
               Switch to {name}
-            </Button>
+            </MenuRow>
           ))}
         </div>
       </Popover>

@@ -44,12 +44,17 @@ export function InvoiceHeader({ type, onSwitch, favourite, onFavourite, onBack, 
   return (
     <div className="flex shrink-0 items-center gap-2 pr-2">
       {/* Filled, and rounded on its right side only — it runs off the left edge of the plane,
-          which is what makes it read as cut into the surface rather than sitting on it. */}
+          which is what makes it read as cut into the surface rather than sitting on it.
+          AND IT ACTUALLY REACHES THAT EDGE NOW. The plane carries `px-4`, so this sat sixteen
+          pixels in from it with its flat left side floating in the middle of the surface —
+          a shape that only means anything against an edge, drawn away from the edge. The
+          negative margin is exactly the plane's own padding, so the two cannot drift apart:
+          nothing else moves, and the title stays where it is. */}
       <button
         type="button"
         onClick={onBack}
         aria-label="Back"
-        className="grid size-control-sm shrink-0 place-items-center rounded-r-card bg-surface-sunken text-ink-muted pressable hover:text-ink focus-ring"
+        className="-ml-4 grid size-control-sm shrink-0 place-items-center rounded-r-card bg-surface-sunken text-ink-muted pressable hover:text-ink focus-ring"
       >
         <Icon name="chevronLeft" className="size-icon-lg" />
       </button>

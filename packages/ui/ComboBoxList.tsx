@@ -1,12 +1,14 @@
 // The list a ComboBox drops. Its own file because it is its own thing: the field owns the
 // typing and the keyboard, this owns where the list is drawn and what a row looks like.
 //
-// OWED: THIS SITS ON THE POPOVER, IT DOES NOT LIVE BESIDE IT. The listing session is building
-// one Popover primitive, and the anchoring below — measure the field, place a panel against
-// the window, close on scroll and resize — is the same job. Two anchored surfaces in one
-// codebase is exactly the duplication this repo exists to prevent, so when Popover lands this
-// file keeps the rows and the foot and hands the placing over. It is owed at a natural break
-// in region two, not as an interruption; see the note in the Popover file.
+// IT SITS ON THE POPOVER NOW, AND THAT FIXED TWO THINGS PEOPLE COULD SEE. This file used to
+// measure the field and place itself against the window, which was the same job Popover already
+// did for everything else — two anchored surfaces in one codebase, and the second one carried
+// the bugs. A list opened low in the window ran off the bottom and the rows past the fold could
+// not be reached at all, because this one never learned to flip; Popover has flipped and clamped
+// on both axes since it was written. And the panel took the INPUT's width, so under a 224px
+// field box a 280px list hung out to one side; it takes the anchor's width as a MINIMUM now, so
+// it lines up with whatever it hangs off and still grows for its own content.
 //
 // It is drawn against the window rather than inside the page's own structure. It has to be:
 // inside a grid cell it sits in a box 33 pixels tall with its overflow hidden, so every pixel
@@ -18,14 +20,18 @@
 // because rows could be seen above and below it.
 
 import * as React from 'react'
-import { createPortal } from 'react-dom'
 
 import { cn } from './cn'
+import { Popover } from './Popover'
 
 export type ComboBoxListProps<Option> = {
   listId: string
   label: string
-  anchor: { left: number; top: number; width: number } | null
+  /** The control the list hangs off. Pass the field's BOX where there is one — the list lines up
+   *  with what a person sees as the field, not with the bare input inside it. */
+  anchorRef: React.RefObject<HTMLElement | null>
+  open: boolean
+  onClose: () => void
   options: readonly Option[]
   getKey: (option: Option) => string
   renderRow: (option: Option, state: { highlighted: boolean }) => React.ReactNode
@@ -46,7 +52,9 @@ export type ComboBoxListProps<Option> = {
 export function ComboBoxList<Option>({
   listId,
   label,
-  anchor,
+  anchorRef,
+  open,
+  onClose,
   options,
   getKey,
   renderRow,
@@ -60,27 +68,45 @@ export function ComboBoxList<Option>({
   stickyAction,
   note,
 }: ComboBoxListProps<Option>) {
-  if (anchor === null) return null
+  // A ROW IS ONLY HOVERED ONCE THE POINTER HAS MOVED. Opening a panel under a pointer that has
+  // not moved fires `mouseenter` on whatever row happens to land beneath it, and that reads as a
+  // deliberate hover — so the highlight the keyboard just set is thrown away by a mouse nobody
+  // touched.
+  //
+  // It went unnoticed while the list could only open DOWNWARDS: the field is above the list, so
+  // the pointer that clicked the field was never over a row. The moment Popover's flip arrived,
+  // a field low in the window put the list ABOVE it and the pointer landed on the LAST row —
+  // Alt+Down set the first stop, the phantom hover moved it to the ninth, and Enter added the
+  // wrong charge. That was read as a timing failure in the move and cost the 24-08 attempt.
+  const [pointerMoved, setPointerMoved] = React.useState(false)
+  React.useEffect(() => {
+    if (!open) setPointerMoved(false)
+  }, [open])
+  const hover = (index: number) => {
+    if (pointerMoved) onHighlight(index)
+  }
 
   // Every stop above the options shifts them along, so the arrows and the mouse agree about
   // which row is which. One number, worked out once.
   const offset = stickyLead ? 1 : 0
   const onLeadRow = stickyLead !== undefined && highlight === 0
 
-  return createPortal(
-    <div
-      ref={listRef}
-      id={listId}
+  return (
+    <Popover
+      open={open}
+      onClose={onClose}
+      anchorRef={anchorRef}
+      label={label}
       role="listbox"
-      aria-label={label}
-      style={{ left: anchor.left, top: anchor.top, width: anchor.width }}
-      className={cn(
-        // Tall enough to show that there is a list. Two-line rows in a 16rem panel showed
-        // four, which reads as the whole thing rather than the top of it.
-        'fixed z-50 flex max-h-96 flex-col overflow-hidden',
-        'rounded-control border border-stroke bg-surface-raised shadow-popover',
-      )}
+      id={listId}
+      // The field keeps the keyboard. Moving focus into the panel would take it out of the input
+      // somebody is still typing in, which is the whole reason a listbox is pointed at with
+      // `aria-activedescendant` rather than entered.
+      takesFocus={false}
+      minWidth="anchor"
+      panelRef={listRef}
     >
+      <div className="contents" onPointerMove={() => setPointerMoved(true)}>
       {stickyLead ? (
         <div
           id={`${listId}-lead`}
@@ -91,7 +117,7 @@ export function ComboBoxList<Option>({
             'text-body font-label text-ink-accent',
             onLeadRow ? 'bg-surface-hover' : 'bg-surface-raised',
           )}
-          onMouseEnter={() => onHighlight(0)}
+          onMouseEnter={() => hover(0)}
           onMouseDown={(event) => {
             event.preventDefault()
             stickyLead.onChoose()
@@ -129,7 +155,7 @@ export function ComboBoxList<Option>({
                 role="option"
                 aria-selected={highlighted}
                 className={cn('cursor-default px-3 py-2 text-body', highlighted && 'bg-surface-hover')}
-                onMouseEnter={() => onHighlight(index + offset)}
+                onMouseEnter={() => hover(index + offset)}
                 onMouseDown={(event) => {
                   // Down rather than click: blur would close the list before a click landed.
                   event.preventDefault()
@@ -159,7 +185,7 @@ export function ComboBoxList<Option>({
             'text-body font-label text-ink-accent',
             onStickyRow ? 'bg-surface-hover' : 'bg-surface-raised',
           )}
-          onMouseEnter={() => onHighlight(options.length + offset)}
+          onMouseEnter={() => hover(options.length + offset)}
           onMouseDown={(event) => {
             event.preventDefault()
             stickyAction.onChoose()
@@ -168,7 +194,7 @@ export function ComboBoxList<Option>({
           {stickyAction.label}
         </div>
       ) : null}
-    </div>,
-    document.body,
+      </div>
+    </Popover>
   )
 }

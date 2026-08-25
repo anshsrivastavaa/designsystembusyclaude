@@ -48,6 +48,20 @@ export type PopoverProps = {
    * The anchor is still given, because closing has to hand the keyboard back somewhere and a
    * point cannot take focus. */
   at?: { x: number; y: number }
+  /** What the surface IS. A menu and a dialog take the keyboard; a `listbox` never does — the
+   * field keeps it and points at the active row with `aria-activedescendant`, which is the whole
+   * reason you can type and choose at the same time. */
+  role?: 'dialog' | 'listbox'
+  /** For the surface a field's `aria-controls` and `aria-activedescendant` point at. */
+  id?: string
+  /** Off for a listbox: moving focus into the panel would take it out of the field somebody is
+   * still typing in. Everything else wants it, so it stays the default. */
+  takesFocus?: boolean
+  /** `anchor` makes the panel at least as wide as the control it hangs off, so a list under a
+   * field lines up with the field rather than with whatever its own content wanted. */
+  minWidth?: 'anchor'
+  /** The panel element, for a caller that has to scroll it or measure it. */
+  panelRef?: React.RefObject<HTMLDivElement | null>
   children: React.ReactNode
 }
 
@@ -56,8 +70,23 @@ export type PopoverProps = {
 const GAP = 4
 const EDGE = 8
 
-export function Popover({ open, onClose, anchorRef, label, align = 'start', at: point, children }: PopoverProps) {
-  const panel = React.useRef<HTMLDivElement>(null)
+export function Popover({
+  open,
+  onClose,
+  anchorRef,
+  label,
+  align = 'start',
+  at: point,
+  role = 'dialog',
+  id,
+  takesFocus = true,
+  minWidth,
+  panelRef,
+  children,
+}: PopoverProps) {
+  const own = React.useRef<HTMLDivElement>(null)
+  const panel = panelRef ?? own
+  const [least, setLeast] = React.useState<number | null>(null)
   const returnTo = React.useRef<HTMLElement | null>(null)
   const [at, setAt] = React.useState<{ left: number; top: number } | null>(null)
 
@@ -94,6 +123,8 @@ export function Popover({ open, onClose, anchorRef, label, align = 'start', at: 
       const lowest = window.innerHeight - size.height - EDGE
       const top = Math.min(Math.max(EDGE, wantedTop), Math.max(EDGE, lowest))
 
+      if (minWidth === 'anchor') setLeast(anchor.width)
+
       const wantedLeft = align === 'end' ? anchor.right - size.width : anchor.left
       const furthest = window.innerWidth - size.width - EDGE
       setAt({ left: Math.min(Math.max(EDGE, wantedLeft), Math.max(EDGE, furthest)), top })
@@ -106,7 +137,7 @@ export function Popover({ open, onClose, anchorRef, label, align = 'start', at: 
       window.removeEventListener('resize', place)
       window.removeEventListener('scroll', place, true)
     }
-  }, [open, align, anchorRef, point])
+  }, [open, align, anchorRef, point, minWidth])
 
   // THE KEYBOARD, IN ITS OWN EFFECT, KEYED ONLY ON `open`. It was together with the listeners
   // below, whose dependencies include the caller's onClose — a new function on every render.
@@ -115,6 +146,8 @@ export function Popover({ open, onClose, anchorRef, label, align = 'start', at: 
   // re-rendered. The test caught it as "expected false to be true" on the panel holding focus.
   React.useEffect(() => {
     if (!open) return
+
+    if (!takesFocus) return
 
     returnTo.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     panel.current?.focus()
@@ -130,10 +163,17 @@ export function Popover({ open, onClose, anchorRef, label, align = 'start', at: 
       const back = came && came.isConnected && came !== document.body ? came : anchorRef.current
       if (back && back.isConnected) back.focus()
     }
-  }, [open, anchorRef])
+  }, [open, anchorRef, takesFocus, panel])
 
+  // DISMISSAL BELONGS TO WHOEVER OWNS THE KEYBOARD. A panel that takes focus is a surface in its
+  // own right, and Escape and a click outside are how a person leaves it. A panel that does NOT
+  // take focus is a view of somebody else's state — a listbox under a field — and the field is
+  // still holding the keyboard, still handling Escape, and still deciding what leaving means.
+  // Installing these as well gave the combo box two dismissal paths racing each other: Escape was
+  // handled twice, and a pointerdown closed the list a frame before the field's own blur could
+  // decide whether it should. Two journeys went red on it, in two different ways.
   React.useEffect(() => {
-    if (!open) return
+    if (!open || !takesFocus) return
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
@@ -160,22 +200,30 @@ export function Popover({ open, onClose, anchorRef, label, align = 'start', at: 
       document.removeEventListener('keydown', onKeyDown, true)
       document.removeEventListener('pointerdown', onPointerDown, true)
     }
-  }, [open, onClose, anchorRef])
+  }, [open, onClose, anchorRef, takesFocus, panel])
 
   if (!open) return null
 
   return createPortal(
     <div
       ref={panel}
-      role="dialog"
+      // A stable handle that does not move when `role` does. Anything looking for the panel by
+      // its role finds a different element depending on what the panel IS, which is fine until
+      // the thing being tested is the role itself.
+      data-slot="popover"
+      role={role}
       aria-label={label}
-      tabIndex={-1}
+      {...(id === undefined ? {} : { id })}
+      tabIndex={takesFocus ? -1 : undefined}
       // Hidden for the one commit before it has been measured and placed, so it is never
       // seen at the top-left corner first. HIDDEN BY OPACITY, NOT BY `visibility` — a
       // visibility:hidden element cannot take focus, so the keyboard silently failed to go
       // into the panel and the test read it as "expected false to be true". Opacity leaves
       // the element focusable, which is the whole difference.
-      style={at === null ? { left: 0, top: 0, opacity: 0, pointerEvents: 'none' } : { left: at.left, top: at.top }}
+      style={{
+        ...(at === null ? { left: 0, top: 0, opacity: 0, pointerEvents: 'none' as const } : { left: at.left, top: at.top }),
+        ...(least === null ? {} : { minWidth: least }),
+      }}
       className={cn(
         'fixed z-50 flex max-h-96 flex-col overflow-hidden outline-none',
         'rounded-control border border-stroke bg-surface-raised shadow-popover',

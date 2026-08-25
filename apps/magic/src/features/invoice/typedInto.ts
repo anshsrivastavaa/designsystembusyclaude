@@ -1,4 +1,5 @@
 import { toPaise } from '../../lib/money'
+import { expandShorthand } from './moneyShorthand'
 import type { ColumnId } from '../../lib/keyboard'
 import type { InvoiceRow } from '../../data/schema/invoice'
 
@@ -24,9 +25,12 @@ function aNumber(typed: string): number {
 export
 const TYPED_INTO: Partial<Record<ColumnId, (typed: string) => Partial<InvoiceRow>>> = {
   quantity: (typed) => ({ quantity: aNumber(typed) }),
-  price: (typed) => ({ pricePaise: toPaise(typed) }),
+  // THE SHORTHAND IS EXPANDED HERE, NOT INSIDE toPaise. `toPaise` is the general converter and
+  // the listing's amount filter uses it too, where a stray `k` should not quietly mean thousand.
+  // This is the one place that has been told the text came out of a money cell in this grid.
+  price: (typed) => ({ pricePaise: toPaise(expandShorthand(typed)) }),
   unit: (typed) => ({ unit: typed }),
-  discount: (typed) => ({ discountPercent: aNumber(typed) }),
+  discount: (typed) => ({ discountPercent: aNumber(expandShorthand(typed)) }),
   freeQuantity: (typed) => ({ freeQuantity: aNumber(typed) }),
 }
 

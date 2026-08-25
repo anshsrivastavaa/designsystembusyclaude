@@ -20,7 +20,7 @@ test('F2 walks from the party to the items to the charges', async ({ page }) => 
   await expect(page.getByRole('combobox', { name: 'Item' })).toBeFocused()
 
   await page.keyboard.press('F2')
-  await expect(page.getByRole('grid', { name: 'Bill sundry' }).getByRole('combobox').first()).toBeFocused()
+  await expect(page.getByRole('table', { name: 'Bill sundry' }).getByRole('combobox').first()).toBeFocused()
 })
 
 test('F2 from the charges saves the invoice, rather than pointing at the button', async ({ page }) => {
@@ -30,7 +30,7 @@ test('F2 from the charges saves the invoice, rather than pointing at the button'
   await page.getByRole('combobox', { name: 'Party' }).click()
   await page.getByRole('option').filter({ hasText: 'Sharma Traders' }).first().click()
 
-  await page.getByRole('grid', { name: 'Bill sundry' }).getByRole('combobox').first().focus()
+  await page.getByRole('table', { name: 'Bill sundry' }).getByRole('combobox').first().focus()
   await page.keyboard.press('F2')
 
   // SAVED, not focused. The bar says what happened, and it carries the number the backend gave

@@ -22,6 +22,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@busy/ui/Button'
 import { Drawer } from '@busy/ui/Drawer'
 import { Icon } from '@busy/ui/Icon'
+import { Select } from '@busy/ui/Select'
 import { data } from '../../data/source'
 import { isRefusal } from '../../data/schema/refusal'
 import { actionFor } from '../../lib/shortcuts'
@@ -36,6 +37,11 @@ export function fieldFor(typed: string): 'name' | 'mobile' | 'gstin' {
   return 'name'
 }
 
+/** Debit or credit, read through the label rather than through a colour — the ledger rule. */
+const SIDES = [
+  { value: 'Dr', label: 'Dr' },
+  { value: 'Cr', label: 'Cr' },
+]
 const GROUPS = ['Sundry Debtors', 'Sundry Creditors']
 const STATES = ['Madhya Pradesh', 'Uttarakhand', 'Delhi', 'Karnataka', 'Assam', 'Maharashtra']
 const DEALERS = ['Registered', 'Composition', 'Unregistered']
@@ -153,15 +159,23 @@ export function PartyDrawer({ typed, onClose, onCreated }: PartyDrawerProps) {
           <DrawerField label="Mobile" value={draft.mobile} onChange={put('mobile')} />
           <DrawerField label="State" value={draft.state} onChange={put('state')} options={STATES} />
           <DrawerField label="Opening balance" value={draft.opening} onChange={put('opening')} align="end">
-            <select
+            {/* THIS IS THE ONE THAT WORE THE BROWSER'S RING INSTEAD OF OURS. Hand-styled here
+                with a class run that agreed with the other three selects on everything except
+                `focus-ring`. It was written up as having no ring at all; measured with the old
+                markup put back, it had one — Chrome's own default, thinner, a different blue and
+                flush against the edge, where every other control on this screen paints the
+                product's, twice as thick and standing clear. So the fault was never an invisible
+                ring. It was a DIFFERENT ring on one control, which to somebody on the keyboard
+                reads as the focus having jumped somewhere else — Nielsen Norman's consistency
+                heuristic, and the exact numbers are in `PartyDrawer.component.test.tsx`.
+                Adopting `Select` is what fixes it, and the fix is not a class added here — it is
+                that there is now one place saying what a select looks like. */}
+            <Select
               value={draft.openingSide}
-              onChange={(event) => put('openingSide')(event.target.value)}
-              aria-label="Opening balance side"
-              className="h-control rounded-control border border-stroke bg-surface px-2 text-body text-ink"
-            >
-              <option>Dr</option>
-              <option>Cr</option>
-            </select>
+              onChange={put('openingSide')}
+              label="Opening balance side"
+              options={SIDES}
+            />
           </DrawerField>
         </DrawerGrid>
 

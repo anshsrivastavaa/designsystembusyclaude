@@ -94,8 +94,24 @@ const FLOOR = 56
  * header corner painted over the header row, the pinned column over the scrolled body, and the
  * footer corner over the totals row. Three tiers, no bookkeeping.
  *
- * This only holds under `border-separate`. With `border-collapse: collapse` the borders on
- * sticky cells drop out entirely — Table.tsx is already separate, and the grid must be too. */
+ * THE `border-separate` REQUIREMENT IS A <table> CONCERN AND NOTHING ELSE. Under
+ * `border-collapse: collapse` the borders on sticky cells drop out entirely, so Table.tsx must
+ * stay separate. It says nothing about a grid built from divs, which has no collapsing model to
+ * fall into — this comment read as a rule for every consumer of these tiers and it is not one.
+ * Scoped on 25-08 after the other session established the distinction.
+ *
+ * TWO THINGS v2 PAID A ROUND TO LEARN, kept here because the next person to freeze a column will
+ * need both:
+ *
+ *   · THE LEFT FREEZE IS A BLOCK OF COLUMNS, NOT ONE. Every column up to the boundary is pinned,
+ *     and only the LAST of them draws the edge line — a line on each pinned column reads as a
+ *     table of narrow tables, and a line on none of them leaves the frozen block with no visible
+ *     edge to be frozen against.
+ *
+ *   · A FROZEN BODY CELL HAS TO BE FORCED BACK TO `position: sticky`. Rules that a cell's own
+ *     children carry — a relative wrapper, an absolutely-placed control — land later in the
+ *     cascade and win, and the cell stops pinning and starts sliding sideways with the scroll.
+ *     It looks like the sticky offset being wrong and it is the position itself being replaced. */
 const Z_PINNED_CELL = 10
 /** A cell sticky in two directions at once: a pinned column's header, and its totals cell. */
 const Z_CORNER = 30

@@ -8,7 +8,6 @@
 import * as React from 'react'
 
 import { ComboBoxList } from './ComboBoxList'
-import { useAnchoredTo } from './anchoredTo'
 import { useListOpening } from './listOpening'
 import { nextStop, NOTHING, stopsOf } from './comboBoxStops'
 import { TextField } from './TextField'
@@ -38,6 +37,10 @@ export type ComboBoxProps<Option> = {
   stickyLead?: { label: string; onChoose: () => void }
   /** A line pinned below the list that says something and does nothing — never a stop. */
   note?: string
+  /** What the list hangs off, when the field sits inside a box. The party field sits in a box narrower than itself
+   * and its input is wider, so a list anchored to the input did not line up with the thing a
+   * person sees as the field. Left out, the input is the anchor. */
+  anchorTo?: React.RefObject<HTMLElement | null>
   /** Focus has left the field. The caller decides whether that means anything. */
   onLeave?: () => void
 }
@@ -51,6 +54,7 @@ function ComboBox<Option>({
   onSelect,
   onDismiss,
   placeholder,
+  anchorTo,
   label,
   invalid,
   inputRef,
@@ -67,6 +71,7 @@ function ComboBox<Option>({
   // row. All three are kept; opening BY ITSELF highlights nothing.
   const [highlight, setHighlight] = React.useState(NOTHING)
   const input = React.useRef<HTMLInputElement>(null)
+
   /** Has the user asked this list anything — typed, or arrowed inside it. */
   const asked = React.useRef(false)
   const list = React.useRef<HTMLDivElement>(null)
@@ -74,8 +79,6 @@ function ComboBox<Option>({
   // When it opens and when it goes away — see listOpening.ts, which records the three separate
   // ways those rules have collided with the rest of this codebase.
   const { open, ask, dismiss, arrived, left } = useListOpening(openOnFocus, input, list)
-  // Where the panel goes, and staying there when the field moves. See anchoredTo.ts.
-  const { anchor, place } = useAnchoredTo(input, list, open)
 
 
 
@@ -124,7 +127,6 @@ function ComboBox<Option>({
       // that is the one nobody asked for.
       asked.current = true
       setHighlight(0)
-      place()
       ask()
       return
     }
@@ -192,7 +194,6 @@ function ComboBox<Option>({
           // Typing is asking — for the list back, as well as for what is in it.
           asked.current = true
           onValueChange(event.target.value)
-          place()
           ask()
         }}
         onKeyDown={handleKeyDown}
@@ -202,14 +203,12 @@ function ComboBox<Option>({
         // the state the field is in.
         onPointerDown={() => {
           if (!openOnFocus) return
-          place()
           ask()
         }}
         onFocus={() => {
           // Opened BY ITSELF: nothing is highlighted until the user arrows or types.
           asked.current = false
           setHighlight(NOTHING)
-          place()
           arrived()
         }}
         onBlur={(event) => {
@@ -225,7 +224,9 @@ function ComboBox<Option>({
       <ComboBoxList
         listId={listId}
         label={label}
-        anchor={visible ? anchor : null}
+        anchorRef={anchorTo ?? input}
+        open={visible}
+        onClose={dismiss}
         options={options}
         getKey={getKey}
         renderRow={renderRow}

@@ -59,6 +59,14 @@ test('F2 creates the party and the cursor goes on to the first item', async ({ p
   // nameless party rather than creating one — so this waits for the thing F2 depends on.
   await expect(page.getByRole('textbox', { name: 'Name' })).toHaveValue('Karthik Trading Co')
 
+  // AND WAIT FOR THE KEYBOARD TO BE IN THE NAME FIELD, which is where a person who just typed a
+  // name is standing. Two earlier versions of this wait were satisfied too early and both looked
+  // fixed: waiting for the field to hold the VALUE is true a frame before focus moves, and
+  // waiting for focus to be anywhere inside the drawer is true while focus is on the drawer's own
+  // container. Captured on a failing full run: `DIALOGS ["Create Party"] FOCUS Create Party` —
+  // the drawer had the keyboard, the field did not, and F2 there did not save.
+  await expect(page.getByRole('textbox', { name: 'Name' })).toBeFocused()
+
   await page.keyboard.press('F2')
 
   await expect(page.getByRole('dialog')).toHaveCount(0)

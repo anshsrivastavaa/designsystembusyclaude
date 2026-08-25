@@ -12,6 +12,8 @@ import type { Item } from '../../data/schema/item'
 import type { InvoiceRow } from '../../data/schema/invoice'
 import { useInvoice } from './store'
 import { onEnter } from '../../lib/keyboard'
+import { actionFor } from '../../lib/shortcuts'
+import { Shortcut } from '@busy/ui/Shortcut'
 
 export function ItemCell({
   row,
@@ -90,8 +92,29 @@ export function ItemCell({
     }
   }, [search])
 
+  // F10 OPENS THE DRAWER ON WHAT HAS BEEN TYPED, and it is the only keyboard door the drawer has.
+  // Before this it opened from the list's "+ Create item" row and from nowhere else — a mouse-only
+  // path to the one place an item gets a unit, a tax category and an HSN.
+  //
+  // WHAT DOES NOT CHANGE IS TAB AND ENTER. Both carry on into the line, and a name matching
+  // nothing behaves exactly like one that matches: the item is created when the line is saved.
+  // That is Aj's 20-08 ruling, asked again on 25-08 and withdrawn once it was shown to reverse
+  // itself — adding a line is the fifty-times-an-invoice path and a drawer in the middle of it is
+  // a wall. This key is the other case, asked for deliberately.
+  //
+  // ON A WRAPPER THAT DRAWS NOTHING. `display: contents` puts no box in the grid — the cell's
+  // layout is untouched — while events still travel through it, because bubbling follows the DOM
+  // and not the box tree. The alternative was a prop on `ComboBox`, which is the other session's.
+  function onKeyDown(event: React.KeyboardEvent<HTMLSpanElement>) {
+    // Which key this is comes from the one table, like every other shortcut in the product.
+    if (actionFor(event) !== 'open-master') return
+    event.preventDefault()
+    event.stopPropagation()
+    setCreating(search.trim())
+  }
+
   return (
-    <>
+    <span className="group/item contents" onKeyDown={onKeyDown}>
     <ItemPicker
       listId={`item-list-${row.id}`}
       // The create row opens the drawer. Typing a name nothing matches and carrying on still
@@ -102,6 +125,7 @@ export function ItemCell({
       inputRef={inputRef}
       value={search}
       invalid={invalid}
+
       onValueChange={(next) => {
         setSearch(next)
         setItemText(index, next)
@@ -115,6 +139,15 @@ export function ItemCell({
       }}
     />
 
+    {/* THE SAME CAP THE PARTY FIELD WEARS, and the same behaviour: shown only while the cell is
+        hovered or holds the keyboard. A shortcut hint that is on all the time is a permanent
+        label on every row of the grid. It is not a control — pressing a cap is not how a
+        shortcut is used — so it takes no pointer events and no place in the tab order. */}
+    <Shortcut
+      keyName="F10"
+      className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 opacity-0 transition-opacity group-hover/item:opacity-100 group-focus-within/item:opacity-100"
+    />
+
     <ItemDrawer
       typed={creating}
       onClose={() => setCreating(null)}
@@ -125,6 +158,6 @@ export function ItemCell({
         moveTo(onEnter({ row: index, column: 'item' }, Number.POSITIVE_INFINITY))
       }}
     />
-    </>
+    </span>
   )
 }

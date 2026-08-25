@@ -132,3 +132,93 @@ test('exactly one ring is on screen, and it is where the keyboard is', async ({ 
     expect(rings.holdsTheKeyboard, `after ${key}`).toBe(true)
   }
 })
+
+// MAGIC IS KEYBOARD FRIENDLY, NOT KEYBOARD ONLY — Aj, 25-08, and this is that ruling as a test.
+//
+// The invoice used to wrap Tab at both ends of `<main>`: at the last control it called
+// `preventDefault()` and moved focus to the first itself, and the reverse at the first. So focus
+// could never leave the page — not to the top menu, which was the intention, and not to the
+// browser's own address bar, tab strip or extensions either, which nobody decided. WCAG 2.1.2 is
+// the one accessibility rule that is a flat prohibition rather than a quality bar.
+//
+// WHAT THIS CAN AND CANNOT SEE, because the obvious test is the wrong one. "Tab from the last
+// control and assert focus left the page" cannot be written: there is no browser chrome in a
+// headless run, so Tab past the last element cycles back to the first one and looks exactly like
+// the wrap it is meant to catch. A journey written that way fails whether the fault is there or
+// not, which is worse than not having it.
+//
+// So it asks the thing that actually changed. The wrap's whole mechanism was consuming the key —
+// `preventDefault` on the Tab keydown. A page that does not consume it has handed the browser its
+// own key back, which is the entire requirement. That is observable, and it goes red the moment
+// anybody puts the wrap back.
+//
+// A REAL KEY PRESS, NOT A DISPATCHED EVENT. A dispatched `keydown` runs handlers and moves no
+// focus at all, so it would say nothing about either half of this.
+test('Tab at the end of the invoice is handed to the browser rather than swallowed', async ({ page }) => {
+  await page.goto('/?screen=create')
+
+  // Every Tab the page sees, and whether the page swallowed it. On `document` in the bubble
+  // phase, so it runs after any handler the invoice registers — including a capture-phase one,
+  // which is what the wrap was.
+  await page.evaluate(() => {
+    const seen: boolean[] = []
+    ;(window as unknown as { tabsSwallowed: boolean[] }).tabsSwallowed = seen
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Tab') seen.push(event.defaultPrevented)
+    })
+  })
+
+  const save = page.getByRole('button', { name: /^Save/ }).first()
+  await save.focus()
+  await expect(save).toBeFocused()
+
+  // Save is the last control in the invoice, so this is the press the wrap used to eat.
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('Shift+Tab')
+  await page.keyboard.press('Shift+Tab')
+
+  const swallowed = await page.evaluate(() => (window as unknown as { tabsSwallowed: boolean[] }).tabsSwallowed)
+  expect(swallowed).toHaveLength(3)
+  expect(swallowed, 'the invoice swallowed a Tab — the wrap is back').toEqual([false, false, false])
+
+  // AND NOTHING CAUGHT IT ON THE WAY PAST. The rescue net puts a keyboard dropped on the page body
+  // back inside; walking off the end is not dropping, and the count is what says which happened.
+  const rescues = await page.evaluate(() => document.querySelector('main')?.getAttribute('data-keyboard-rescues'))
+  expect(rescues).toBe('0')
+})
+
+// THE OTHER HALF OF THE RULING IS NOT IN THE CODE, AND THIS IS WHAT IS ACTUALLY THERE.
+//
+// The ruling says the top menu is deliberately out of the tab order and that this is done on the
+// controls rather than by wrapping the container. Measured on the running build, it is not done at
+// all: User, Favourites, Housekeeping, Help, the company menu, the year menu, Open POS counter,
+// the density switch, the rail expander and Sales are eleven ordinary buttons with no `tabindex`
+// override between them. **The wrap was the only thing keeping the keyboard out of them**, so
+// removing it makes all eleven reachable — Shift+Tab from Back now lands on Sales.
+//
+// That may be the better screen and it is not this session's call, and the controls are in the
+// shell, which is Session B's. Filed in `docs/owed.md`. This test records what is true today so
+// the number cannot drift while the question is open.
+test('every control outside the invoice is reachable by keyboard, which the wrap used to hide', async ({ page }) => {
+  await page.goto('/?screen=create')
+
+  const stops = await page.evaluate(() => {
+    const main = document.querySelector('main')
+    const all = [...document.querySelectorAll<HTMLElement>(
+      'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',
+    )].filter((element) => element.offsetParent !== null)
+    return all.filter((element) => main === null || !main.contains(element)).length
+  })
+  expect(stops).toBeGreaterThan(0)
+
+  // And they are before the invoice in the document, so walking BACKWARDS off its first control
+  // is what reaches them.
+  await page.getByRole('button', { name: 'Back' }).focus()
+  await page.keyboard.press('Shift+Tab')
+  const landed = await page.evaluate(() => {
+    const main = document.querySelector('main')
+    const active = document.activeElement
+    return main !== null && active !== null && !main.contains(active) && active !== document.body
+  })
+  expect(landed).toBe(true)
+})

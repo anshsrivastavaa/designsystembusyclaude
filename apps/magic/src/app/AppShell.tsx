@@ -63,6 +63,39 @@ export function AppShell({ children, onOpenSales }: AppShellProps) {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-surface-page text-ink">
+      {/* FIRST IN THE DOM, AND THAT IS THE WHOLE MECHANISM. Eleven working controls sit in the
+          chrome before the screen — the four top menus, the company, the year, the POS button,
+          the two density options, the rail's expander and Sales. Every one of them is real and
+          every one stays: taking a control out of the tab order to shorten a walk is taking it
+          away from the people who navigate by keyboard, which is the opposite of the intention.
+          A skip link gives the walk back without costing anybody a control.
+
+          IT IS SEEN ONLY WHEN IT IS FOCUSED. Tab once from the address bar and it appears; tab
+          again and it is gone. That is the convention, and it is why this can be first without
+          being in anybody's way.
+
+          The screen owns the `<main>`, not the shell — a document has one main region and it
+          belongs to the content — so this finds it rather than assuming an id it cannot put
+          there. `tabindex="-1"` goes on just in time: a landmark is not focusable by default,
+          and without it the browser scrolls to the region and leaves the keyboard behind. */}
+      <a
+        href="#main"
+        onClick={(event) => {
+          const screen = document.querySelector('main')
+          if (!screen) return
+          event.preventDefault()
+          screen.setAttribute('tabindex', '-1')
+          screen.focus()
+        }}
+        className={cn(
+          'sr-only rounded-control bg-surface px-3 py-2 text-body font-label text-ink-accent',
+          'focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:shadow-popover',
+          'focus-ring',
+        )}
+      >
+        Skip to the screen
+      </a>
+
       <TopBar />
 
       <div className="flex min-h-0 flex-1">

@@ -30,7 +30,9 @@ apps/magic/flow/group-the-listing.flow.test.ts
 apps/magic/flow/invoice.ts
 apps/magic/flow/it-gives-way-under-the-finger.flow.test.ts
 apps/magic/flow/less-motion-means-less-motion.flow.test.ts
+apps/magic/flow/money-shorthand.flow.test.ts
 apps/magic/flow/one-door-to-the-audit-trail.flow.test.ts
+apps/magic/flow/only-a-grid-says-grid.flow.test.ts
 apps/magic/flow/open-an-invoice.flow.test.ts
 apps/magic/flow/pick-a-date.flow.test.ts
 apps/magic/flow/pick-an-item.flow.test.ts
@@ -40,10 +42,13 @@ apps/magic/flow/takeFromTheList.ts
 apps/magic/flow/the-address-bar-tells-the-truth.flow.test.ts
 apps/magic/flow/the-bulk-bar-is-the-card-foot.flow.test.ts
 apps/magic/flow/the-controls-answer-the-press.flow.test.ts
+apps/magic/flow/the-ends-of-a-row.flow.test.ts
 apps/magic/flow/the-f-key-walk.flow.test.ts
+apps/magic/flow/the-item-drawer-has-a-key.flow.test.ts
 apps/magic/flow/the-keyboard-is-never-lost.flow.test.ts
 apps/magic/flow/the-party-picker.flow.test.ts
 apps/magic/flow/the-screen-holds-together.flow.test.ts
+apps/magic/flow/the-skip-link.flow.test.ts
 apps/magic/flow/what-is-known-about-a-party.flow.test.ts
 apps/magic/index.html
 apps/magic/package.json
@@ -127,6 +132,7 @@ apps/magic/src/features/invoice/MonthGrid.tsx
 apps/magic/src/features/invoice/Narration.tsx
 apps/magic/src/features/invoice/PartyBadge.tsx
 apps/magic/src/features/invoice/PartyDetails.tsx
+apps/magic/src/features/invoice/PartyDrawer.component.test.tsx
 apps/magic/src/features/invoice/PartyDrawer.tsx
 apps/magic/src/features/invoice/PartyHeader.tsx
 apps/magic/src/features/invoice/PartyInsight.tsx
@@ -141,11 +147,14 @@ apps/magic/src/features/invoice/TaxSummary.tsx
 apps/magic/src/features/invoice/TransportDrawer.tsx
 apps/magic/src/features/invoice/VoucherSwitch.tsx
 apps/magic/src/features/invoice/attaching.ts
+apps/magic/src/features/invoice/caretAt.ts
 apps/magic/src/features/invoice/cellContent.ts
 apps/magic/src/features/invoice/cellHands.ts
 apps/magic/src/features/invoice/columnTotals.ts
 apps/magic/src/features/invoice/focusHome.ts
 apps/magic/src/features/invoice/gridColumns.ts
+apps/magic/src/features/invoice/moneyShorthand.logic.test.ts
+apps/magic/src/features/invoice/moneyShorthand.ts
 apps/magic/src/features/invoice/nextSection.logic.test.ts
 apps/magic/src/features/invoice/nextSection.ts
 apps/magic/src/features/invoice/noteAndRights.ts
@@ -303,7 +312,6 @@ packages/ui/Toggle.stories.tsx
 packages/ui/Toggle.tsx
 packages/ui/Tokens.stories.tsx
 packages/ui/Type.stories.tsx
-packages/ui/anchoredTo.ts
 packages/ui/cn.logic.test.ts
 packages/ui/cn.ts
 packages/ui/columnHandle.ts
@@ -329,6 +337,7 @@ scripts/check-dead.mjs
 scripts/check-deps.mjs
 scripts/check-docs.mjs
 scripts/check-drift.mjs
+scripts/check-exports.mjs
 scripts/check-flow.mjs
 scripts/check-lint.mjs
 scripts/check-run.mjs

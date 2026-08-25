@@ -15,11 +15,26 @@
 
 import type { ReactNode, RefObject } from 'react'
 
-export function FieldBox({ children, ref }: { children: ReactNode; ref?: RefObject<HTMLDivElement | null> }) {
+import { cn } from '@busy/ui/cn'
+
+export function FieldBox({
+  children,
+  ref,
+  className,
+}: {
+  children: ReactNode
+  ref?: RefObject<HTMLDivElement | null>
+  /** What the field around it needs — a group name for a hint that shows on hover, a margin.
+   * Never the frame itself: that is this file's whole job. */
+  className?: string
+}) {
   return (
     <div
       ref={ref}
-      className="relative flex h-control items-center rounded-control border border-stroke bg-surface focus-ring-within-inset"
+      className={cn(
+        'relative flex h-control items-center rounded-control border border-stroke bg-surface focus-ring-within-inset',
+        className,
+      )}
     >
       {children}
     </div>

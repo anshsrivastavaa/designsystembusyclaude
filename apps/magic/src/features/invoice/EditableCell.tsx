@@ -13,6 +13,7 @@ import { TextField } from '@busy/ui/TextField'
 import type { ColumnId } from '../../lib/keyboard'
 import type { InvoiceRow } from '../../data/schema/invoice'
 import { alignmentOf } from './cellContent'
+import { acceptsTyped } from './moneyShorthand'
 
 type EditableCellProps = {
   ref: Ref<HTMLInputElement>
@@ -59,6 +60,11 @@ export function EditableCell({ ref, column, row, index, invalid, onType }: Edita
       value={draft}
       onChange={(event) => {
         const typed = event.target.value
+        // REFUSED AS IT IS TYPED, NOT ON BLUR. The draft is simply not moved, so the wrong key
+        // does nothing and the cell never shows a character it is not going to keep. A cell that
+        // accepts a letter, shows it, and quietly drops it later has already lied about what it
+        // holds — and this grid has the scar: `5k` was accepted, shown, and stored as zero.
+        if (!acceptsTyped(column, typed)) return
         setDraft(typed)
         onType(column, index, typed)
       }}

@@ -62,6 +62,18 @@ export const Everything: StoryObj = {
             </Disclosure>
           </DemoRow>
 
+          <DemoRow
+            label="Flush"
+            align="top"
+            note="A full-bleed table whose top rule has to meet the card's sides, and a body already aligned to the card's own padding. Both were adopters; both needed the padding gone, for opposite reasons."
+          >
+            <Disclosure summary="Tax summary" flush defaultOpen>
+              <div className="border-t border-stroke bg-surface-sunken px-3 py-2 text-body text-ink">
+                A rule that runs edge to edge
+              </div>
+            </Disclosure>
+          </DemoRow>
+
           <DemoRow label="Controlled from outside" align="top">
             <div className="flex items-center gap-3">
               <Disclosure summary="Breakdown" open={breakdown} onOpenChange={setBreakdown}>
